@@ -56,6 +56,26 @@ const DB = (() => {
   function uid(prefix = 'id') { return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`; }
   function now() { return new Date().toISOString(); }
 
+  async function forceSyncAll() {
+    if (!supabaseClient) {
+      if (window.Toast) Toast.error('Erro de Sincronização', 'Cliente do Supabase não conectado.');
+      return;
+    }
+    const allKeys = Object.values(KEYS);
+    for (const k of allKeys) {
+      const data = get(k);
+      if (data && (Array.isArray(data) ? data.length > 0 : Object.keys(data).length > 0)) {
+        try {
+          await supabaseClient.from('diman_store')
+            .upsert({ collection: k, key: 'all', data: data }, { onConflict: 'collection,key' });
+        } catch(e) {
+          console.error('Sync failed for collection:', k, e);
+        }
+      }
+    }
+    if (window.Toast) Toast.success('Sincronização Concluída', 'Todos os dados locais foram enviados para a nuvem do Supabase.');
+  }
+
   async function initSupabase() {
     if (!supabaseClient) return;
     try {
@@ -459,5 +479,7 @@ const DB = (() => {
     }
   };
 
-  return { equipment, tasks, parts, workforce, timesheets, restrictions, costs, lessons, notifications, settings, kpi, uid, now, initSupabase, syncToSupabase };
+  return {
+    equipment, tasks, parts, workforce, timesheets, replannings, restrictions, costs, lessons, notifications, settings, kpi, uid, now,
+    initSupabase, forceSyncAll, setGlobalEqFilter, syncToSupabase };
 })();

@@ -453,6 +453,11 @@ function renderShell(session) {
               Início
             </button>
 
+            <button class="btn btn-outline btn-sm" onclick="DB.forceSyncAll()" title="Forçar envio de dados locais para a nuvem" style="display:flex;align-items:center;gap:6px;padding:var(--space-2) var(--space-3);border-radius:var(--radius-full);color:var(--brand-primary-light);border-color:var(--brand-primary-light);margin-left:var(--space-2);">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+              Sincronizar Nuvem
+            </button>
+
             <!-- Global Equipment Filter -->
             <div style="margin-left:var(--space-4); display:flex; align-items:center;">
               <select id="global-eq-select" class="form-control" style="width:250px; border-radius:var(--radius-full); background:var(--bg-base); border:1px solid var(--border-card); font-size:var(--text-sm);" onchange="window.setGlobalEqFilter(this.value)">
