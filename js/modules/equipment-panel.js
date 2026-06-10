@@ -165,7 +165,7 @@ window.EquipmentPanel = (() => {
         </div>
 
         <!-- Create Task Modal -->
-        <div id="eq-task-modal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+        <div id="eq-task-modal" class="modal-overlay">
           <div class="card" style="width:100%;max-width:600px;padding:var(--space-6);">
             <h3 style="margin-bottom:var(--space-4);font-size:1.5rem;font-weight:800;">Nova Atividade - <span id="new-task-disc-label" style="color:var(--brand-primary-light);"></span></h3>
             <input type="hidden" id="new-task-disc" />
@@ -203,14 +203,14 @@ window.EquipmentPanel = (() => {
             </div>
 
             <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
-              <button class="btn btn-ghost" onclick="document.getElementById('eq-task-modal').style.display='none'">Cancelar</button>
+              <button class="btn btn-ghost" onclick="closeModal('eq-task-modal')">Cancelar</button>
               <button class="btn btn-primary" onclick="EquipmentPanel.saveTask()">Salvar Atividade</button>
             </div>
           </div>
         </div>
 
         <!-- Create Part Modal -->
-        <div id="eq-part-modal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+        <div id="eq-part-modal" class="modal-overlay">
           <div class="card" style="width:100%;max-width:500px;padding:var(--space-6);">
             <h3 style="margin-bottom:var(--space-4);font-size:1.5rem;font-weight:800;">Nova Peça</h3>
             
@@ -261,7 +261,7 @@ window.EquipmentPanel = (() => {
             </div>
 
             <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
-              <button class="btn btn-ghost" onclick="document.getElementById('eq-part-modal').style.display='none'">Cancelar</button>
+              <button class="btn btn-ghost" onclick="closeModal('eq-part-modal')">Cancelar</button>
               <button class="btn btn-primary" onclick="EquipmentPanel.savePart()">Salvar Peça</button>
             </div>
           </div>
@@ -578,7 +578,7 @@ window.EquipmentPanel = (() => {
   }
 
   function openTaskModal(disciplina) {
-    document.getElementById('eq-task-modal').style.display = 'flex';
+    openModal('eq-task-modal');
     document.getElementById('new-task-disc').value = disciplina;
     document.getElementById('new-task-disc-label').textContent = disciplina.toUpperCase();
     
@@ -611,8 +611,8 @@ window.EquipmentPanel = (() => {
     };
 
     DB.tasks.create(newTask);
-    document.getElementById('eq-task-modal').style.display = 'none';
-    Toast.success('Atividade salva com sucesso!');
+    closeModal('eq-task-modal');
+    Toast.success('Atividade Adicionada', `A atividade "${desc}" foi criada com sucesso.`);
     Router.navigate('equipment-panel', { id: currentEqId, force: true });
   }
 
@@ -625,7 +625,7 @@ window.EquipmentPanel = (() => {
   }
 
   function openPartModal() {
-    document.getElementById('eq-part-modal').style.display = 'flex';
+    openModal('eq-part-modal');
     document.getElementById('new-part-cod').value = '';
     document.getElementById('new-part-desc').value = '';
     document.getElementById('new-part-qtd').value = 1;
@@ -655,8 +655,8 @@ window.EquipmentPanel = (() => {
     };
 
     DB.parts.create(newPart);
-    document.getElementById('eq-part-modal').style.display = 'none';
-    Toast.success('Peça adicionada com sucesso!');
+    closeModal('eq-part-modal');
+    Toast.success('Peça Solicitada', `A solicitação da peça "${desc}" foi registrada.`);
     Router.navigate('equipment-panel', { id: currentEqId, force: true });
   }
 
@@ -838,7 +838,7 @@ window.EquipmentPanel = (() => {
     const eq = DB.equipment.get(currentEqId);
     if (!eq) return;
     
-    const user = Auth.getCurrentUser();
+    const user = Auth.getSession();
     if (user?.perfil !== 'Administrador') {
       Toast.error('Acesso Negado', 'Você não tem permissão para excluir equipamentos.');
       return;
