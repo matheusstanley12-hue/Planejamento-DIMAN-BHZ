@@ -736,13 +736,36 @@ window.TasksModule = (() => {
   }
 
   function openCreate() {
+    if (!document.getElementById('modal-task')) {
+      const div = document.createElement('div');
+      div.innerHTML = `<div class="modal-overlay" id="modal-task">
+        <div class="modal modal-lg">
+          <div class="modal-header"><div class="modal-title" id="task-modal-title">Tarefa</div><button class="modal-close" onclick="closeModal('modal-task')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+          <div class="modal-body" id="task-modal-body"></div>
+          <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-task')">Cancelar</button><button class="btn btn-primary" onclick="TasksModule.save()">Salvar</button></div>
+        </div>
+      </div>`;
+      document.body.appendChild(div.firstElementChild);
+    }
     document.getElementById('task-modal-title').textContent = 'Nova Tarefa';
     document.getElementById('task-modal-body').innerHTML = taskForm(null);
     openModal('modal-task');
   }
 
   function openEdit(id) {
+    if (!document.getElementById('modal-task')) {
+      const div = document.createElement('div');
+      div.innerHTML = `<div class="modal-overlay" id="modal-task">
+        <div class="modal modal-lg">
+          <div class="modal-header"><div class="modal-title" id="task-modal-title">Tarefa</div><button class="modal-close" onclick="closeModal('modal-task')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+          <div class="modal-body" id="task-modal-body"></div>
+          <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-task')">Cancelar</button><button class="btn btn-primary" onclick="TasksModule.save()">Salvar</button></div>
+        </div>
+      </div>`;
+      document.body.appendChild(div.firstElementChild);
+    }
     const t = DB.tasks.get(id);
+    if (!t) return;
     document.getElementById('task-modal-title').textContent = 'Editar Tarefa';
     document.getElementById('task-modal-body').innerHTML = taskForm(t);
     openModal('modal-task');
