@@ -225,6 +225,7 @@ function showLoginPage() {
     if (result.success) {
       if (result.mustChangePassword) {
         page.remove();
+        renderShell(result.session);
         showChangePasswordPage(result.session);
       } else {
         // Wipe local storage for production exactly once
