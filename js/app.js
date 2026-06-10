@@ -81,16 +81,20 @@ async function initApp() {
     const params = {};
     hash.replace('#qrview', '').replace(/[?&]([^=&]+)=([^&]*)/g, (_, k, v) => { params[k] = decodeURIComponent(v); });
     if (params.id) {
-      SeedData.seed(); // ensure data is seeded
       renderPublicQrView(params.id);
       return;
     }
   }
 
   // Wipe local storage for production exactly once on load
-  if (!localStorage.getItem('diman_production_ready')) {
-    localStorage.removeItem('diman_db');
-    localStorage.setItem('diman_production_ready', 'true');
+  if (!localStorage.getItem('diman_production_v2_ready')) {
+    const keysToWipe = ['diman_equipment', 'diman_tasks', 'diman_parts', 'diman_workforce', 'diman_timesheets', 'diman_replannings', 'diman_restrictions', 'diman_costs', 'diman_lessons', 'diman_notifications', 'diman_kpi_cache'];
+    keysToWipe.forEach(k => localStorage.removeItem(k));
+    localStorage.setItem('diman_production_v2_ready', 'true');
+    // Force sync the empty state to Supabase to clear it too
+    if (window.DB && DB.forceSyncAll) {
+      DB.forceSyncAll();
+    }
   }
 
   Auth.init();
@@ -106,9 +110,6 @@ async function initApp() {
     showChangePasswordPage(session);
     return;
   }
-
-  // Seed demo data
-  SeedData.seed();
 
   // Render shell
   renderShell(session);
@@ -226,15 +227,12 @@ function showLoginPage() {
         page.remove();
         showChangePasswordPage(result.session);
       } else {
-        // Seed data desabilitado para Produção
-        // if (typeof SeedData !== 'undefined' && DB.equipment.list().length === 0) {
-        //   SeedData.seed();
-        // }
-        
         // Wipe local storage for production exactly once
-        if (!localStorage.getItem('diman_production_ready')) {
-          localStorage.removeItem('diman_db');
-          localStorage.setItem('diman_production_ready', 'true');
+        if (!localStorage.getItem('diman_production_v2_ready')) {
+          const keysToWipe = ['diman_equipment', 'diman_tasks', 'diman_parts', 'diman_workforce', 'diman_timesheets', 'diman_replannings', 'diman_restrictions', 'diman_costs', 'diman_lessons', 'diman_notifications', 'diman_kpi_cache'];
+          keysToWipe.forEach(k => localStorage.removeItem(k));
+          localStorage.setItem('diman_production_v2_ready', 'true');
+          if (window.DB && DB.forceSyncAll) DB.forceSyncAll();
         }
 
         setTimeout(() => { page.remove(); renderShell(result.session); Router.navigate('home'); }, 300);
