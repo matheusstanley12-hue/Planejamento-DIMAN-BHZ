@@ -212,38 +212,43 @@ function showLoginPage() {
   // Form submit
   document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = document.getElementById('login-btn');
-    const matricula = document.getElementById('login-matricula').value.trim();
-    const senha = document.getElementById('login-senha').value;
-    const errDiv = document.getElementById('login-error');
-    const errMsg = document.getElementById('login-error-msg');
+    try {
+      const btn = document.getElementById('login-btn');
+      const matricula = document.getElementById('login-matricula').value.trim();
+      const senha = document.getElementById('login-senha').value;
+      const errDiv = document.getElementById('login-error');
+      const errMsg = document.getElementById('login-error-msg');
 
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner spinner-sm"></span> Verificando...`;
-    errDiv.style.display = 'none';
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner spinner-sm"></span> Verificando...`;
+      errDiv.style.display = 'none';
 
-    const result = await Auth.login(matricula, senha);
-    if (result.success) {
-      if (result.mustChangePassword) {
-        page.remove();
-        renderShell(result.session);
-        showChangePasswordPage(result.session);
-      } else {
-        // Wipe local storage for production exactly once
-        if (!localStorage.getItem('diman_production_v2_ready')) {
-          const keysToWipe = ['diman_equipment', 'diman_tasks', 'diman_parts', 'diman_workforce', 'diman_timesheets', 'diman_replannings', 'diman_restrictions', 'diman_costs', 'diman_lessons', 'diman_notifications', 'diman_kpi_cache'];
-          keysToWipe.forEach(k => localStorage.removeItem(k));
-          localStorage.setItem('diman_production_v2_ready', 'true');
-          if (window.DB && DB.forceSyncAll) DB.forceSyncAll();
+      const result = await Auth.login(matricula, senha);
+      if (result.success) {
+        if (result.mustChangePassword) {
+          page.remove();
+          renderShell(result.session);
+          showChangePasswordPage(result.session);
+        } else {
+          // Wipe local storage for production exactly once
+          if (!localStorage.getItem('diman_production_v2_ready')) {
+            const keysToWipe = ['diman_equipment', 'diman_tasks', 'diman_parts', 'diman_workforce', 'diman_timesheets', 'diman_replannings', 'diman_restrictions', 'diman_costs', 'diman_lessons', 'diman_notifications', 'diman_kpi_cache'];
+            keysToWipe.forEach(k => localStorage.removeItem(k));
+            localStorage.setItem('diman_production_v2_ready', 'true');
+            if (window.DB && DB.forceSyncAll) DB.forceSyncAll();
+          }
+
+          setTimeout(() => { page.remove(); renderShell(result.session); Router.navigate('home'); }, 300);
         }
-
-        setTimeout(() => { page.remove(); renderShell(result.session); Router.navigate('home'); }, 300);
+      } else {
+        errMsg.textContent = result.error;
+        errDiv.style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg> Entrar`;
       }
-    } else {
-      errMsg.textContent = result.error;
-      errDiv.style.display = 'flex';
-      btn.disabled = false;
-      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg> Entrar`;
+    } catch(err) {
+      console.error('Login flow error', err);
+      alert('Erro fatal no login: ' + err.message + '\n\n' + err.stack);
     }
   });
 
@@ -591,9 +596,12 @@ function renderPublicQrView(eqId) {
 // ================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Apply saved theme
-  const savedTheme = localStorage.getItem('diman_theme') || 'light';
-  document.documentElement.dataset.theme = savedTheme;
-
-  await initApp();
+  try {
+    const savedTheme = localStorage.getItem('diman_theme') || 'light';
+    document.documentElement.dataset.theme = savedTheme;
+    await initApp();
+  } catch (e) {
+    console.error('Fatal App Error:', e);
+    alert('Erro fatal ao carregar o sistema: ' + e.message + '\n\n' + e.stack);
+  }
 });
