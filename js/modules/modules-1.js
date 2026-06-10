@@ -505,10 +505,11 @@ window.EquipmentModule = (() => {
     return `<div style="display:flex;flex-direction:column;gap:var(--space-4);">
       <div class="form-row"><div class="form-group"><label>Código *</label><input id="eq-codigo" value="${eq?.codigo||''}" placeholder="Ex: SSM-288" required /></div>
       <div class="form-group"><label>Nome do Equipamento *</label><input id="eq-nome" value="${eq?.nome||''}" placeholder="Nome completo" required /></div></div>
-      <div class="form-row"><div class="form-group"><label>Cliente</label><input id="eq-cliente" value="${eq?.cliente||''}" /></div>
-      <div class="form-group"><label>Contrato</label><input id="eq-contrato" value="${eq?.contrato||''}" /></div></div>
-      <div class="form-row"><div class="form-group"><label>Tipo</label><input id="eq-tipo" value="${eq?.tipo||''}" placeholder="Sonda, Perfuratriz..." /></div>
-      <div class="form-group"><label>Localização</label><input id="eq-loc" value="${eq?.localizacao||''}" /></div></div>
+      <div class="form-row"><div class="form-group"><label>O.S. *</label><input id="eq-os" value="${eq?.os||''}" placeholder="Ordem de Serviço" required /></div>
+      <div class="form-group"><label>Cliente</label><input id="eq-cliente" value="${eq?.cliente||''}" /></div></div>
+      <div class="form-row"><div class="form-group"><label>Contrato</label><input id="eq-contrato" value="${eq?.contrato||''}" /></div>
+      <div class="form-group"><label>Tipo</label><input id="eq-tipo" value="${eq?.tipo||''}" placeholder="Sonda, Perfuratriz..." /></div></div>
+      <div class="form-row"><div class="form-group"><label>Localização</label><input id="eq-loc" value="${eq?.localizacao||''}" /></div>
       <div class="form-row"><div class="form-group"><label>Fabricante</label><input id="eq-fab" value="${eq?.fabricante||''}" /></div>
       <div class="form-group"><label>Modelo</label><input id="eq-modelo" value="${eq?.modelo||''}" /></div></div>
       <div class="form-row"><div class="form-group"><label>Número de Série</label><input id="eq-serie" value="${eq?.numeroSerie||''}" /></div>
@@ -527,8 +528,9 @@ window.EquipmentModule = (() => {
   function save() {
     const id = document.getElementById('eq-editing-id').value;
     const data = {
-      codigo: document.getElementById('eq-codigo').value.trim(),
+      codigo: document.getElementById('eq-codigo').value.trim().toUpperCase(),
       nome: document.getElementById('eq-nome').value.trim(),
+      os: document.getElementById('eq-os').value.trim(),
       cliente: document.getElementById('eq-cliente').value.trim(),
       contrato: document.getElementById('eq-contrato').value.trim(),
       tipo: document.getElementById('eq-tipo').value.trim(),
@@ -542,7 +544,7 @@ window.EquipmentModule = (() => {
       pctAvanco: parseInt(document.getElementById('eq-pct').value) || 0,
       observacoes: document.getElementById('eq-obs').value.trim(),
     };
-    if (!data.codigo || !data.nome) { Toast.error('Erro', 'Código e nome são obrigatórios.'); return; }
+    if (!data.codigo || !data.nome || !data.os) { Toast.error('Erro', 'Código, Nome e O.S. são obrigatórios.'); return; }
     if (id) { DB.equipment.update(id, data); Toast.success('Equipamento atualizado!', data.codigo); }
     else { data.dataLiberacaoPlanejada = document.getElementById('eq-data-plan').value; DB.equipment.create(data); Toast.success('Equipamento criado!', data.codigo); }
     closeModal('modal-equipment');
