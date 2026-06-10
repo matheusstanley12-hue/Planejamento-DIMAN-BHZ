@@ -68,6 +68,7 @@ window.EquipmentPanel = (() => {
               Baixar Todas as Tarefas
             </button>
           </div>
+        </div>
 
         <!-- Super Cabeçalho -->
         <div class="card" style="margin-bottom:var(--space-6);padding:0;overflow:hidden;border:1px solid var(--border-hover);">
