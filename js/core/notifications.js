@@ -2,7 +2,7 @@
    PLANEJAMENTO DIMAN-BHZ — Core: Toast & Notification System
    ============================================================ */
 
-const Toast = (() => {
+window.Toast = (() => {
   function show(type, title, message, duration = 4000) {
     const container = document.getElementById('toast-container');
     if (!container) return;

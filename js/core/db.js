@@ -2,7 +2,7 @@
    PLANEJAMENTO DIMAN-BHZ — Core: Database Layer
    ============================================================ */
 
-const DB = (() => {
+window.DB = (() => {
   const SUPABASE_URL = 'https://umsozbjpfmxvhwycjjkr.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_NGJvPtMUdiDGCnK5qRroYg_7_wPqZiH';
   let supabaseClient = null;

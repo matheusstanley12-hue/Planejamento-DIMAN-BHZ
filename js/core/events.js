@@ -2,7 +2,7 @@
    PLANEJAMENTO DIMAN-BHZ — Core: Event Bus
    ============================================================ */
 
-const events = (() => {
+window.events = (() => {
   const listeners = {};
 
   function on(event, callback) {

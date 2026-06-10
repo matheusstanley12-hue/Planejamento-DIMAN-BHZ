@@ -2,7 +2,7 @@
    PLANEJAMENTO DIMAN-BHZ — Core: Authentication
    ============================================================ */
 
-const Auth = (() => {
+window.Auth = (() => {
   const USERS_KEY = 'diman_users';
   const SESSION_KEY = 'diman_session';
   const AUDIT_KEY = 'diman_audit';
