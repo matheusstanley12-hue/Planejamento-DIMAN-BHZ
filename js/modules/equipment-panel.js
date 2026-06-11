@@ -356,11 +356,19 @@ window.EquipmentPanel = (() => {
                   </td>
                   <td>${t.responsavel || '—'}</td>
                   <td>
-                    <div style="font-size:10px;margin-bottom:2px"><strong>Plan:</strong> ${formatDate(t.dataPlanejadaInicio)} a ${formatDate(t.dataPlanejadaTermino)}</div>
-                    <div style="font-size:10px;margin-bottom:2px"><strong>Real:</strong> ${formatDate(t.dataRealInicio)||'—'} a ${formatDate(t.dataRealTermino)||'—'}</div>
-                    <div style="font-size:10px;display:flex;align-items:center;gap:4px;">
-                      <strong>Replan:</strong> 
-                      <input type="date" value="${t.dataReplanejada||''}" onchange="window.EquipmentPanel.updateTaskField('${currentEqId}', '${t.id}', 'dataReplanejada', this.value)" style="width:110px;padding:2px 4px;font-size:11px;border:1px solid var(--border-default);border-radius:4px;background:var(--bg-base);color:var(--text-primary);cursor:pointer;" title="Data Replanejada" />
+                    <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:4px;align-items:center;font-size:10px;">
+                      <strong>Plan:</strong>
+                      <input type="date" value="${t.dataPlanejadaInicio||''}" onchange="window.EquipmentPanel.updateTaskField('${currentEqId}', '${t.id}', 'dataPlanejadaInicio', this.value)" style="width:100%;padding:2px;font-size:10px;border:1px solid var(--border-default);border-radius:3px;background:var(--bg-base);color:var(--text-primary);cursor:pointer;" title="Início Planejado" />
+                      <input type="date" value="${t.dataPlanejadaTermino||''}" onchange="window.EquipmentPanel.updateTaskField('${currentEqId}', '${t.id}', 'dataPlanejadaTermino', this.value)" style="width:100%;padding:2px;font-size:10px;border:1px solid var(--border-default);border-radius:3px;background:var(--bg-base);color:var(--text-primary);cursor:pointer;" title="Fim Planejado" />
+
+                      <strong>Real:</strong>
+                      <input type="date" value="${t.dataRealInicio||''}" onchange="window.EquipmentPanel.updateTaskField('${currentEqId}', '${t.id}', 'dataRealInicio', this.value)" style="width:100%;padding:2px;font-size:10px;border:1px solid var(--border-default);border-radius:3px;background:var(--bg-base);color:var(--text-primary);cursor:pointer;" title="Início Real" />
+                      <input type="date" value="${t.dataRealTermino||''}" onchange="window.EquipmentPanel.updateTaskField('${currentEqId}', '${t.id}', 'dataRealTermino', this.value)" style="width:100%;padding:2px;font-size:10px;border:1px solid var(--border-default);border-radius:3px;background:var(--bg-base);color:var(--text-primary);cursor:pointer;" title="Fim Real" />
+
+                      <strong>Replan:</strong>
+                      <div style="grid-column: span 2;">
+                        <input type="date" value="${t.dataReplanejada||''}" onchange="window.EquipmentPanel.updateTaskField('${currentEqId}', '${t.id}', 'dataReplanejada', this.value)" style="width:100%;padding:2px;font-size:10px;border:1px solid var(--border-default);border-radius:3px;background:var(--bg-base);color:var(--text-primary);cursor:pointer;" title="Data Replanejada" />
+                      </div>
                     </div>
                   </td>
                   <td style="font-size:11px;">P: ${t.horasPlanejadas||0}h<br/>R: ${t.horasRealizadas||0}h</td>
