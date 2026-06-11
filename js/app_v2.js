@@ -317,7 +317,14 @@ function showChangePasswordPage(session) {
 // ================================================================
 // APP SHELL
 // ================================================================
+// Fix bad data from test
+try {
+  let eq = JSON.parse(localStorage.getItem('diman_equipment') || '[]');
+  eq = eq.filter(e => e.codigo !== 'TESTE-API');
+  localStorage.setItem('diman_equipment', JSON.stringify(eq));
+} catch (e) {}
 
+// Initial rendering function
 function renderShell(session) {
   const perms = session.permissions || {};
   document.body.innerHTML = '';
@@ -457,7 +464,7 @@ function renderShell(session) {
             <div style="margin-left:var(--space-4); display:flex; align-items:center;">
               <select id="global-eq-select" class="form-control" style="width:250px; border-radius:var(--radius-full); background:var(--bg-base); border:1px solid var(--border-card); font-size:var(--text-sm);" onchange="window.setGlobalEqFilter(this.value)">
                 <option value="">Filtro Global: Todos Equipamentos</option>
-                ${DB.equipment.list().filter(e => e.status !== 'Liberado').map(e => `<option value="${e.id}">${e.codigo} - ${e.nome.split(' ').slice(0,2).join(' ')}</option>`).join('')}
+                ${DB.equipment.list().filter(e => e.status !== 'Liberado').map(e => `<option value="${e.id}">${e.codigo} - ${(e.nome || 'Sem Nome').split(' ').slice(0,2).join(' ')}</option>`).join('')}
               </select>
             </div>
           </div>
