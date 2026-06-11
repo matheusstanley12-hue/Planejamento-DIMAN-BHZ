@@ -338,10 +338,9 @@ window.EquipmentPanel = (() => {
                 <th style="width:30px;"></th>
                 <th>Descrição da Atividade</th>
                 <th>Responsável</th>
-                <th>Planejado (Início - Fim)</th>
-                <th>Real (Início - Fim)</th>
+                <th>Datas (Planejado / Real / Replan)</th>
                 <th>Horas</th>
-                <th>Status</th>
+                <th>Status / Avanço</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -356,16 +355,25 @@ window.EquipmentPanel = (() => {
                     ${t.critico?'<span style="font-size:9px;background:var(--color-danger);color:white;padding:1px 4px;border-radius:2px;font-weight:bold;">CRÍTICO</span>':''}
                   </td>
                   <td>${t.responsavel || '—'}</td>
-                  <td style="font-size:11px;">${formatDate(t.dataPlanejadaInicio)} a ${formatDate(t.dataPlanejadaTermino)}</td>
-                  <td style="font-size:11px;">${formatDate(t.dataRealInicio)||'—'} a ${formatDate(t.dataRealTermino)||'—'}</td>
+                  <td>
+                    <div style="font-size:10px;margin-bottom:2px"><strong>Plan:</strong> ${formatDate(t.dataPlanejadaInicio)} a ${formatDate(t.dataPlanejadaTermino)}</div>
+                    <div style="font-size:10px;margin-bottom:2px"><strong>Real:</strong> ${formatDate(t.dataRealInicio)||'—'} a ${formatDate(t.dataRealTermino)||'—'}</div>
+                    <div style="font-size:10px;display:flex;align-items:center;gap:4px;">
+                      <strong>Replan:</strong> 
+                      <input type="date" value="${t.dataReplanejada||''}" onchange="window.EquipmentPanel.updateTaskField('${t.id}', 'dataReplanejada', this.value)" style="padding:1px;font-size:10px;border:1px solid var(--border-default);border-radius:3px;background:var(--bg-base);color:var(--text-primary)" title="Data Replanejada" />
+                    </div>
+                  </td>
                   <td style="font-size:11px;">P: ${t.horasPlanejadas||0}h<br/>R: ${t.horasRealizadas||0}h</td>
                   <td>
-                    <select class="form-select" style="font-size:11px;padding:2px 4px;height:auto;border-radius:4px;border:1px solid ${t.status==='Falta de Peça'?'var(--color-orange)':'var(--border-hover)'};color:${t.status==='Falta de Peça'?'var(--color-orange)':'inherit'};font-weight:${t.status==='Falta de Peça'?'bold':'normal'};" onchange="EquipmentPanel.updateTaskStatus('${t.id}', this.value)">
+                    <select class="form-select" style="font-size:11px;padding:2px 4px;height:auto;border-radius:4px;border:1px solid ${t.status==='Falta de Peça'?'var(--color-orange)':'var(--border-hover)'};color:${t.status==='Falta de Peça'?'var(--color-orange)':'inherit'};font-weight:${t.status==='Falta de Peça'?'bold':'normal'};margin-bottom:4px;width:105px;" onchange="window.EquipmentPanel.updateTaskStatus('${t.id}', this.value)">
                       <option value="Não Iniciada" ${t.status==='Não Iniciada'?'selected':''}>Não Iniciada</option>
                       <option value="Em Andamento" ${t.status==='Em Andamento'?'selected':''}>Em Andamento</option>
                       <option value="Falta de Peça" ${t.status==='Falta de Peça'?'selected':''}>Falta de Peça</option>
                       <option value="Concluída" ${t.status==='Concluída'?'selected':''}>Concluída</option>
                     </select>
+                    <div style="display:flex;align-items:center;gap:4px;font-size:10px;">
+                      Avanço: <input type="number" min="0" max="100" value="${t.pctExecutado||0}" onchange="window.EquipmentPanel.updateTaskField('${t.id}', 'pctExecutado', this.value)" style="width:40px;padding:1px;font-size:10px;text-align:center;border:1px solid var(--border-default);border-radius:3px;background:var(--bg-base);color:var(--text-primary)" title="% de Avanço" /> %
+                    </div>
                   </td>
                   <td>
                     <button class="btn btn-ghost btn-sm" onclick="EquipmentPanel.deleteTask('${t.id}')" title="Excluir Atividade" style="color:var(--color-danger);padding:4px;">
@@ -674,9 +682,36 @@ window.EquipmentPanel = (() => {
     if(t) {
       t.status = newStatus;
       if (newStatus === 'Concluída') t.pctExecutado = 100;
-      DB.tasks.update(id, t);
-      Toast.success('Status da atividade atualizado!');
-      Router.navigate('equipment-panel', { id: currentEqId, force: true });
+      window.DB.tasks.update(id, t);
+      window.Toast.success('Status da atividade atualizado!');
+      window.Router.navigate('equipment-panel', { id: currentEqId, force: true });
+    }
+  }
+
+  function updateTaskField(id, field, value) {
+    const t = window.DB.tasks.get(id);
+    if (!t) return;
+    const data = { updatedAt: new Date().toISOString() };
+    
+    if (field === 'pctExecutado') {
+      data[field] = parseInt(value, 10) || 0;
+      if (data[field] === 100) {
+        data.status = 'Concluída';
+        data.dataRealTermino = new Date().toISOString().slice(0,10);
+      } else if (data[field] > 0 && t.status === 'Não Iniciada') {
+        data.status = 'Em Andamento';
+        if (!t.dataRealInicio) data.dataRealInicio = new Date().toISOString().slice(0,10);
+      } else if (data[field] < 100 && t.status === 'Concluída') {
+        data.status = 'Em Andamento';
+      }
+    } else {
+      data[field] = value;
+    }
+    
+    window.DB.tasks.update(id, data);
+    window.Toast.success('Salvo', 'Atividade atualizada com sucesso.');
+    if (field === 'pctExecutado') {
+      window.Router.navigate('equipment-panel', { id: currentEqId, force: true });
     }
   }
 
@@ -861,5 +896,11 @@ window.EquipmentPanel = (() => {
     }
   }
 
-  return { render, toggleAccordion, addFollowUp, openTaskModal, saveTask, deleteTask, updateTaskStatus, openPartModal, savePart, deletePart, exportTasksCSV, deleteEquipment };
+  return { 
+    render, exportTasksCSV, exportEquipmentReport, updateTaskStatus, updateTaskField, deleteTask,
+    openPartModal, closePartModal, savePart,
+    openTaskModal, closeTaskModal, saveTask,
+    openRestrModal, closeRestrModal, saveRestr, closeRestr,
+    deleteEquipment 
+  };
 })();
