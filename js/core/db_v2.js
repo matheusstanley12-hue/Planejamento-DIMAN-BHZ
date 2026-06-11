@@ -94,10 +94,17 @@ window.DB = (() => {
       const data = get(k);
       if (data && (Array.isArray(data) ? data.length > 0 : Object.keys(data).length > 0)) {
         try {
-          await supabaseClient.from('diman_store')
+          const { error } = await supabaseClient.from('diman_store')
             .upsert({ collection: k, key: 'all', data: data }, { onConflict: 'collection,key' });
+          if (error) {
+             console.error('Supabase Error:', error);
+             if (window.Toast) window.Toast.error('Erro do Banco de Dados', error.message || JSON.stringify(error));
+             return;
+          }
         } catch(e) {
           console.error('Sync failed for collection:', k, e);
+          if (window.Toast) window.Toast.error('Erro de Conexão', e.message);
+          return;
         }
       }
     }
@@ -109,7 +116,11 @@ window.DB = (() => {
     try {
       // 1. Initial fetch
       const { data, error } = await supabaseClient.from('diman_store').select('*');
-      if (error) { console.error('Supabase fetch error:', error); return; }
+      if (error) { 
+         console.error('Supabase fetch error:', error); 
+         if (window.Toast) window.Toast.error('Falha de Conexão Nuvem', error.message || 'Erro ao conectar com o Supabase. Você está offline ou a chave é inválida.');
+         return; 
+      }
       if (data && data.length > 0) {
         data.forEach(row => {
           if (row.key === 'all') {
