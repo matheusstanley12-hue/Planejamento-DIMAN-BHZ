@@ -204,7 +204,7 @@ window.EquipmentPanel = (() => {
 
             <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
               <button class="btn btn-ghost" onclick="closeModal('eq-task-modal')">Cancelar</button>
-              <button class="btn btn-primary" id="btn-save-task">Salvar Atividade</button>
+              <button class="btn btn-primary" onclick="window.EquipmentPanel.saveTask('${currentEqId}')">Salvar Atividade</button>
             </div>
           </div>
         </div>
@@ -360,7 +360,7 @@ window.EquipmentPanel = (() => {
                     <div style="font-size:10px;margin-bottom:2px"><strong>Real:</strong> ${formatDate(t.dataRealInicio)||'—'} a ${formatDate(t.dataRealTermino)||'—'}</div>
                     <div style="font-size:10px;display:flex;align-items:center;gap:4px;">
                       <strong>Replan:</strong> 
-                      <input type="${t.dataReplanejada ? 'date' : 'text'}" placeholder="--/--/----" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" value="${t.dataReplanejada||''}" onchange="window.EquipmentPanel.updateTaskField('${currentEqId}', '${t.id}', 'dataReplanejada', this.value)" style="width:90px;padding:2px;font-size:10px;border:1px solid var(--border-default);border-radius:3px;background:var(--bg-base);color:var(--text-primary);text-align:center;" title="Data Replanejada" />
+                      <input type="date" value="${t.dataReplanejada||''}" onchange="window.EquipmentPanel.updateTaskField('${currentEqId}', '${t.id}', 'dataReplanejada', this.value)" style="width:110px;padding:2px 4px;font-size:11px;border:1px solid var(--border-default);border-radius:4px;background:var(--bg-base);color:var(--text-primary);cursor:pointer;" title="Data Replanejada" />
                     </div>
                   </td>
                   <td style="font-size:11px;">P: ${t.horasPlanejadas||0}h<br/>R: ${t.horasRealizadas||0}h</td>
@@ -590,11 +590,12 @@ window.EquipmentPanel = (() => {
     document.getElementById('new-task-disc').value = disciplina;
     document.getElementById('new-task-disc-label').textContent = disciplina.toUpperCase();
     
+    const today = new Date().toISOString().slice(0,10);
     document.getElementById('new-task-desc').value = '';
     document.getElementById('new-task-resp').value = '';
     document.getElementById('new-task-horas').value = 0;
-    document.getElementById('new-task-ini').value = new Date().toISOString().slice(0,10);
-    document.getElementById('new-task-fim').value = new Date().toISOString().slice(0,10);
+    document.getElementById('new-task-ini').value = today;
+    document.getElementById('new-task-fim').value = today;
     document.getElementById('new-task-critico').checked = false;
   }
 
@@ -634,13 +635,14 @@ window.EquipmentPanel = (() => {
 
   function openPartModal() {
     openModal('eq-part-modal');
+    const today = new Date().toISOString().slice(0,10);
     document.getElementById('new-part-cod').value = '';
     document.getElementById('new-part-desc').value = '';
     document.getElementById('new-part-qtd').value = 1;
     document.getElementById('new-part-status').value = 'Solicitada';
     document.getElementById('new-part-critico').checked = false;
-    document.getElementById('new-part-sol').value = new Date().toISOString().slice(0,10);
-    document.getElementById('new-part-prev').value = '';
+    document.getElementById('new-part-sol').value = today;
+    document.getElementById('new-part-prev').value = today;
     document.getElementById('new-part-real').value = '';
   }
 
