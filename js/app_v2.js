@@ -13,6 +13,7 @@ const Toast = window.Toast || {};
 window.Router = (() => {
   const routes = {};
   let current = null;
+  let currentParams = {};
   let destroyFn = null;
 
   function register(name, moduleFn) { routes[name] = moduleFn; }
@@ -23,6 +24,10 @@ window.Router = (() => {
     // destroy previous
     if (destroyFn) { try { destroyFn(); } catch(e){} destroyFn = null; }
 
+    if (current === name) {
+      params = { ...currentParams, ...params };
+    }
+    currentParams = { ...params };
     current = name;
     
     const sidebar = document.getElementById('sidebar');
