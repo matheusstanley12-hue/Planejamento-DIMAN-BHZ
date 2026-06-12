@@ -311,15 +311,23 @@ function showLoginPage() {
     btn.innerHTML = `<span class="spinner spinner-sm"></span> Verificando...`;
     errDiv.style.display = 'none';
 
-    const result = await Auth.login(matricula, senha);
-    if (result.success) {
-      if (result.mustChangePassword) {
-        showFirstAccessPasswordChange(matricula, result.session, page);
+    try {
+      const result = await Auth.login(matricula, senha);
+      if (result.success) {
+        if (result.mustChangePassword) {
+          showFirstAccessPasswordChange(matricula, result.session, page);
+        } else {
+          setTimeout(() => { page.remove(); renderShell(result.session); Router.navigate(result.session.perfil === 'Executante' ? 'worker-panel' : 'home'); }, 300);
+        }
       } else {
-        setTimeout(() => { page.remove(); renderShell(result.session); Router.navigate(result.session.perfil === 'Executante' ? 'worker-panel' : 'home'); }, 300);
+        errMsg.textContent = result.error;
+        errDiv.style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg> Entrar`;
       }
-    } else {
-      errMsg.textContent = result.error;
+    } catch (error) {
+      console.error("Login crash exception:", error);
+      errMsg.textContent = "Erro de autenticação: " + (error.message || error);
       errDiv.style.display = 'flex';
       btn.disabled = false;
       btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg> Entrar`;

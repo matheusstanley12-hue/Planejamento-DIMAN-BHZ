@@ -9,13 +9,17 @@ window.Auth = (() => {
 
   // Hash password with SHA-256 via Web Crypto API with pure JS fallback for non-secure contexts
   async function hashPassword(password) {
-    if (typeof crypto === 'undefined' || !crypto.subtle) {
-      return sha256_fallback(password);
+    try {
+      if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
+        const msgBuffer = new TextEncoder().encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (e) {
+      console.warn("Falha no Web Crypto API, usando fallback em JS puro:", e);
     }
-    const msgBuffer = new TextEncoder().encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return sha256_fallback(password);
   }
 
   function sha256_fallback(ascii) {
@@ -277,19 +281,23 @@ window.Auth = (() => {
   }
 
   function addAuditLog(action, description, changes) {
-    const session = getSession();
-    const logs = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
-    logs.unshift({
-      id: 'al-' + Date.now() + '-' + Math.random().toString(36).slice(2),
-      action,
-      description,
-      changes,
-      user: session ? { id: session.userId, nome: session.nome, matricula: session.matricula } : null,
-      timestamp: new Date().toISOString()
-    });
-    // Keep last 5000 entries
-    if (logs.length > 5000) logs.splice(5000);
-    localStorage.setItem(AUDIT_KEY, JSON.stringify(logs));
+    try {
+      const session = getSession();
+      const logs = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
+      logs.unshift({
+        id: 'al-' + Date.now() + '-' + Math.random().toString(36).slice(2),
+        action,
+        description,
+        changes,
+        user: session ? { id: session.userId, nome: session.nome, matricula: session.matricula } : null,
+        timestamp: new Date().toISOString()
+      });
+      // Keep last 5000 entries
+      if (logs.length > 5000) logs.splice(5000);
+      localStorage.setItem(AUDIT_KEY, JSON.stringify(logs));
+    } catch (e) {
+      console.error("Failed to write audit log:", e);
+    }
   }
 
   function getAuditLogs(filters = {}) {
