@@ -251,8 +251,6 @@ window.WorkerPanel = (() => {
       </div>
     `;
 
-    `;
-
     // Inject CSS for custom sub-animations (pulsing for timer button)
     if (!document.getElementById('worker-panel-styles')) {
       const style = document.createElement('style');
