@@ -635,6 +635,12 @@ window.PartsModule = (() => {
 window.WorkforceModule = (() => {
   let activeTab = 'team';
   let editingWorkerId = null;
+  let activeSector = 'Todos';
+
+  function setSector(s) {
+    activeSector = s;
+    Router.navigate('workforce', { force: true });
+  }
 
   function render() {
     const workers = DB.workforce.list();
@@ -656,40 +662,66 @@ window.WorkforceModule = (() => {
         <button class="tab-btn ${activeTab==='productivity'?'active':''}" onclick="WorkforceModule.setTab('productivity')">Produtividade</button>
       </div>
       ${activeTab === 'team' ? `
-        <div class="tab-panel active" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--space-4);padding:var(--space-4);">
-          ${workers.length > 0 ? workers.map(w => {
-            if (!w) return '';
-            const wHours = monthTs.filter(t=>t.workerId===w.id).reduce((s,t)=>s+(t.horasTrabalhadas||0),0);
+        <div class="tab-panel active" style="padding:var(--space-4);">
+          ${(() => {
+            if (workers.length === 0) return '<div class="empty-state"><p>Nenhum funcionário na equipe.</p></div>';
+            const allSectors = [...new Set(workers.map(w => w.disciplina || 'Sem Setor'))].sort();
+            const filterHtml = `
+              <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap;">
+                <button class="btn btn-sm ${activeSector === 'Todos' ? 'btn-primary' : 'btn-ghost'}" style="border:1px solid var(--border-color);" onclick="WorkforceModule.setSector('Todos')">Todos</button>
+                ${allSectors.map(s => `
+                  <button class="btn btn-sm ${activeSector === s ? 'btn-primary' : 'btn-ghost'}" style="border:1px solid var(--border-color);" onclick="WorkforceModule.setSector('${s}')">${s}</button>
+                `).join('')}
+              </div>
+            `;
             
-            const eq = w.equipmentId ? DB.equipment.get(w.equipmentId) : null;
-            const isAllocated = eq && eq.status !== 'Liberado';
-            const allocationBadge = isAllocated
-              ? `<div style="margin:var(--space-1) 0"><span class="badge" style="background:rgba(255, 152, 0, 0.15);color:#ff9800;border:1px solid rgba(255,152,0,0.2);" title="${w.justificativa ? 'Justificativa: ' + w.justificativa : ''}">Alocado: ${eq.codigo}</span></div>
-                 ${w.justificativa ? `<div style="font-size:10px;color:var(--text-muted);font-style:italic;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px auto 0;" title="${w.justificativa}">${w.justificativa}</div>` : ''}`
-              : `<div style="margin:var(--space-1) 0"><span class="badge badge-success">Disponível</span></div>`;
+            const sectorsToRender = activeSector === 'Todos' ? allSectors : [activeSector];
+            
+            return filterHtml + sectorsToRender.map(sector => {
+              const sectorWorkers = workers.filter(w => (w.disciplina || 'Sem Setor') === sector);
+              if (sectorWorkers.length === 0) return '';
+              return `
+                <h3 style="margin-top:var(--space-2);margin-bottom:var(--space-3);color:var(--text-primary);border-bottom:1px solid var(--border-color);padding-bottom:var(--space-2);font-size:16px;display:flex;align-items:center;gap:8px;">
+                  ${sector} <span class="badge badge-ghost">${sectorWorkers.length}</span>
+                </h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--space-4);margin-bottom:var(--space-6);">
+                  ${sectorWorkers.map(w => {
+                    if (!w) return '';
+                    const wHours = monthTs.filter(t=>t.workerId===w.id).reduce((s,t)=>s+(t.horasTrabalhadas||0),0);
+                    
+                    const eq = w.equipmentId ? DB.equipment.get(w.equipmentId) : null;
+                    const isAllocated = eq && eq.status !== 'Liberado';
+                    const allocationBadge = isAllocated
+                      ? `<div style="margin:var(--space-1) 0"><span class="badge" style="background:rgba(255, 152, 0, 0.15);color:#ff9800;border:1px solid rgba(255,152,0,0.2);" title="${w.justificativa ? 'Justificativa: ' + w.justificativa : ''}">Alocado: ${eq.codigo}</span></div>
+                         ${w.justificativa ? `<div style="font-size:10px;color:var(--text-muted);font-style:italic;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px auto 0;" title="${w.justificativa}">${w.justificativa}</div>` : ''}`
+                      : `<div style="margin:var(--space-1) 0"><span class="badge badge-success">Disponível</span></div>`;
 
-            return `<div class="card" style="text-align:center;padding:var(--space-4);display:flex;flex-direction:column;justify-content:space-between;min-height:280px;">
-              <div>
-                <div class="avatar" style="width:48px;height:48px;font-size:var(--text-base);margin:0 auto var(--space-2);">${avatarInitials(w.nome)}</div>
-                <div style="font-weight:700;font-size:var(--text-sm);color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${w.nome}">${w.nome}</div>
-                <div style="font-size:var(--text-xs);color:var(--text-muted)">${w.funcao || 'Sem Função'} · ${w.matricula || 'Sem Matrícula'}</div>
-                <div class="badge badge-ghost" style="margin:var(--space-2) 0">${w.disciplina}</div>
-                <div style="font-size:var(--text-xs);color:var(--text-muted)">Horas este mês: <strong style="color:var(--brand-primary-light)">${wHours.toFixed(0)}h</strong></div>
-                <div style="margin-top:var(--space-2);">${typeof statusBadge === 'function' ? statusBadge(w.status) : ''}</div>
-                <div style="margin-top:var(--space-2);">${allocationBadge}</div>
-              </div>
-              <div style="display:flex;justify-content:center;gap:var(--space-2);margin-top:var(--space-3);border-top:1px solid var(--border-color);padding-top:var(--space-2);">
-                <button class="btn btn-ghost btn-sm" onclick="WorkforceModule.openEditWorker('${w.id}')" title="Editar Funcionário" style="display:flex;align-items:center;gap:4px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
-                  Editar
-                </button>
-                <button class="btn btn-ghost btn-sm" style="color:var(--color-danger);display:flex;align-items:center;gap:4px;" onclick="WorkforceModule.deleteWorker('${w.id}', '${w.nome ? w.nome.replace(/'/g, "\\'") : ''}')" title="Excluir Funcionário">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397" /></svg>
-                  Excluir
-                </button>
-              </div>
-            </div>`;
-          }).join('') : '<div class="empty-state" style="grid-column:1/-1;"><p>Nenhum funcionário na equipe.</p></div>'}
+                    return `<div class="card" style="text-align:center;padding:var(--space-4);display:flex;flex-direction:column;justify-content:space-between;min-height:280px;">
+                      <div>
+                        <div class="avatar" style="width:48px;height:48px;font-size:var(--text-base);margin:0 auto var(--space-2);">${avatarInitials(w.nome)}</div>
+                        <div style="font-weight:700;font-size:var(--text-sm);color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${w.nome}">${w.nome}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">${w.funcao || 'Sem Função'} · ${w.matricula || 'Sem Matrícula'}</div>
+                        <div class="badge badge-ghost" style="margin:var(--space-2) 0">${w.disciplina}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted)">Horas este mês: <strong style="color:var(--brand-primary-light)">${wHours.toFixed(0)}h</strong></div>
+                        <div style="margin-top:var(--space-2);">${typeof statusBadge === 'function' ? statusBadge(w.status) : ''}</div>
+                        <div style="margin-top:var(--space-2);">${allocationBadge}</div>
+                      </div>
+                      <div style="display:flex;justify-content:center;gap:var(--space-2);margin-top:var(--space-3);border-top:1px solid var(--border-color);padding-top:var(--space-2);">
+                        <button class="btn btn-ghost btn-sm" onclick="WorkforceModule.openEditWorker('${w.id}')" title="Editar Funcionário" style="display:flex;align-items:center;gap:4px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                          Editar
+                        </button>
+                        <button class="btn btn-ghost btn-sm" style="color:var(--color-danger);display:flex;align-items:center;gap:4px;" onclick="WorkforceModule.deleteWorker('${w.id}', '${w.nome ? w.nome.replace(/'/g, "\\\\'") : ''}')" title="Excluir Funcionário">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397" /></svg>
+                          Excluir
+                        </button>
+                      </div>
+                    </div>`
+                  }).join('')}
+                </div>
+              `
+            }).join('');
+          })()}
         </div>
       ` : activeTab === 'timesheets' ? `
         <div class="tab-panel active">
@@ -912,7 +944,7 @@ window.WorkforceModule = (() => {
     Toast.success('Apontamento registrado!', `${hours.toFixed(1)} horas`);
   }
 
-  return { render, setTab, openCreateWorker, openEditWorker, saveWorker, deleteWorker, openCreateTimesheet, saveTimesheet };
+  return { render, setTab, setSector, openCreateWorker, openEditWorker, saveWorker, deleteWorker, openCreateTimesheet, saveTimesheet };
 })();
 
 // ================================================================
