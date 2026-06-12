@@ -43,7 +43,7 @@ window.Dashboard = (() => {
       { label:'Liberados', value: stats.liberados, icon:'success', type:'success' },
       { label:'Atrasados', value: stats.atrasados, icon:'danger', type:'danger' },
       { label:'Aguardando Peças', value: stats.aguardandoPecas, icon:'warning', type:'warning' },
-      { label:'Bloqueados', value: stats.bloqueados, icon:'danger', type:'danger' },
+      { label:'Paralisados / F. Peça', value: stats.bloqueados, icon:'danger', type:'danger' },
       { label:'Total de Tarefas', value: stats.totalTarefas, icon:'primary', type:'primary' },
       { label:'Tarefas Concluídas', value: stats.concluidas, icon:'success', type:'success' },
       { label:'Tarefas Críticas', value: stats.criticas, icon:'danger', type:'danger' },
@@ -210,11 +210,11 @@ window.Dashboard = (() => {
         }, options: { ...chartDefaults(), plugins: { legend: { labels: { color:'#8EACC8', font:{family:'Inter',size:11} } } } }});
 
         // Chart 2: Status doughnut
-        const statusCounts = ['Em Manutenção','Liberado','Bloqueado','Cancelado'].map(s=>eqs.filter(e=>e.status===s).length);
+        const statusCounts = ['Em Manutenção','Liberado','Paralisado','Falta de Peças'].map(s=>eqs.filter(e=>e.status===s).length);
         const c2 = document.getElementById('ch-status');
         if (c2) charts.status = new Chart(c2, { type:'doughnut', data: {
-          labels: ['Em Manutenção','Liberado','Bloqueado','Cancelado'],
-          datasets: [{ data: statusCounts, backgroundColor:['rgba(30,136,229,0.8)','rgba(0,200,83,0.8)','rgba(244,67,54,0.8)','rgba(100,100,100,0.5)'], borderWidth:0 }]
+          labels: ['Em Manutenção','Liberado','Paralisado','Falta de Peças'],
+          datasets: [{ data: statusCounts, backgroundColor:['rgba(30,136,229,0.8)','rgba(0,200,83,0.8)','rgba(244,67,54,0.8)','rgba(255,179,0,0.8)'], borderWidth:0 }]
         }, options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{color:'#8EACC8',font:{family:'Inter',size:10}} } } }});
 
         // Chart 3: Equipment progress bar
@@ -586,9 +586,12 @@ window.EquipmentModule = (() => {
       </div>
       <div class="form-row">
         <div class="form-group"><label>🔒 Data Planejada de Liberação ${eq ? '(BLOQUEADA)' : ''}</label><input type="date" id="eq-data-plan" value="${toDateInput(eq?.dataLiberacaoPlanejada)}" ${eq?'readonly style="opacity:.6;cursor:not-allowed;"':''} /></div>
-        <div class="form-group"><label>Status</label><select id="eq-status">
-          ${['Em Manutenção','Liberado','Bloqueado','Cancelado'].map(s=>`<option ${eq?.status===s?'selected':''}>${s}</option>`).join('')}
-        </select></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="eq-status" style="background:var(--bg-base);border:1px solid var(--border-card);color:var(--text-primary);">
+            ${['Em Manutenção','Liberado','Paralisado','Falta de Peças'].map(s=>`<option ${eq?.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
       </div>
       
       <div style="border-top:1px solid var(--border-card);padding-top:var(--space-4);margin-top:var(--space-2);">

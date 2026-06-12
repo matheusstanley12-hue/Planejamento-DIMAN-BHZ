@@ -537,7 +537,7 @@ window.DB = (() => {
         liberados: eqs.filter(e => e.status === 'Liberado').length,
         atrasados: eqs.filter(e => e.status === 'Em Manutenção' && e.dataLiberacaoPlanejada && e.dataLiberacaoPlanejada < today).length,
         aguardandoPecas: eqs.filter(e => allParts.some(p => p.equipmentId === e.id && ['Solicitada','Comprada','Em Transporte'].includes(p.status))).length,
-        bloqueados: eqs.filter(e => e.status === 'Bloqueado').length,
+        bloqueados: eqs.filter(e => e.status === 'Paralisado' || e.status === 'Falta de Peças').length,
         totalTarefas: allTasks.length,
         concluidas: allTasks.filter(t => t.status === 'Concluída').length,
         pendentes: allTasks.filter(t => t.status !== 'Concluída').length,

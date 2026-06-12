@@ -14,6 +14,8 @@ window.QrGeneratorModule = (() => {
         'Aguardando Manutenção': 'var(--color-warning)',
         'Liberado': 'var(--color-success)',
         'Bloqueado': 'var(--color-danger)',
+        'Paralisado': 'var(--color-danger)',
+        'Falta de Peças': 'var(--color-warning)',
       };
       const borderColor = statusColors[eq.status] || 'var(--border-card)';
 

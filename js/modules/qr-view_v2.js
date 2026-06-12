@@ -13,6 +13,8 @@ window.QrViewModule = (() => {
       'Aguardando Manutenção': 'var(--color-warning)',
       'Liberado': 'var(--color-success)',
       'Bloqueado': 'var(--color-danger)',
+      'Paralisado': 'var(--color-danger)',
+      'Falta de Peças': 'var(--color-warning)',
     };
     const sColor = statusColors[eq.status] || 'var(--text-secondary)';
 

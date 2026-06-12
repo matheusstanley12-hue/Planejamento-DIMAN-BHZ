@@ -201,6 +201,8 @@ function statusBadge(status) {
     'Liberado':            'badge-success',
     'Bloqueado':           'badge-danger',
     'Cancelado':           'badge-ghost',
+    'Paralisado':          'badge-danger',
+    'Falta de Peças':      'badge-warning',
     'Solicitada':          'badge-ghost',
     'Comprada':            'badge-info',
     'Em Transporte':       'badge-warning',

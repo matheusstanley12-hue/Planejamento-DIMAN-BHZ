@@ -114,7 +114,16 @@ window.HomeModule = (() => {
                 </svg>
               </button>
             ` : ''}
-            ${statusBadge(e.status)}
+            ${isAdmin ? `
+              <select onchange="event.stopPropagation(); window.HomeModule.updateEquipmentStatus('${e.id}', this.value)" 
+                      onclick="event.stopPropagation();" 
+                      class="badge ${e.status === 'Liberado' ? 'badge-success' : e.status === 'Em Manutenção' ? 'badge-primary' : e.status === 'Paralisado' ? 'badge-danger' : e.status === 'Falta de Peças' ? 'badge-warning' : 'badge-ghost'}" 
+                      style="border:none; cursor:pointer; font-weight:700; padding:2px 8px; outline:none; font-family:var(--font-sans); text-align:center; -webkit-appearance:none; -moz-appearance:none; appearance:none;">
+                ${['Em Manutenção', 'Liberado', 'Paralisado', 'Falta de Peças'].map(s => `
+                  <option value="${s}" ${e.status === s ? 'selected' : ''} style="background:var(--bg-modal); color:var(--text-primary); font-weight:normal;">${s}</option>
+                `).join('')}
+              </select>
+            ` : statusBadge(e.status)}
           </div>
         </div>
         
@@ -388,6 +397,39 @@ window.HomeModule = (() => {
     }
   }
 
+  function updateEquipmentStatus(id, newStatus) {
+    const eq = window.DB.equipment.get(id);
+    if (!eq) return;
+
+    const oldStatus = eq.status;
+    if (oldStatus === newStatus) return;
+
+    const updatePayload = { status: newStatus };
+    if (newStatus === 'Liberado' && !eq.dataLiberacaoReal) {
+      updatePayload.dataLiberacaoReal = new Date().toISOString().slice(0, 10);
+    } else if (newStatus !== 'Liberado') {
+      updatePayload.dataLiberacaoReal = null;
+    }
+
+    window.DB.equipment.update(id, updatePayload);
+
+    // Add timeline event
+    window.DB.equipment.addTimeline(id, {
+      tipo: newStatus === 'Liberado' ? 'LIBERACAO' : 'STATUS_ALTERADO',
+      titulo: `Alteração de Status: ${newStatus}`,
+      descricao: `Equipamento alterado de "${oldStatus}" para "${newStatus}"`,
+      responsavel: (window.Auth && window.Auth.getSession()?.nome) || 'Sistema'
+    });
+
+    if (window.Toast) {
+      window.Toast.success('Status Atualizado', `Equipamento ${eq.codigo} alterado para ${newStatus}`);
+    }
+
+    // Re-render
+    const currentRoute = window.Router ? window.Router.current : 'home';
+    window.Router.navigate(currentRoute, { force: true });
+  }
+
   return { 
     render, 
     filter, 
@@ -397,6 +439,7 @@ window.HomeModule = (() => {
     allowDrop,
     dragEnter,
     dragLeave,
-    drop
+    drop,
+    updateEquipmentStatus
   };
 })();

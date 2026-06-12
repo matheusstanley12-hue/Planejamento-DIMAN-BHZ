@@ -509,7 +509,7 @@ window.AIAssistant = (() => {
       const stats = DB.kpi.getEquipmentStats();
       const eqs = DB.equipment.list();
       let resp = `🏭 **Resumo Geral da Oficina**\n\n`;
-      resp += `**Equipamentos:** ${stats.emManutencao} em manutenção | ${stats.liberados} liberados | ${stats.bloqueados} bloqueados\n`;
+      resp += `**Equipamentos:** ${stats.emManutencao} em manutenção | ${stats.liberados} liberados | ${stats.bloqueados} paralisados ou com falta de peças\n`;
       resp += `**Avanço geral:** ${stats.pctAvancoGeral}% concluído\n`;
       resp += `**Tarefas:** ${stats.totalTarefas} total | ${stats.concluidas} concluídas | ${stats.criticas} críticas\n`;
       resp += `**Restrições abertas:** ${stats.restricoesAbertas}\n\n`;
@@ -1035,7 +1035,7 @@ window.ReportsModule = (() => {
       const total = filteredEqs.length;
       const emManutencao = filteredEqs.filter(e => e.status === 'Em Manutenção').length;
       const liberados = filteredEqs.filter(e => e.status === 'Liberado').length;
-      const bloqueados = filteredEqs.filter(e => e.status === 'Bloqueado').length;
+      const bloqueados = filteredEqs.filter(e => e.status === 'Paralisado' || e.status === 'Falta de Peças').length;
       const avgProgress = total > 0 ? Math.round(filteredEqs.reduce((s, e) => s + (e.pctAvanco || 0), 0) / total) : 0;
 
       addHeader("Relatório de Equipamentos em Manutenção");
@@ -1049,7 +1049,7 @@ window.ReportsModule = (() => {
       doc.text("Total Equip.", 20, 43);
       doc.text("Em Manutenção", 55, 43);
       doc.text("Liberados", 90, 43);
-      doc.text("Bloqueados", 125, 43);
+      doc.text("Paral. / F. Peça", 125, 43);
       doc.text("Média Progresso", 160, 43);
 
       doc.setFontSize(14);
