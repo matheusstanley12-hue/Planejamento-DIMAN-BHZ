@@ -19,6 +19,7 @@ window.Router = (() => {
   function register(name, moduleFn) { routes[name] = moduleFn; }
 
   async function navigate(name, params = {}) {
+    if (window.closeMobileSidebar) window.closeMobileSidebar();
     if (current === name && !params.force) return;
 
     // destroy previous
@@ -671,16 +672,30 @@ function renderShell(session) {
 // ================================================================
 
 function toggleSidebar() {
-  document.getElementById('sidebar')?.classList.toggle('collapsed');
+  if (window.innerWidth <= 768) {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar && sidebar.classList.contains('mobile-open')) {
+      closeMobileSidebar();
+    } else {
+      openMobileSidebar();
+    }
+  } else {
+    document.getElementById('sidebar')?.classList.toggle('collapsed');
+  }
 }
+window.toggleSidebar = toggleSidebar;
+
 function openMobileSidebar() {
   document.getElementById('sidebar')?.classList.add('mobile-open');
   document.getElementById('mobile-overlay')?.classList.add('visible');
 }
+window.openMobileSidebar = openMobileSidebar;
+
 function closeMobileSidebar() {
   document.getElementById('sidebar')?.classList.remove('mobile-open');
   document.getElementById('mobile-overlay')?.classList.remove('visible');
 }
+window.closeMobileSidebar = closeMobileSidebar;
 
 function toggleTheme() {
   const html = document.documentElement;

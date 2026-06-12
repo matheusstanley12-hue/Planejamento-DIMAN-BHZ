@@ -578,3 +578,46 @@ input[type="range"]::-webkit-slider-thumb:hover { box-shadow: 0 0 0 6px rgba(30,
   border-radius: var(--radius-lg);
   background: var(--bg-card);
 }
+
+/* ====== MOBILE RESPONSIVENESS PATCH ====== */
+@media (max-width: 768px) {
+  /* Ocultar o texto do título e logo extra no topbar no celular */
+  .topbar-title-wrap {
+    display: none !important;
+  }
+  
+  /* Diminuir o tamanho do filtro global de equipamentos no topbar */
+  .topbar-filter-wrap {
+    margin-left: var(--space-1) !important;
+    flex: 1 !important;
+  }
+  .topbar-filter-wrap select {
+    width: 100% !important;
+    max-width: 180px !important;
+    padding: var(--space-2) var(--space-3) !important;
+    font-size: var(--text-xs) !important;
+    height: 36px !important;
+  }
+  
+  /* Ocultar botão início do topbar no celular (já está no menu lateral) */
+  .btn-home-topbar {
+    display: none !important;
+  }
+  
+  /* Ocultar texto do usuário, mantendo apenas o avatar circular */
+  .topbar-user-name {
+    display: none !important;
+  }
+  
+  /* Ocultar botão "Sair" do topbar (o logout pode ser feito clicando no avatar) */
+  .btn-logout-topbar {
+    display: none !important;
+  }
+  
+  /* Ajustar topbar no mobile para evitar overflow */
+  #topbar {
+    padding: 0 var(--space-3) !important;
+    justify-content: space-between !important;
+    gap: var(--space-2) !important;
+  }
+}
