@@ -459,10 +459,12 @@ window.AIAssistant = (() => {
     });
   }
 
+  let lastMentionedEqs = [];
+
   function detectIntents(q) {
     q = normalize(q);
     const intents = [];
-    if (/atraso|atrazo|demora|motivo|porque.*atras|replaneja/.test(q)) intents.push('delay');
+    if (/atraso|atrazo|atrasad|demora|motivo|por.*que.*atras|replaneja/.test(q)) intents.push('delay');
     if (/libera|entrega|previsa|prazo|quando|termina|conclui/.test(q)) intents.push('liberation');
     if (/risco|perigo|alerta|critico|citico|caminho.*critico|caminho.*citico/.test(q)) intents.push('risk');
     if (/peca|pesa|material|componente|comprad|solicitad|almoxarifado|sensor|motor|bomba|cilindro/.test(q)) intents.push('parts');
@@ -478,7 +480,14 @@ window.AIAssistant = (() => {
 
   function processQuery(query) {
     const intents = detectIntents(query);
-    const matchedEqs = extractEquipments(query);
+    let matchedEqs = extractEquipments(query);
+    
+    // AI Context Memory
+    if (matchedEqs.length > 0) {
+      lastMentionedEqs = matchedEqs;
+    } else if (lastMentionedEqs.length > 0 && /ela|ele|esse|essa|desta|deste|esta|este|atrasad|status|peca|pesa|porque|motivo/.test(normalize(query))) {
+      matchedEqs = lastMentionedEqs;
+    }
     
     // Strict Guardrail Check for Personal / Non-Maintenance queries
     if (/receita|piada|politica|clima|futebol|jogo|religiao|pessoal|gerar.*imagem|desenha|piadas/.test(normalize(query))) {
@@ -533,12 +542,20 @@ window.AIAssistant = (() => {
         const totalDelay = repls.reduce((s,r) => s+window.daysBetween(r.dataAnterior,r.novaData),0);
         if (totalDelay > 0) {
           resp += `• **Atraso Acumulado:** ${totalDelay} dias identificados ao longo de ${repls.length} replanejamento(s).\n`;
-          resp += `• **Última Causa de Atraso:** ${repls[repls.length-1].motivo}\n`;
+          resp += `• **Última Causa Registrada:** ${repls[repls.length-1].motivo}\n`;
+        } else if (eq.dataLiberacaoAtual || eq.dataLiberacaoPlanejada) {
+          const datePrev = eq.dataLiberacaoAtual || eq.dataLiberacaoPlanejada;
+          const daysToLib = window.daysBetween(new Date().toISOString().slice(0,10), datePrev);
+          if (daysToLib < 0) {
+            resp += `• **Motivo do Atraso:** O equipamento encontra-se ATRASADO em ${Math.abs(daysToLib)} dias em relação à data planejada, porém **nenhum motivo formal de replanejamento foi registrado no sistema** pela equipe técnica.\n`;
+          }
         }
         if (eq.dataLiberacaoAtual || eq.dataLiberacaoPlanejada) {
           const datePrev = eq.dataLiberacaoAtual || eq.dataLiberacaoPlanejada;
           const daysToLib = window.daysBetween(new Date().toISOString().slice(0,10), datePrev);
-          resp += `• **Previsão de Liberação:** ${window.formatDate(datePrev)} (${daysToLib < 0 ? 'ATRASADO em '+Math.abs(daysToLib)+' dias' : 'em '+daysToLib+' dias'}).\n`;
+          if (daysToLib >= 0) {
+            resp += `• **Previsão de Liberação:** ${window.formatDate(datePrev)} (em ${daysToLib} dias).\n`;
+          }
         }
 
         if (eqRestr.length > 0) {
