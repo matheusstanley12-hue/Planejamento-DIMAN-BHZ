@@ -83,32 +83,23 @@ class MainActivity : AppCompatActivity() {
                 fileUploadCallback = filePathCallback
 
                 var takePictureIntent: Intent? = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                if (takePictureIntent?.resolveActivity(packageManager) != null) {
-                    var photoFile: File? = null
-                    try {
-                        val imageFileName = "JPEG_" + System.currentTimeMillis() + "_"
-                        val storageDir = cacheDir
-                        photoFile = File.createTempFile(imageFileName, ".jpg", storageDir)
-                    } catch (ex: IOException) {
-                        // Error occurred
-                    }
-                    if (photoFile != null) {
-                        cameraImageUri = FileProvider.getUriForFile(
-                            this@MainActivity,
-                            "${packageName}.fileprovider",
-                            photoFile
-                        )
-                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri)
-                    } else {
-                        takePictureIntent = null
-                    }
+                var photoFile: File? = null
+                try {
+                    val imageFileName = "JPEG_" + System.currentTimeMillis() + "_"
+                    val storageDir = cacheDir
+                    photoFile = File.createTempFile(imageFileName, ".jpg", storageDir)
+                } catch (ex: IOException) {
+                    // Error occurred
                 }
-
-                val isCapture = fileChooserParams?.isCaptureEnabled ?: false
-
-                if (isCapture && takePictureIntent != null) {
-                    fileChooserLauncher.launch(takePictureIntent)
-                    return true
+                if (photoFile != null) {
+                    cameraImageUri = FileProvider.getUriForFile(
+                        this@MainActivity,
+                        "${packageName}.fileprovider",
+                        photoFile
+                    )
+                    takePictureIntent?.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri)
+                } else {
+                    takePictureIntent = null
                 }
 
                 val contentSelectionIntent = Intent(Intent.ACTION_GET_CONTENT)
