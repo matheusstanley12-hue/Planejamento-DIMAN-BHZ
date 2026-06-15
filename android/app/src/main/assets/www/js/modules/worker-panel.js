@@ -25,18 +25,37 @@ window.WorkerPanel = (() => {
 
   function canExecuteTask(session, task) {
     if (!session || session.perfil !== 'Executante') return true;
-    if (!session.cargo || !task.disciplina) return true;
-    const cargo = session.cargo.toLowerCase();
+    if (!task.disciplina) return true;
+
     const disc = task.disciplina.toLowerCase();
-    
-    if (cargo.includes('mecânic') && disc.includes('mecânic')) return true;
-    if (cargo.includes('elétric') && disc.includes('elétric')) return true;
-    if (cargo.includes('caldeir') && disc.includes('caldeir')) return true;
-    if (cargo.includes('usinagem') && disc.includes('usinagem')) return true;
-    if (cargo.includes('pintor') && disc.includes('pintor')) return true;
-    if (cargo.includes('lavador') && disc.includes('lavador')) return true;
-    if (cargo.includes('montag') && disc.includes('montag')) return true;
-    if (cargo.includes('lubrific') && disc.includes('lubrific')) return true;
+
+    if (session.disciplina) {
+      if (session.disciplina.toLowerCase() === disc) return true;
+    }
+
+    if (session.cargo) {
+      const cargo = session.cargo.toLowerCase();
+      
+      if (disc.includes('mecânic') || disc.includes('mecanic')) {
+        if ((cargo.includes('mecânic') || cargo.includes('mecanic')) && !cargo.includes('torneiro')) return true;
+      } else if (disc.includes('usinagem')) {
+        if (cargo.includes('usinagem') || cargo.includes('torneiro')) return true;
+      } else if (disc.includes('elétric') || disc.includes('eletric')) {
+        if (cargo.includes('elétric') || cargo.includes('eletric')) return true;
+      } else if (disc.includes('caldeir') || disc.includes('solda')) {
+        if (cargo.includes('caldeir') || cargo.includes('soldad')) return true;
+      } else if (disc.includes('pintor') || disc.includes('pintura')) {
+        if (cargo.includes('pintor')) return true;
+      } else if (disc.includes('lavador') || disc.includes('lavação') || disc.includes('lavacao')) {
+        if (cargo.includes('lavador')) return true;
+      } else if (disc.includes('montag') || disc.includes('montador')) {
+        if (cargo.includes('montag') || cargo.includes('montador')) return true;
+      } else if (disc.includes('lubrific')) {
+        if (cargo.includes('lubrific')) return true;
+      } else if (disc.includes('ferramentaria')) {
+        if (cargo.includes('ferrament')) return true;
+      }
+    }
     
     return false;
   }
@@ -95,7 +114,7 @@ window.WorkerPanel = (() => {
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('Almoço')">🍽️ Almoço</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('Banheiro')">🚻 Banheiro</button>
-              <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('Falta de Peças')">⚙️ Falta de Peças</button>
+              <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.promptMissingParts()">⚙️ Falta de Peças</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('DSS')">🛡️ DSS</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('Fim Expediente')">🏠 Fim Expediente</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('Outros')">Outros</button>
@@ -108,6 +127,44 @@ window.WorkerPanel = (() => {
     if (!container.id) { container.id = 'worker-panel-modals'; document.body.appendChild(container); }
     container.innerHTML = modalHtml;
     openModal('modal-worker-pause');
+  }
+
+  function promptMissingParts() {
+    closeModal('modal-worker-pause');
+    const modalHtml = `
+      <div class="modal-overlay" id="modal-worker-missing-parts">
+        <div class="modal" style="box-shadow:var(--shadow-lg);">
+          <div class="modal-header">
+            <div class="modal-title">Justificar Falta de Peças</div>
+            <button class="modal-close" onclick="closeModal('modal-worker-missing-parts')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="padding-top:10px;">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px;">Por favor, descreva qual peça está faltando para que possamos providenciar (código, nome, etc):</p>
+            <div class="form-group" style="margin-bottom:15px;">
+              <textarea id="missing-parts-desc" rows="4" placeholder="Ex: Filtro de óleo cód 12345, Junta do cabeçote, etc..." style="width:100%;resize:vertical;border-radius:6px;border:1px solid var(--border-card);padding:10px;color:var(--text-primary);background:var(--bg-base);"></textarea>
+            </div>
+            <button class="btn btn-primary" style="width:100%;margin-top:10px;height:45px;" onclick="WorkerPanel.submitMissingParts()">Confirmar Pausa</button>
+          </div>
+        </div>
+      </div>
+    `;
+    const container = document.getElementById('worker-panel-modals') || document.createElement('div');
+    if (!container.id) { container.id = 'worker-panel-modals'; document.body.appendChild(container); }
+    container.innerHTML = modalHtml;
+    openModal('modal-worker-missing-parts');
+  }
+
+  function submitMissingParts() {
+    const desc = document.getElementById('missing-parts-desc').value.trim();
+    if (!desc) {
+      Toast.error('Erro', 'Por favor, descreva a peça que está faltando.');
+      return;
+    }
+    const reason = 'Falta de Peças: ' + desc;
+    closeModal('modal-worker-missing-parts');
+    pauseWork(reason);
   }
 
   function pauseWork(reason) {
@@ -137,7 +194,7 @@ window.WorkerPanel = (() => {
 
     if (t) {
       let updatePayload = { horasRealizadas: (t.horasRealizadas || 0) + Math.max(0, Math.round(elapsedHrs * 100) / 100) };
-      if (reason === 'Falta de Peças' || reason === 'Falta de Peça') {
+      if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça')) {
         updatePayload.status = 'Aguardando Peça';
       }
       DB.tasks.update(t.id, updatePayload);
@@ -1538,6 +1595,8 @@ window.WorkerPanel = (() => {
     startTask,
     promptPause,
     pauseWork,
+    promptMissingParts,
+    submitMissingParts,
     resumeWork,
     promptComplete,
     previewPhoto,
