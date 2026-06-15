@@ -69,10 +69,8 @@ window.QrGeneratorModule = (() => {
     
     // Create a temporary hidden container for the QR Code
     const tempQrContainer = document.createElement('div');
-    tempQrContainer.style.position = 'fixed';
-    tempQrContainer.style.left = '0';
-    tempQrContainer.style.top = '0';
-    tempQrContainer.style.zIndex = '-9999';
+    tempQrContainer.style.position = 'absolute';
+    tempQrContainer.style.left = '-9999px';
     document.body.appendChild(tempQrContainer);
 
     if (typeof QRCode !== 'undefined') {
@@ -94,20 +92,12 @@ window.QrGeneratorModule = (() => {
         }
         
         const dataUrl = canvas.toDataURL("image/png");
+        document.body.removeChild(tempQrContainer);
         
-        // Create the PDF wrapper
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'fixed';
-        wrapper.style.left = '0';
-        wrapper.style.top = '0';
-        wrapper.style.zIndex = '-9999';
-        wrapper.style.width = '600px'; 
-        wrapper.style.background = '#ffffff';
-        wrapper.style.padding = '40px';
-        wrapper.style.boxSizing = 'border-box';
-        wrapper.innerHTML = `
-            <div style="background: white; padding: 40px; border-radius: 16px; text-align: center; border: 2px solid #e2e8f0; font-family: 'Inter', sans-serif;">
-              <div style="font-size: 32px; font-weight: 900; color: #0f172a; margin-bottom: 10px;">${nome || codigo}</div>
+        const pdfHtml = `
+          <div style="width: 600px; background: #ffffff; padding: 40px; box-sizing: border-box; font-family: Arial, sans-serif;">
+            <div style="background: white; padding: 40px; border-radius: 16px; text-align: center; border: 2px solid #e2e8f0;">
+              <div style="font-size: 32px; font-weight: 900; color: #0f172a; margin-bottom: 10px; text-transform: uppercase;">${nome || codigo}</div>
               <div style="font-size: 20px; font-weight: 600; color: #64748b; margin-bottom: 30px;">Ativo: ${codigo}</div>
               <div style="background: white; padding: 20px; display: inline-block; border-radius: 12px; border: 1px solid #cbd5e1;">
                 <img src="${dataUrl}" style="width: 250px; height: 250px; display: block;" />
@@ -115,9 +105,8 @@ window.QrGeneratorModule = (() => {
               <div style="font-size: 16px; color: #64748b; margin-top: 20px;">Escaneie a etiqueta para acessar o histórico e solicitar serviços</div>
               <div style="margin-top: 30px; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px;">Gerado por Planejamento Geosol &bull; DIMAN-BHZ</div>
             </div>
+          </div>
         `;
-        
-        document.body.appendChild(wrapper);
         
         const opt = {
           margin:       0.5,
@@ -130,22 +119,16 @@ window.QrGeneratorModule = (() => {
         Toast && Toast.info('Gerando PDF...', 'Aguarde um instante...');
         
         if (window.html2pdf) {
-          window.html2pdf().set(opt).from(wrapper).save().then(() => {
-            document.body.removeChild(wrapper);
-            document.body.removeChild(tempQrContainer);
+          window.html2pdf().set(opt).from(pdfHtml).save().then(() => {
             Toast && Toast.success('PDF Gerado', 'O download foi iniciado!');
           }).catch(e => {
-            document.body.removeChild(wrapper);
-            document.body.removeChild(tempQrContainer);
             console.error("html2pdf error:", e);
             Toast && Toast.error('Erro', 'Não foi possível gerar o PDF.');
           });
         } else {
-          document.body.removeChild(wrapper);
-          document.body.removeChild(tempQrContainer);
           alert("A biblioteca html2pdf não está disponível.");
         }
-      }, 150); // 150ms delay to ensure canvas is fully drawn
+      }, 150);
       
     } else {
       document.body.removeChild(tempQrContainer);
