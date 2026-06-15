@@ -133,11 +133,11 @@ window.WorkerPanel = (() => {
     if (targetWorker.equipmentId && targetWorker.equipmentId !== t.equipmentId) {
       const eqWorker = DB.equipment.get(targetWorker.equipmentId);
       const eqName = eqWorker ? eqWorker.codigo : 'Outro Equipamento';
-      return Toast.error('Acesso Negado', `O executante ${targetWorker.nome} está alocado na sonda/equipamento ${eqName}. Gentileza procurar o seu gestor e solicitar a troca do executante.`);
+      return Toast.error('Acesso Negado', `Ei ${targetWorker.nome}, você está alocado na sonda/equipamento ${eqName}. Por gentileza, procure o seu gestor e solicite a troca de alocação.`);
     }
 
     if (targetWorker.currentState && targetWorker.currentState !== 'Ocioso') {
-      return Toast.error('Atenção', `O executante ${targetWorker.nome} já possui uma tarefa ou pausa em andamento. Solicite que ele finalize primeiro.`);
+      return Toast.error('Atenção', `${targetWorker.nome}, você já tem uma atividade ou pausa em andamento. Por gentileza, finalize sua tarefa atual primeiro.`);
     }
 
     DB.workforce.update(targetWorker.id, {
@@ -352,7 +352,7 @@ window.WorkerPanel = (() => {
     const myWorker = getMyWorker(session);
     if (!myWorker) return Toast.error('Erro', 'Cadastro não encontrado.');
     if (myWorker.currentState && myWorker.currentState !== 'Ocioso') {
-      return Toast.error('Atenção', 'Você já tem uma tarefa ou pausa em andamento. Finalize primeiro.');
+      return Toast.error('Atenção', `${myWorker.nome}, você já tem uma atividade ou pausa em andamento. Por gentileza, finalize a sua tarefa primeiro.`);
     }
 
     const t = DB.tasks.get(taskId);
