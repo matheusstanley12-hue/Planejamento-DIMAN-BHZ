@@ -138,7 +138,7 @@ window.QrGeneratorModule = (() => {
     footer1.style.fontSize = '16px';
     footer1.style.color = '#64748b';
     footer1.style.marginTop = '20px';
-    footer1.innerText = 'Escaneie o Qr-code para verificar o status do equipamento';
+    footer1.innerText = 'Aponte a câmera para consultar o status e o histórico do equipamento';
     contentBox.appendChild(footer1);
 
     const footer2 = document.createElement('div');
