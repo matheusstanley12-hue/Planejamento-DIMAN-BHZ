@@ -1738,8 +1738,49 @@ window.WorkerServices = (() => {
       `;
     }
 
+    const allSols = window.DB.solicitacoes ? window.DB.solicitacoes.list() : [];
+    const myHistory = allSols.filter(s => s.origem.includes(session.nome)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    let historyHtml = '';
+    if (myHistory.length > 0) {
+      historyHtml = `
+        <div class="card" style="margin-top:var(--space-6);background:var(--bg-card);border:1px solid var(--border-card);max-width:800px;">
+          <h2 style="font-size:var(--text-lg);font-weight:700;margin-bottom:var(--space-4);">Histórico de Solicitações</h2>
+          <div style="overflow-x:auto;">
+            <table class="table" style="width:100%;text-align:left;border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border-card);">
+                  <th style="padding:10px;font-size:12px;color:var(--text-muted);">DATA</th>
+                  <th style="padding:10px;font-size:12px;color:var(--text-muted);">SETOR</th>
+                  <th style="padding:10px;font-size:12px;color:var(--text-muted);">DESCRIÇÃO</th>
+                  <th style="padding:10px;font-size:12px;color:var(--text-muted);">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${myHistory.map(s => {
+                  let badge = 'badge-ghost';
+                  if (s.status.includes('PCM')) badge = 'badge-warning';
+                  else if (s.status.includes('Encarregado')) badge = 'badge-primary';
+                  else if (s.status === 'Em Execução') badge = 'badge-info';
+                  else if (s.status === 'Concluída') badge = 'badge-success';
+                  
+                  return `
+                  <tr style="border-bottom:1px solid var(--border-card);">
+                    <td style="padding:10px;white-space:nowrap;color:var(--text-secondary);font-size:13px;">${new Date(s.createdAt).toLocaleDateString()}</td>
+                    <td style="padding:10px;font-weight:600;font-size:14px;">${s.destino}</td>
+                    <td style="padding:10px;color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;" title="${s.descricao}">${s.descricao}</td>
+                    <td style="padding:10px;"><span class="badge ${badge}" style="font-size:11px;">${s.status}</span></td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
     setTimeout(() => {
-      document.getElementById('btn-w-sv-save').addEventListener('click', () => {
+      document.getElementById('btn-w-sv-save')?.addEventListener('click', () => {
         const desc = document.getElementById('w-sv-desc').value.trim();
         const dest = document.getElementById('w-sv-dest').value;
 
@@ -1753,7 +1794,7 @@ window.WorkerServices = (() => {
         }
 
         const eqId = document.getElementById('w-sv-eq').value;
-        const eq = window.DB.equipment.get(eqId);
+        const statusReq = (dest === 'Usinagem') ? 'Aguardando Aprovação PCM' : 'Aguardando Encarregado';
         
         const payload = {
           id: window.DB.uid('sol'),
@@ -1761,14 +1802,15 @@ window.WorkerServices = (() => {
           destino: dest,
           equipmentId: eqId,
           descricao: desc,
-          status: 'Aguardando',
+          status: statusReq,
           createdAt: window.DB.now(),
           updatedAt: window.DB.now()
         };
 
         window.DB.solicitacoes.add(payload);
-        window.Toast.success('Enviado!', `Solicitação para ${dest} enviada ao PCM.`);
-        document.getElementById('w-sv-desc').value = '';
+        const msg = (dest === 'Usinagem') ? `Solicitação para Usinagem enviada ao PCM para aprovação.` : `Solicitação enviada direto para o encarregado de ${dest}.`;
+        window.Toast.success('Enviado!', msg);
+        window.Router.navigate('worker-services', { force: true });
       });
     }, 100);
 
@@ -1777,7 +1819,7 @@ window.WorkerServices = (() => {
         <h1 style="font-size:var(--text-xl);font-weight:800;color:var(--text-primary);margin-bottom:var(--space-2);">Solicitar Serviço Externo</h1>
         <p style="color:var(--text-secondary);font-size:var(--text-sm);margin-bottom:var(--space-6);">Abra uma requisição para outros setores de manutenção (Usinagem, Elétrica, etc).</p>
 
-        <div class="card" style="max-width:600px;background:var(--bg-card);border:1px solid var(--border-card);">
+        <div class="card" style="max-width:800px;background:var(--bg-card);border:1px solid var(--border-card);">
           <div style="display:flex;flex-direction:column;gap:var(--space-4);">
             <div class="form-group">
               <label>Equipamento *</label>
@@ -1809,6 +1851,8 @@ window.WorkerServices = (() => {
             </div>
           </div>
         </div>
+
+        ${historyHtml}
       </div>
     `;
   }

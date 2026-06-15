@@ -20,24 +20,27 @@ window.ServicesModule = (() => {
     let mySols = [];
     if (isPCM) {
       // PCM sees Usinagem needing approval, plus everything else for oversight
-      mySols = solicitacoes;
+      mySols = solicitacoes.filter(s => s.destino === 'Usinagem');
     } else if (isEncarregado) {
       // Encarregado sees their sector
-      mySols = solicitacoes.filter(s => s.setorDestino === session.disciplina);
+      mySols = solicitacoes.filter(s => s.destino === session.disciplina);
     }
 
     const pendentes = mySols.filter(s => s.status === 'Aguardando Aprovação PCM' || s.status === 'Aguardando Encarregado');
-    const andamento = mySols.filter(s => s.status === 'Em Execução');
+    const andamento = mySols.filter(s => s.status === 'Em Execução' || s.status === 'Em Andamento');
     const concluidas = mySols.filter(s => s.status === 'Concluída' || s.status === 'Rejeitada');
 
     let currentList = activeTab === 'pendentes' ? pendentes : activeTab === 'andamento' ? andamento : concluidas;
+
+    const pageTitle = isPCM ? 'Serviços de Usinagem' : 'Serviços / Mão de Obra';
+    const pageSubtitle = isPCM ? 'Aprovações de OS de Usinagem' : 'Destinação de Mão de Obra';
 
     const html = `
       <div class="page-container">
         <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
           <div>
-            <h1 class="page-title">Solicitações de Serviço</h1>
-            <p class="page-subtitle">Aprovações e Destinação de Mão de Obra</p>
+            <h1 class="page-title">${pageTitle}</h1>
+            <p class="page-subtitle">${pageSubtitle}</p>
           </div>
         </div>
 
@@ -59,19 +62,17 @@ window.ServicesModule = (() => {
               <tr>
                 <th>Data</th>
                 <th>Equipamento</th>
-                <th>Solicitante</th>
-                <th>Setor Destino</th>
+                <th>Origem</th>
+                <th>Destino</th>
                 <th>Descrição</th>
-                <th>Prazo</th>
                 <th>Status</th>
                 <th style="text-align:right;">Ações</th>
               </tr>
             </thead>
             <tbody>
-              ${currentList.length === 0 ? `<tr><td colspan="8" class="text-center" style="padding:var(--space-6);color:var(--text-muted);">Nenhuma solicitação encontrada nesta aba.</td></tr>` : ''}
+              ${currentList.length === 0 ? `<tr><td colspan="7" class="text-center" style="padding:var(--space-6);color:var(--text-muted);">Nenhuma solicitação encontrada nesta aba.</td></tr>` : ''}
               ${currentList.map(s => {
                 const eq = DB.equipment.get(s.equipmentId);
-                const isLate = s.prazo < window.DB.now().slice(0, 10) && s.status !== 'Concluída';
                 
                 let actions = '';
                 if (s.status === 'Aguardando Aprovação PCM' && isPCM) {
@@ -79,11 +80,11 @@ window.ServicesModule = (() => {
                     <button class="btn btn-success btn-xs" onclick="window.ServicesModule.approvePCM('${s.id}')">Aprovar OS</button>
                     <button class="btn btn-danger btn-xs" onclick="window.ServicesModule.reject('${s.id}')">Rejeitar</button>
                   `;
-                } else if (s.status === 'Aguardando Encarregado' && (isEncarregado || isPCM)) {
+                } else if (s.status === 'Aguardando Encarregado' && isEncarregado) {
                   actions = `
                     <button class="btn btn-primary btn-xs" onclick="window.ServicesModule.assignWorker('${s.id}')">Destinar Mão de Obra</button>
                   `;
-                } else if (s.status === 'Em Execução' && (isEncarregado || isPCM)) {
+                } else if ((s.status === 'Em Execução' || s.status === 'Em Andamento') && isEncarregado) {
                    actions = `
                     <button class="btn btn-outline btn-xs" onclick="window.ServicesModule.assignWorker('${s.id}')">Alterar Recurso</button>
                   `;
@@ -93,15 +94,13 @@ window.ServicesModule = (() => {
                   <tr>
                     <td>${new Date(s.createdAt).toLocaleDateString('pt-BR')}</td>
                     <td><strong>${eq ? eq.codigo : '—'}</strong></td>
-                    <td>${s.solicitanteNome}</td>
-                    <td><span class="badge badge-ghost">${s.setorDestino}</span></td>
+                    <td>${s.origem || '—'}</td>
+                    <td><span class="badge badge-ghost">${s.destino || '—'}</span></td>
                     <td>
-                      ${s.critico ? '<span class="badge badge-danger" style="margin-right:4px;">Crítico</span>' : ''}
                       ${s.descricao}
                     </td>
-                    <td class="${isLate ? 'text-danger' : ''}" style="font-weight:600;">${new Date(s.prazo).toLocaleDateString('pt-BR')}</td>
                     <td>
-                      <span class="badge ${s.status.includes('Aguardando') ? 'badge-warning' : s.status === 'Em Execução' ? 'badge-primary' : s.status === 'Concluída' ? 'badge-success' : 'badge-danger'}">
+                      <span class="badge ${s.status.includes('PCM') ? 'badge-warning' : s.status.includes('Aguardando') ? 'badge-primary' : s.status.includes('Execução') || s.status.includes('Andamento') ? 'badge-info' : s.status === 'Concluída' ? 'badge-success' : 'badge-danger'}">
                         ${s.status}
                       </span>
                     </td>
@@ -126,7 +125,12 @@ window.ServicesModule = (() => {
   }
 
   function approvePCM(id) {
-    if (!confirm('Deseja aprovar esta solicitação de Usinagem e gerar uma ordem de serviço (Tarefa)?')) return;
+    const osNumber = prompt('Digite o número da Ordem de Serviço (OS) para aprovar esta solicitação:');
+    if (osNumber === null) return; // Cancelled
+    if (osNumber.trim() === '') {
+      Toast.error('Erro', 'O número da OS é obrigatório.');
+      return;
+    }
     
     const s = window.DB.solicitacoes.list().find(x => x.id === id);
     if (!s) return;
@@ -134,18 +138,18 @@ window.ServicesModule = (() => {
     // Create task
     const taskData = {
       equipmentId: s.equipmentId,
-      codigo: 'USIN-' + Math.random().toString().slice(2, 6),
+      codigo: 'OS ' + osNumber.trim(),
       descricao: `[SOLICITAÇÃO] ${s.descricao}`,
-      disciplina: s.setorDestino,
+      disciplina: s.destino,
       responsavel: '', // Empty until encarregado assigns
-      prioridade: s.critico ? 'Crítica' : 'Alta',
+      prioridade: 'Alta',
       status: 'Aguardando Recurso',
       dataPlanejadaInicio: new Date().toISOString().slice(0, 10),
-      dataPlanejadaTermino: s.prazo,
+      dataPlanejadaTermino: new Date().toISOString().slice(0, 10),
       horasPlanejadas: 0,
       horasRealizadas: 0,
       pctExecutado: 0,
-      critico: s.critico,
+      critico: false,
       observacoes: '',
       predecessoras: [],
       solicitacaoId: s.id,
@@ -154,10 +158,8 @@ window.ServicesModule = (() => {
     
     window.DB.tasks.create(taskData);
     
-    // After creating task, we need to find its ID (the create function generates one and pushes to syncQueue/localStorage)
-    // A quick hack: list tasks, sort by createdAt desc, get first one
     const tasks = window.DB.tasks.getAll();
-    const newTask = tasks[tasks.length - 1]; // Assume it's the last added
+    const newTask = tasks[tasks.length - 1];
 
     window.DB.solicitacoes.update(id, { 
       status: 'Aguardando Encarregado', 
@@ -182,24 +184,23 @@ window.ServicesModule = (() => {
     const s = window.DB.solicitacoes.list().find(x => x.id === id);
     if (!s) return;
 
-    // Check if task exists (for non-Usinagem, it might not exist yet if we don't auto-create it)
-    // Actually, let's auto-create it here if osId is missing
+    // If task does not exist (non-usinagem direct flow)
     let taskId = s.osId;
     if (!taskId) {
       const taskData = {
         equipmentId: s.equipmentId,
-        codigo: s.setorDestino.substring(0,3).toUpperCase() + '-' + Math.random().toString().slice(2, 6),
+        codigo: s.destino.substring(0,3).toUpperCase() + '-' + Math.random().toString().slice(2, 6),
         descricao: `[SOLICITAÇÃO] ${s.descricao}`,
-        disciplina: s.setorDestino,
+        disciplina: s.destino,
         responsavel: '',
-        prioridade: s.critico ? 'Crítica' : 'Alta',
+        prioridade: 'Alta',
         status: 'Aguardando Recurso',
         dataPlanejadaInicio: new Date().toISOString().slice(0, 10),
-        dataPlanejadaTermino: s.prazo,
+        dataPlanejadaTermino: new Date().toISOString().slice(0, 10),
         horasPlanejadas: 0,
         horasRealizadas: 0,
         pctExecutado: 0,
-        critico: s.critico,
+        critico: false,
         observacoes: '',
         predecessoras: [],
         solicitacaoId: s.id,
@@ -211,7 +212,7 @@ window.ServicesModule = (() => {
       window.DB.solicitacoes.update(id, { osId: taskId });
     }
 
-    const workers = window.DB.workforce.list().filter(w => w.disciplina === s.setorDestino);
+    const workers = window.DB.workforce.list().filter(w => w.disciplina === s.destino);
     
     const modalHtml = `
       <div class="modal-overlay" id="modal-assign">
@@ -225,7 +226,7 @@ window.ServicesModule = (() => {
           <div class="modal-body">
             <p style="margin-bottom:12px;color:var(--text-secondary);font-size:13px;">Selecione o executante para a atividade: <strong>${s.descricao}</strong></p>
             <div class="form-group">
-              <label>Executante (${s.setorDestino})</label>
+              <label>Executante (${s.destino})</label>
               <select id="sv-assign-worker">
                 <option value="">-- Selecione --</option>
                 ${workers.map(w => `<option value="${w.nome}">${w.nome}</option>`).join('')}

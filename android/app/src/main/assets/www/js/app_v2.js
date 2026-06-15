@@ -472,7 +472,7 @@ function renderShell(session) {
     { route:'released',   label:'Equip. Liberados',      icon:'check-circle',   perm:'dashboard',   section:'' },
     { route:'tasks',      label:'Tarefas',               icon:'clipboard-list', perm:'tasks',       section:'' },
 
-    { route:'services',   label:'Serviços / Aprovações', icon:'clipboard-document-check', perm:'dashboard', section:'' },
+    { route:'services',   label: ['Desenvolvedor', 'Administrador', 'Planejador', 'Gerente'].includes(session.perfil) ? 'Serviços de Usinagem' : 'Serviços / Mão de Obra', icon:'clipboard-document-check', perm:'dashboard', section:'' },
     { route:'planning',   label:'Planejamento',          icon:'calendar',       perm:'planning',    section:'' },
     { route:'parts',      label:'Falta de Peças',   icon:'cube',           perm:'parts',       section:'' },
     { route:'meetings',   label:'Ata de Reunião',   icon:'clipboard-list', perm:'planning',    section:'' },
