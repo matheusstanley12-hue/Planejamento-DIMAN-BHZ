@@ -38,7 +38,11 @@ window.Dashboard = (() => {
           anchor: 'end',
           align: 'top',
           offset: 4,
-          formatter: (value) => value > 0 ? value : ''
+          formatter: (value) => {
+            if (!value || value <= 0) return '';
+            const rounded = Math.round(value * 10) / 10;
+            return rounded;
+          }
         },
         tooltip: {
           backgroundColor: 'rgba(15, 23, 42, 0.9)',
@@ -313,7 +317,7 @@ window.Dashboard = (() => {
         optEq.scales.y.max = 100;
         optEq.scales.y.grace = '0%'; // Don't need grace for percentages
         optEq.scales.y.ticks.callback = (v)=>v+'%';
-        optEq.plugins.datalabels.formatter = (v)=>v+'%';
+        optEq.plugins.datalabels.formatter = (v) => Math.round(v) + '%';
 
         const c3 = document.getElementById('ch-eq');
         if (c3) charts.eq = new Chart(c3, { type:'bar', data: {
