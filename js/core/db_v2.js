@@ -22,6 +22,7 @@ window.DB = (() => {
     costs: 'diman_costs',
     lessons: 'diman_lessons',
     notifications: 'diman_notifications',
+    meetingTasks: 'diman_meeting_tasks',
     kpiCache: 'diman_kpi_cache',
     settings: 'diman_settings',
     solicitacoes: 'diman_solicitacoes',
@@ -120,7 +121,8 @@ window.DB = (() => {
       { id: 'wf-18130', matricula: '18130', nome: 'GABRIEL LIMA OLIVEIRA', funcao: 'Ajudante', disciplina: 'Mecânica', centroCusto: '05002101', createdAt: now() },
       { id: 'wf-18131', matricula: '18131', nome: 'KAIQUE MIRANDA SILVA', funcao: 'Ajudante', disciplina: 'Mecânica', centroCusto: '05002101', createdAt: now() },
       { id: 'wf-18158', matricula: '18158', nome: 'OSEIAS DOS SANTOS ARAUJO', funcao: 'Ajudante', disciplina: 'Mecânica', centroCusto: '05002101', createdAt: now() }
-    ]
+    ],
+    diman_meeting_tasks: []
   };
 
   function get(key) {
@@ -806,8 +808,15 @@ window.DB = (() => {
     delete: (id) => { const m = get(KEYS.manuals); set(KEYS.manuals, m.filter(r => r.id !== id)); }
   };
 
+  const meetingTasks = {
+    list: () => get(KEYS.meetingTasks),
+    add: (data) => { const m = get(KEYS.meetingTasks); m.push({ ...data, createdAt: now() }); set(KEYS.meetingTasks, m); },
+    update: (id, updates) => { let m = get(KEYS.meetingTasks); const i = m.findIndex(r => r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.meetingTasks, m); } },
+    delete: (id) => { const m = get(KEYS.meetingTasks); set(KEYS.meetingTasks, m.filter(r => r.id !== id)); }
+  };
+
   return {
-    equipment, tasks, parts, workforce, timesheets, replannings, restrictions, costs, lessons, notifications, settings, kpi, solicitacoes, manuals, uid, now,
+    equipment, tasks, parts, workforce, timesheets, replannings, restrictions, costs, lessons, notifications, settings, kpi, solicitacoes, manuals, meetingTasks, uid, now,
     initSupabase, forceSyncAll, setGlobalEqFilter, syncToSupabase };
   } catch(err) {
     alert('Erro crítico ao inicializar o banco de dados (db.js): ' + err.message + '\n\n' + err.stack);
