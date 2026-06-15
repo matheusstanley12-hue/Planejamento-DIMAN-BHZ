@@ -75,30 +75,31 @@ window.Dashboard = (() => {
     const currentMonthPrefix = new Date().toISOString().slice(0, 7);
     const stats = DB.kpi.getEquipmentStats(currentMonthPrefix);
     
-    // Filter equipments for current month context
     const eqs = DB.equipment.list().filter(e => 
       (e.dataLiberacaoPlanejada && e.dataLiberacaoPlanejada.startsWith(currentMonthPrefix)) || 
       (e.dataLiberacaoAtual && e.dataLiberacaoAtual.startsWith(currentMonthPrefix)) || 
       (e.dataFim && e.dataFim.startsWith(currentMonthPrefix)) ||
-      (e.status === 'Em Manutenção') // Keep active ones visible
+      (e.status === 'Em Manutenção')
     );
     
     const parts = DB.parts.getAll();
     const pendingParts = parts.filter(p => ['Solicitada','Comprada','Em Transporte'].includes(p.status)).length;
+    const restrs = DB.restrictions.getAll().filter(r => r.status === 'Aberta').length;
     
-    // Top 5 Atrasados
     const atrasadosList = eqs.filter(e => e.status !== 'Liberado' && e.pctAvanco < 100 && e.dataLiberacaoPlanejada < new Date().toISOString().slice(0,10))
                              .sort((a,b) => (b.pctAvanco || 0) - (a.pctAvanco || 0))
                              .slice(0, 5);
 
     const devClass = stats.aderencia >= 90 ? 'success' : (stats.aderencia >= 70 ? 'warning' : 'danger');
-
+    
     setTimeout(() => {
       try {
-        Chart.defaults.color = '#94a3b8';
+        const textColor = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#64748b';
+        const borderColor = getComputedStyle(document.body).getPropertyValue('--border-default').trim() || 'rgba(150,150,150,0.2)';
+        Chart.defaults.color = textColor;
         Chart.defaults.font.family = 'Inter';
         
-        // 1. Radial Gauge for Global Advance
+        // 1. Avanço Global (Gauge)
         const ctxGauge = document.getElementById('ch-global-gauge');
         if (ctxGauge) {
           charts.gauge = new Chart(ctxGauge, {
@@ -107,7 +108,7 @@ window.Dashboard = (() => {
               labels: ['Realizado', 'Pendente'],
               datasets: [{
                 data: [stats.pctAvancoGeral, Math.max(0, 100 - stats.pctAvancoGeral)],
-                backgroundColor: ['#38bdf8', 'rgba(15, 23, 42, 0.5)'],
+                backgroundColor: ['#0ea5e9', borderColor],
                 borderWidth: 0,
                 borderRadius: 20,
               }]
@@ -135,7 +136,7 @@ window.Dashboard = (() => {
                  data: eqCount,
                  backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
                  borderWidth: 2,
-                 borderColor: '#1e293b',
+                 borderColor: 'var(--bg-card)',
                  hoverOffset: 4
                }]
              },
@@ -143,7 +144,7 @@ window.Dashboard = (() => {
                cutout: '70%',
                maintainAspectRatio: false,
                plugins: {
-                 legend: { position: 'right', labels: { color: '#f8fafc', usePointStyle: true, padding: 15, font: { size: 11, family: 'Inter' } } }
+                 legend: { position: 'right', labels: { color: textColor, usePointStyle: true, padding: 15, font: { size: 11, family: 'Inter' } } }
                }
              }
            });
@@ -161,22 +162,22 @@ window.Dashboard = (() => {
         const ctxAno = document.getElementById('ch-ano-pro');
         if (ctxAno) {
           charts.ano = new Chart(ctxAno, {
-            type: 'line',
+            type: 'bar',
             data: {
               labels: monthsStr,
               datasets: [
-                { label: 'Realizado', data: mReal, borderColor: '#34d399', backgroundColor: 'rgba(52, 211, 153, 0.2)', fill: true, tension: 0.4, borderWidth: 3 },
-                { label: 'Planejado', data: mPlan, borderColor: '#94a3b8', borderDash: [5, 5], backgroundColor: 'transparent', fill: false, tension: 0.4, borderWidth: 2 }
+                { type: 'line', label: 'Realizado (Tendência)', data: mReal, borderColor: '#10b981', backgroundColor: '#10b981', fill: false, tension: 0.4, borderWidth: 3 },
+                { type: 'bar', label: 'Planejado', data: mPlan, backgroundColor: borderColor, borderRadius: 4, barPercentage: 0.5 }
               ]
             },
-            options: { ...chartDefaults(), maintainAspectRatio: false }
+            options: { ...chartDefaults(), maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: borderColor }, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
           });
         }
 
         // 4. Avanço por Categoria
-        const categories = ['Sondas de Pesquisas', 'Bomba de pesquisa', 'Sondas Poços', 'Bombas de poços', 'Subconjuntos', 'Programação de almoxarifado', 'Outros Equipamentos'];
-        const catPlan = categories.map(c => eqs.filter(e => e.tipo === c && e.dataLiberacaoPlanejada && e.dataLiberacaoPlanejada.startsWith(currentMonthPrefix)).length);
-        const catReal = categories.map(c => eqs.filter(e => e.tipo === c && e.status === 'Liberado' && (e.dataLiberacaoAtual || e.dataFim || '').startsWith(currentMonthPrefix)).length);
+        const categories = ['Sondas de Pesquisas', 'Bomba de pesquisa', 'Sondas Poços', 'Bombas de poços', 'Subconjuntos', 'Prog. almoxarifado', 'Outros'];
+        const catPlan = categories.map(c => eqs.filter(e => (e.tipo || '').includes(c.split(' ')[0]) && e.dataLiberacaoPlanejada && e.dataLiberacaoPlanejada.startsWith(currentMonthPrefix)).length);
+        const catReal = categories.map(c => eqs.filter(e => (e.tipo || '').includes(c.split(' ')[0]) && e.status === 'Liberado' && (e.dataLiberacaoAtual || e.dataFim || '').startsWith(currentMonthPrefix)).length);
         const ctxCat = document.getElementById('ch-cat-pro');
         if (ctxCat) {
           charts.cat = new Chart(ctxCat, {
@@ -184,131 +185,151 @@ window.Dashboard = (() => {
             data: {
               labels: categories,
               datasets: [
-                { label: 'Realizado', data: catReal, backgroundColor: '#38bdf8', borderRadius: 4 },
-                { label: 'Planejado', data: catPlan, backgroundColor: 'rgba(148, 163, 184, 0.2)', borderRadius: 4 }
+                { label: 'Realizado', data: catReal, backgroundColor: '#0ea5e9', borderRadius: 4 },
+                { label: 'Planejado', data: catPlan, backgroundColor: borderColor, borderRadius: 4 }
               ]
             },
-            options: { ...chartDefaults(), indexAxis: 'y', maintainAspectRatio: false }
+            options: { 
+              ...chartDefaults(), 
+              indexAxis: 'y', 
+              maintainAspectRatio: false,
+              scales: { x: { beginAtZero: true, grid: { color: borderColor }, ticks: { precision: 0 } }, y: { grid: { display: false } } }
+            }
           });
         }
 
-      } catch(e) { console.warn('Chart Pro error:', e); }
+      } catch(e) { console.warn('Chart error:', e); }
     }, 100);
 
     const html = `
-    <div class="dashboard-pro-wrapper">
+    <div style="width:100%; max-width:100%; padding:var(--space-6); display:flex; flex-direction:column; gap:var(--space-6);">
+      
       <!-- HEADER -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 32px; flex-wrap:wrap; gap:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
         <div>
-          <h1 class="section-title">COMMAND CENTER</h1>
-          <p class="section-subtitle">Real-time Global Operations · ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</p>
+          <h1 style="font-size:var(--text-3xl); font-weight:900; color:var(--text-primary); letter-spacing:-0.02em; margin:0;">CENTRAL DE CONTROLE</h1>
+          <p style="font-size:var(--text-sm); color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:0.05em; margin:4px 0 0 0;">
+            Operações Globais em Tempo Real · ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}
+          </p>
         </div>
         <div style="display:flex; gap: 16px; align-items:center;">
-          <div style="display:flex; align-items:center; gap: 8px;">
-            <div style="width:10px;height:10px;background:#ef4444;border-radius:50%;box-shadow: 0 0 10px #ef4444; animation: pulse 2s infinite;"></div>
-            <span style="color:#ef4444; font-weight:700; font-size: 14px; text-transform:uppercase; letter-spacing:0.1em;">Live</span>
+          <div style="display:flex; align-items:center; gap: 8px; padding: 6px 12px; background: rgba(239, 68, 68, 0.1); border-radius: 20px;">
+            <div style="width:8px;height:8px;background:#ef4444;border-radius:50%;box-shadow: 0 0 10px #ef4444; animation: pulse 2s infinite;"></div>
+            <span style="color:#ef4444; font-weight:700; font-size: 12px; text-transform:uppercase; letter-spacing:0.1em;">Ao Vivo</span>
           </div>
-          <button class="btn btn-primary" style="background:#1e293b; border: 1px solid rgba(255,255,255,0.1); color: #fff;" onclick="Router.navigate('dashboard',{force:true})">
+          <button class="btn btn-primary" style="display:flex; align-items:center; gap:8px;" onclick="Router.navigate('dashboard',{force:true})">
             <svg style="width:14px;height:14px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Refresh
+            Atualizar
           </button>
         </div>
       </div>
 
-      <div class="grid-bento-pro">
+      <div style="display:grid; grid-template-columns: repeat(12, 1fr); gap:var(--space-6);">
         
         <!-- TOP KPI 1: Avanço Global -->
-        <div class="card-glass col-span-4" style="align-items:center; justify-content:center; padding: 32px 24px;">
-          <div class="card-glass-header" style="width:100%;">
-            <span>Avanço Global do Projeto</span>
-            <svg style="width:16px;color:#38bdf8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        <div style="grid-column: span 3; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-5); display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:var(--shadow-sm);">
+          <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4);">
+            <span style="font-size:var(--text-xs); font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Avanço do Projeto</span>
+            <svg style="width:16px;color:var(--brand-primary)" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
           </div>
-          <div style="position:relative; width: 220px; height: 110px;">
+          <div style="position:relative; width: 180px; height: 90px;">
             <canvas id="ch-global-gauge"></canvas>
             <div style="position:absolute; bottom: 0; left: 0; width: 100%; text-align: center;">
-              <div class="metric-value-huge text-neon-blue">${stats.pctAvancoGeral}%</div>
+              <div style="font-size:36px; font-weight:900; color:var(--brand-primary); line-height:1;">${stats.pctAvancoGeral}%</div>
             </div>
           </div>
         </div>
 
         <!-- TOP KPI 2: Aderência -->
-        <div class="card-glass col-span-4 ${devClass === 'success' ? 'success-accent' : devClass === 'danger' ? 'danger-accent' : ''}">
-          <div class="card-glass-header">
-            <span>Aderência ao Cronograma</span>
-            <span style="padding: 4px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); color:#fff">${stats.aderencia >= 90 ? 'Ótimo' : stats.aderencia >= 70 ? 'Atenção' : 'Crítico'}</span>
+        <div style="grid-column: span 3; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-5); box-shadow:var(--shadow-sm);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-4);">
+            <span style="font-size:var(--text-xs); font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Aderência</span>
+            <span class="badge" style="background:var(--color-${devClass}); color:#fff">${stats.aderencia >= 90 ? 'Ótimo' : stats.aderencia >= 70 ? 'Atenção' : 'Crítico'}</span>
           </div>
-          <div class="metric-value-huge ${devClass === 'success' ? 'text-neon-green' : devClass === 'danger' ? 'text-neon-red' : ''}">${stats.aderencia}%</div>
-          <p style="color:#94a3b8; font-size:13px;">Planejado vs Realizado (Mês Atual)</p>
+          <div style="font-size:42px; font-weight:900; color:var(--color-${devClass}); line-height:1; margin-bottom:var(--space-2);">${stats.aderencia}%</div>
+          <p style="color:var(--text-muted); font-size:12px; margin:0;">Planejado vs Realizado (Mês Atual)</p>
         </div>
 
         <!-- TOP KPI 3: Produtividade -->
-        <div class="card-glass col-span-4">
-          <div class="card-glass-header">
-            <span>Volume de Horas Realizadas</span>
-            <svg style="width:16px;color:#a855f7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div style="grid-column: span 3; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-5); box-shadow:var(--shadow-sm);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-4);">
+            <span style="font-size:var(--text-xs); font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Horas Trabalhadas</span>
+            <svg style="width:16px;color:var(--color-purple)" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
-          <div class="metric-value-huge" style="color:#c084fc; text-shadow: 0 0 20px rgba(192,132,252,0.4);">${stats.horasRealizadas.toFixed(0)}h</div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 16px;">
-            <span style="color:#94a3b8; font-size: 13px;">Tarefas Concluídas: <strong style="color:#fff">${stats.concluidas}</strong></span>
-            <span style="color:#94a3b8; font-size: 13px;">Restrições: <strong style="color:#ef4444">${stats.restricoesAbertas}</strong></span>
+          <div style="font-size:42px; font-weight:900; color:var(--color-purple); line-height:1; margin-bottom:var(--space-2);">${stats.horasRealizadas.toFixed(0)}h</div>
+          <div style="display:flex; gap: 12px;">
+            <span style="color:var(--text-muted); font-size:12px;">Meta: ${stats.horasPlanejadas.toFixed(0)}h</span>
+          </div>
+        </div>
+
+        <!-- TOP KPI 4: Alertas Gerais -->
+        <div style="grid-column: span 3; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-5); box-shadow:var(--shadow-sm);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-4);">
+            <span style="font-size:var(--text-xs); font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Alertas & Gargalos</span>
+            <svg style="width:16px;color:var(--color-danger)" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; color:var(--text-secondary); font-weight:600;">Peças Pendentes</span>
+              <span style="font-size:16px; font-weight:800; color:${pendingParts>0?'var(--color-danger)':'var(--text-primary)'};">${pendingParts}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; color:var(--text-secondary); font-weight:600;">Restrições Abertas</span>
+              <span style="font-size:16px; font-weight:800; color:${restrs>0?'var(--color-warning)':'var(--text-primary)'};">${restrs}</span>
+            </div>
           </div>
         </div>
 
         <!-- CHART: Status dos Equipamentos -->
-        <div class="card-glass col-span-3" style="min-height: 380px;">
-          <div class="card-glass-header"><span>Saúde da Frota (Live)</span></div>
-          <div class="canvas-container">
+        <div style="grid-column: span 4; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-5); min-height: 380px; display:flex; flex-direction:column; box-shadow:var(--shadow-sm);">
+          <div style="font-size:var(--text-sm); font-weight:800; color:var(--text-primary); margin-bottom:var(--space-4); text-transform:uppercase; letter-spacing:0.05em;">Saúde da Frota (Ao Vivo)</div>
+          <div style="flex:1; position:relative; min-height:250px;">
             <canvas id="ch-status-pro"></canvas>
-            <!-- Center Total -->
-            <div style="position:absolute; top:50%; left:30%; transform:translate(-50%, -50%); text-align:center; pointer-events:none;">
-              <div style="font-size:32px; font-weight:900; color:#fff; line-height:1;">${eqs.length}</div>
-              <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.1em;">Total</div>
+            <div style="position:absolute; top:50%; left:28%; transform:translate(-50%, -50%); text-align:center; pointer-events:none;">
+              <div style="font-size:36px; font-weight:900; color:var(--text-primary); line-height:1;">${eqs.length}</div>
+              <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:4px;">Total</div>
             </div>
           </div>
         </div>
 
         <!-- CHART: Timeline Anual -->
-        <div class="card-glass col-span-6" style="min-height: 380px;">
-          <div class="card-glass-header"><span>Projeção e Execução Anual</span></div>
-          <div class="canvas-container">
+        <div style="grid-column: span 8; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-5); min-height: 380px; display:flex; flex-direction:column; box-shadow:var(--shadow-sm);">
+          <div style="font-size:var(--text-sm); font-weight:800; color:var(--text-primary); margin-bottom:var(--space-4); text-transform:uppercase; letter-spacing:0.05em;">Projeção e Execução de Entregas (${new Date().getFullYear()})</div>
+          <div style="flex:1; position:relative; min-height:250px;">
             <canvas id="ch-ano-pro"></canvas>
           </div>
         </div>
 
-        <!-- LIST: Top 5 Gargalos -->
-        <div class="card-glass col-span-3 danger-accent" style="min-height: 380px;">
-          <div class="card-glass-header"><span style="color:#f87171;">⚠️ Equipamentos Críticos</span></div>
-          <div class="ranking-list" style="overflow-y:auto; flex:1; padding-right:8px;">
-            ${atrasadosList.length === 0 ? '<div style="text-align:center;color:#94a3b8;margin-top:20px;">Nenhum equipamento crítico.</div>' : ''}
-            ${atrasadosList.map(e => `
-              <div class="ranking-item">
-                <div>
-                  <div class="ranking-item-title">${e.codigo}</div>
-                  <div class="ranking-item-meta">${e.tipo}</div>
-                </div>
-                <div style="text-align:right;">
-                  <div class="ranking-item-value text-neon-red">${Math.round(e.pctAvanco || 0)}%</div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-          
-          <div style="margin-top:24px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.05);">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:12px; color:#94a3b8;">
-              <span>Falta de Peças (Pendentes)</span>
-              <strong style="color:#fff">${pendingParts}</strong>
-            </div>
-            <div style="background:rgba(255,255,255,0.1); height:6px; border-radius:3px; overflow:hidden;">
-              <div style="background:#ef4444; width:${Math.min(100, (pendingParts/10)*100)}%; height:100%;"></div>
-            </div>
+        <!-- CHART: Categoria -->
+        <div style="grid-column: span 8; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-5); min-height: 360px; display:flex; flex-direction:column; box-shadow:var(--shadow-sm);">
+          <div style="font-size:var(--text-sm); font-weight:800; color:var(--text-primary); margin-bottom:var(--space-4); text-transform:uppercase; letter-spacing:0.05em;">Entregas por Família de Equipamento</div>
+          <div style="flex:1; position:relative; min-height:250px;">
+            <canvas id="ch-cat-pro"></canvas>
           </div>
         </div>
 
-        <!-- CHART: Categoria -->
-        <div class="card-glass col-span-12" style="min-height: 340px;">
-          <div class="card-glass-header"><span>Entrega Estratégica por Categoria (Mês Atual)</span></div>
-          <div class="canvas-container small">
-            <canvas id="ch-cat-pro"></canvas>
+        <!-- LIST: Top 5 Gargalos -->
+        <div style="grid-column: span 4; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-5); min-height: 360px; display:flex; flex-direction:column; box-shadow:var(--shadow-sm);">
+          <div style="font-size:var(--text-sm); font-weight:800; color:var(--color-danger); margin-bottom:var(--space-4); text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; gap:8px;">
+            <svg style="width:18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            Watchlist Crítica
+          </div>
+          <div style="overflow-y:auto; flex:1; padding-right:4px;">
+            ${atrasadosList.length === 0 ? '<div style="text-align:center;color:var(--text-muted);margin-top:40px;font-style:italic;">Nenhum equipamento em atraso crítico.</div>' : ''}
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              ${atrasadosList.map(e => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg-base); border-radius:var(--radius-md); border-left:4px solid var(--color-danger);">
+                  <div>
+                    <div style="font-weight:800; color:var(--text-primary); font-size:14px;">${e.codigo}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">${e.tipo || 'Equipamento'}</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-weight:800; color:var(--color-danger); font-size:16px;">${Math.round(e.pctAvanco || 0)}%</div>
+                    <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Avanço</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
           </div>
         </div>
 
