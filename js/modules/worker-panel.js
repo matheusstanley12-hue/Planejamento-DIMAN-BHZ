@@ -622,10 +622,7 @@ window.WorkerPanel = (() => {
         document.querySelectorAll('.live-pause-timer').forEach(span => {
           const start = span.getAttribute('data-start');
           if (start) {
-            const pauseMins = Math.floor((new Date() - new Date(start)) / 60000);
-            const hh = String(Math.floor(pauseMins / 60)).padStart(2, '0');
-            const mm = String(pauseMins % 60).padStart(2, '0');
-            span.innerText = ` - ${hh}:${mm}`;
+            span.innerText = ` - ${formatTimeDiff(start)}`;
           }
         });
       }, 1000);
@@ -741,10 +738,7 @@ window.WorkerPanel = (() => {
         const pauseReason = t.pauseReason || t.status;
         let timeStr = '';
         if (t.pauseStartTime) {
-          const pauseMins = Math.floor((new Date() - new Date(t.pauseStartTime)) / 60000);
-          const hh = String(Math.floor(pauseMins / 60)).padStart(2, '0');
-          const mm = String(pauseMins % 60).padStart(2, '0');
-          timeStr = `<span class="live-pause-timer" data-start="${t.pauseStartTime}"> - ${hh}:${mm}</span>`;
+          timeStr = `<span class="live-pause-timer" data-start="${t.pauseStartTime}"> - ${formatTimeDiff(t.pauseStartTime)}</span>`;
         }
         actionBtn = `
           <div style="width:100%; display:flex; flex-direction:column; gap:8px;">
