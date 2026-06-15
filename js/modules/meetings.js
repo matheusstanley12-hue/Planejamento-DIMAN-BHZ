@@ -208,11 +208,11 @@ window.MeetingsModule = (() => {
     document.getElementById('mt-due').value = '';
     document.getElementById('mt-prio').value = 'Média';
     document.getElementById('mt-comments').value = '';
-    document.getElementById('meeting-task-modal').classList.add('visible');
+    document.getElementById('meeting-task-modal').classList.add('open');
   }
 
   function closeModal() {
-    document.getElementById('meeting-task-modal').classList.remove('visible');
+    document.getElementById('meeting-task-modal').classList.remove('open');
   }
 
   function saveTask() {
