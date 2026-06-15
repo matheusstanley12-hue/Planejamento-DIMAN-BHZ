@@ -839,7 +839,9 @@ window.WorkforceModule = (() => {
     const currentEqId = worker?.equipmentId || '';
     const eqs = allEqs.filter(e => e.status !== 'Liberado' || e.id === currentEqId);
     
-    const isLocked = worker && currentEqId && allEqs.find(e => e.id === currentEqId)?.status !== 'Liberado';
+    const session = window.Auth ? window.Auth.getSession() : null;
+    const canBypassLock = session && ['Administrador', 'Desenvolvedor', 'Gerente'].includes(session.perfil);
+    const isLocked = worker && currentEqId && allEqs.find(e => e.id === currentEqId)?.status !== 'Liberado' && !canBypassLock;
     const discs = ['Mecânica','Caldeiraria','Elétrica','Usinagem','Pintor','Lavador','Montagem','Subconjunto','Teste','Retrabalho'];
     const funcs = ['Mecânico','Mecânico poços','Ajudante','Ajudante de poços','Eletrecista','Lavador','Soldador','Torneiro','Fresador','Ajustador'];
     

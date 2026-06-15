@@ -184,30 +184,30 @@ window.Dashboard = (() => {
       <div class="charts-grid">
         <div class="chart-card">
           <div class="card-header"><div class="card-title">Planejado × Realizado por Disciplina</div></div>
-          <canvas id="ch-disc" height="220"></canvas>
+          <canvas id="ch-disc" height="320"></canvas>
         </div>
         <div class="chart-card">
           <div class="card-header"><div class="card-title">Status dos Equipamentos</div></div>
-          <canvas id="ch-status" height="220"></canvas>
+          <canvas id="ch-status" height="320"></canvas>
         </div>
         <div class="chart-card">
           <div class="card-header"><div class="card-title">Avanço por Equipamento</div></div>
-          <canvas id="ch-eq" height="220"></canvas>
+          <canvas id="ch-eq" height="320"></canvas>
         </div>
         <div class="chart-card">
           <div class="card-header"><div class="card-title">Consumo de Mão de Obra</div></div>
-          <canvas id="ch-mo" height="220"></canvas>
+          <canvas id="ch-mo" height="320"></canvas>
         </div>
       </div>
       
       <div class="charts-grid" style="margin-top:var(--space-5);">
         <div class="chart-card">
           <div class="card-header"><div class="card-title">Planejado × Realizado por Categoria (Mês Atual)</div></div>
-          <canvas id="ch-cat-eq" height="220"></canvas>
+          <canvas id="ch-cat-eq" height="320"></canvas>
         </div>
         <div class="chart-card">
           <div class="card-header"><div class="card-title">Planejado × Realizado (Visão Anual)</div></div>
-          <canvas id="ch-ano-eq" height="220"></canvas>
+          <canvas id="ch-ano-eq" height="320"></canvas>
         </div>
       </div>
 
