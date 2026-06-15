@@ -97,9 +97,9 @@ window.ManualsAdmin = (() => {
               <textarea id="man-desc" class="form-control" rows="2" placeholder="Ex: Vista explodida e tabela de torques..."></textarea>
             </div>
             <div class="form-group">
-              <label>Link do PDF (Drive / SharePoint)</label>
-              <input type="url" id="man-link" class="form-control" placeholder="https://" required />
-              <small style="color:var(--text-muted);display:block;margin-top:4px;">Cole o link direto para o arquivo PDF.</small>
+              <label>Caminho do Arquivo ou Link (Drive / Computador)</label>
+              <input type="text" id="man-link" class="form-control" placeholder="Ex: C:\\Manuais\\Sonda.pdf ou https://" required />
+              <small style="color:var(--text-muted);display:block;margin-top:4px;">Cole o link da web ou o caminho da pasta no seu computador.</small>
             </div>
           </div>
           <div class="modal-footer">
@@ -191,25 +191,31 @@ window.WorkerManuals = (() => {
             <p style="color:var(--text-secondary);font-size:var(--text-sm);">Não há manuais cadastrados para os seus equipamentos atuais.</p>
           </div>
         ` : `
-          <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:var(--space-4);">
-            ${workerManuals.map(m => {
-              const eq = workerEquipments.find(e => e.id === m.equipmentId);
+          <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+            ${Object.keys(grouped).map(eqId => {
+              const eq = workerEquipments.find(e => e.id === eqId);
+              const manuals = grouped[eqId];
               return `
-                <div class="card" style="padding:var(--space-4);display:flex;flex-direction:column;background:var(--bg-card);border:1px solid var(--border-card);border-radius:var(--radius-lg);transition:transform 0.2s;box-shadow:var(--shadow-sm);">
-                  <div style="flex:1;">
-                    <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);">
-                      <div style="width:28px;height:28px;background:rgba(59,130,246,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--brand-primary-light);">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25M9 16.5v.75m3-3v3M15 12v5.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                      </div>
-                      <span style="font-size:var(--text-xs);font-weight:600;color:var(--brand-primary-light);text-transform:uppercase;">${eq ? eq.name : 'Equipamento'}</span>
-                    </div>
-                    <h3 style="font-weight:700;color:var(--text-primary);font-size:var(--text-base);line-height:1.3;margin-bottom:var(--space-2);">${m.title}</h3>
-                    ${m.description ? `<p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-4);line-height:1.4;">${m.description}</p>` : '<div style="margin-bottom:var(--space-4);"></div>'}
+                <div style="background:var(--bg-card);border:1px solid var(--border-card);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);">
+                  <div style="background:rgba(59,130,246,0.05);padding:var(--space-4);border-bottom:1px solid var(--border-card);display:flex;align-items:center;gap:var(--space-3);">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px;height:24px;color:var(--brand-primary);"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
+                    <h2 style="font-size:var(--text-lg);font-weight:700;color:var(--text-primary);margin:0;">Pasta: ${eq ? eq.name : 'Equipamento'}</h2>
+                    <span class="badge badge-primary" style="margin-left:auto;">${manuals.length}</span>
                   </div>
-                  <a href="${m.link}" target="_blank" class="btn btn-primary" style="width:100%;display:flex;justify-content:center;gap:8px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
-                    Acessar Manual
-                  </a>
+                  <div style="padding:var(--space-4);display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:var(--space-4);">
+                    ${manuals.map(m => `
+                      <div class="card" style="padding:var(--space-4);display:flex;flex-direction:column;border:1px solid var(--border-hover);border-radius:var(--radius-md);background:var(--bg-base);">
+                        <div style="flex:1;">
+                          <h3 style="font-weight:700;color:var(--text-primary);font-size:var(--text-base);line-height:1.3;margin-bottom:var(--space-2);">${m.title}</h3>
+                          ${m.description ? `<p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-4);line-height:1.4;">${m.description}</p>` : '<div style="margin-bottom:var(--space-4);"></div>'}
+                        </div>
+                        <a href="${m.link}" target="_blank" class="btn btn-primary" style="width:100%;display:flex;justify-content:center;gap:8px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+                          Acessar Manual
+                        </a>
+                      </div>
+                    `).join('')}
+                  </div>
                 </div>
               `;
             }).join('')}
