@@ -1537,10 +1537,11 @@ window.WorkerPanel = (() => {
     getMyEquipments,
     startTask,
     promptPause,
-    promptComplete,
+    pauseWork,
     resumeWork,
-    closePauseModal,
-    savePauseState
+    promptComplete,
+    previewPhoto,
+    finalizeTask
   };
 })();
 
