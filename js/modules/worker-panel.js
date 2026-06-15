@@ -879,7 +879,7 @@ window.WorkerPanel = (() => {
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;margin-top:24px;">
           <h3 style="font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:0;">Fila de Tarefas Pendentes</h3>
-          <button class="btn btn-ghost btn-sm" onclick="WorkerPanel.openCreateTask()" style="color:var(--brand-primary);font-weight:700;">+ Nova Tarefa</button>
+          <button class="btn btn-primary btn-sm" onclick="WorkerPanel.openCreateTask()" style="font-weight:700;">+ Nova Tarefa</button>
         </div>
         
         ${listTasks.length > 0 ? tasksHtml : `
