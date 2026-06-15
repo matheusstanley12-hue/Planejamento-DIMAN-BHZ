@@ -1,0 +1,160 @@
+/* ================================================================
+   PRO DASHBOARD (Nível Multinacional)
+   ================================================================ */
+
+.dashboard-pro-wrapper {
+  background-color: #0f172a; /* Slate 900 */
+  color: #f8fafc;
+  min-height: 100vh;
+  padding: var(--space-6);
+  border-radius: 12px;
+  box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
+  font-family: 'Inter', sans-serif;
+}
+
+.dashboard-pro-wrapper .section-title {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-pro-wrapper .section-subtitle {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Glassmorphism Cards */
+.card-glass {
+  background: rgba(30, 41, 59, 0.7); /* Slate 800 semi-transparent */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-glass::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 2px;
+  background: linear-gradient(90deg, rgba(56,189,248,0) 0%, rgba(56,189,248,0.5) 50%, rgba(56,189,248,0) 100%);
+  opacity: 0.5;
+}
+
+.card-glass.danger-accent::before {
+  background: linear-gradient(90deg, rgba(239,68,68,0) 0%, rgba(239,68,68,0.5) 50%, rgba(239,68,68,0) 100%);
+}
+
+.card-glass.success-accent::before {
+  background: linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.5) 50%, rgba(16,185,129,0) 100%);
+}
+
+.card-glass-header {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Typography */
+.text-neon-blue {
+  color: #38bdf8;
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+}
+.text-neon-green {
+  color: #34d399;
+  text-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
+}
+.text-neon-red {
+  color: #f87171;
+  text-shadow: 0 0 20px rgba(248, 113, 113, 0.4);
+}
+
+.metric-value-huge {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+  margin: 8px 0;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* Grids */
+.grid-bento-pro {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* Top High-level KPIs spanning 4 cols each (3 items) */
+.col-span-4 { grid-column: span 4; }
+
+/* Main charts */
+.col-span-8 { grid-column: span 8; }
+.col-span-6 { grid-column: span 6; }
+.col-span-3 { grid-column: span 3; }
+
+/* Responsive adjustments */
+@media(max-width: 1400px) {
+  .col-span-4 { grid-column: span 6; } /* 2 per row */
+  .col-span-8 { grid-column: span 12; }
+}
+@media(max-width: 1024px) {
+  .col-span-4, .col-span-6, .col-span-3 { grid-column: span 12; }
+}
+
+/* Customized Canvas containers */
+.canvas-container {
+  flex: 1;
+  position: relative;
+  min-height: 300px;
+  width: 100%;
+}
+
+.canvas-container.small {
+  min-height: 200px;
+}
+
+/* List Items (Top 5 Equipamentos) */
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ranking-item {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ranking-item-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #f8fafc;
+}
+.ranking-item-meta {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.ranking-item-value {
+  font-family: 'Inter', monospace;
+  font-weight: 800;
+  color: #cbd5e1;
+}
