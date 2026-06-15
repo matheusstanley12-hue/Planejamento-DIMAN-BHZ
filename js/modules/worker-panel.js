@@ -1790,7 +1790,6 @@ window.WorkerPanel = (() => {
     openReportRestriction,
     updateRestrictionTasks,
     saveRestriction,
-    submitCreateTask,
     startTask,
     startPromptTask,
     promptPause,
