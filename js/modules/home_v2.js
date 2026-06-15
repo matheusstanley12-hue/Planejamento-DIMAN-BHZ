@@ -22,7 +22,12 @@ window.HomeModule = (() => {
   }
 
   function render() {
-    const eqs = [...window.DB.equipment.list()].filter(e => e.status !== 'Liberado');
+    const currentMonthStr = new Date().toISOString().slice(0, 7);
+    const eqs = [...window.DB.equipment.list()].filter(e => {
+      if (e.status === 'Liberado') return false; // always hide released
+      if (!e.dataLiberacaoPlanejada) return true; // show if no date
+      return e.dataLiberacaoPlanejada.startsWith(currentMonthStr);
+    });
     // Sort equipment by estimated release date ascending (soonest to leave first)
     eqs.sort((a, b) => {
       const dateA = a.dataLiberacaoAtual || a.dataLiberacaoPlanejada || '9999-12-31';
