@@ -608,16 +608,27 @@ window.WorkerPanel = (() => {
     const state = myWorker.currentState || 'Ocioso';
     
     // Auto-update timer display
-    if (!window.workerTimerInterval && state !== 'Ocioso') {
+    if (!window.workerTimerInterval) {
       window.workerTimerInterval = setInterval(() => {
+        const session = window.Auth.getSession();
+        const workers = window.DB.workforce.list();
+        const myW = workers.find(w => (w.matricula && session.matricula && w.matricula === session.matricula) || w.nome === session.nome);
+
         const el = document.getElementById('live-timer-wp');
-        if (el && myWorker.currentActionStartTime) {
-          el.innerText = formatTimeDiff(myWorker.currentActionStartTime);
+        if (el && myW && myW.currentActionStartTime) {
+          el.innerText = formatTimeDiff(myW.currentActionStartTime);
         }
+
+        document.querySelectorAll('.live-pause-timer').forEach(span => {
+          const start = span.getAttribute('data-start');
+          if (start) {
+            const pauseMins = Math.floor((new Date() - new Date(start)) / 60000);
+            const hh = String(Math.floor(pauseMins / 60)).padStart(2, '0');
+            const mm = String(pauseMins % 60).padStart(2, '0');
+            span.innerText = ` - ${hh}:${mm}`;
+          }
+        });
       }, 1000);
-    } else if (state === 'Ocioso' && window.workerTimerInterval) {
-      clearInterval(window.workerTimerInterval);
-      window.workerTimerInterval = null;
     }
 
     if (state === 'Trabalhando') {
@@ -733,7 +744,7 @@ window.WorkerPanel = (() => {
           const pauseMins = Math.floor((new Date() - new Date(t.pauseStartTime)) / 60000);
           const hh = String(Math.floor(pauseMins / 60)).padStart(2, '0');
           const mm = String(pauseMins % 60).padStart(2, '0');
-          timeStr = ` - ${hh}:${mm}`;
+          timeStr = `<span class="live-pause-timer" data-start="${t.pauseStartTime}"> - ${hh}:${mm}</span>`;
         }
         actionBtn = `
           <div style="width:100%; display:flex; flex-direction:column; gap:8px;">
