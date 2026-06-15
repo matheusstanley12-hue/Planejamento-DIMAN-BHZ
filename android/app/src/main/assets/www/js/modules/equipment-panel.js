@@ -948,6 +948,17 @@ window.EquipmentPanel = (() => {
     };
 
     const targetEqId = eqId || currentEqId;
+
+    if (taskData.responsavel && taskData.responsavel !== 'Não atribuído') {
+      const activeEqs = DB.equipment.list().filter(e => e.id !== targetEqId && e.status !== 'Liberado');
+      for (const eq of activeEqs) {
+        if (eq.workforceMap && Object.values(eq.workforceMap).includes(taskData.responsavel)) {
+          Toast.error('Erro', `O funcionário ${taskData.responsavel} já está alocado no equipamento ${eq.codigo} (${eq.status}).`);
+          return;
+        }
+      }
+    }
+
     const eq = DB.equipment.get(targetEqId);
     const defaultWorker = eq && eq.workforceMap ? eq.workforceMap[taskData.disciplina] : '';
     

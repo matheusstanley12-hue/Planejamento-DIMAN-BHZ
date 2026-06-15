@@ -685,6 +685,19 @@ window.EquipmentModule = (() => {
       }
     };
     if (!data.codigo || !data.os) { Toast.error('Erro', 'Código e O.S. são obrigatórios.'); return; }
+
+    const activeEqs = DB.equipment.list().filter(e => e.id !== id && e.status !== 'Liberado');
+    const newWorkers = Object.values(data.workforceMap).filter(w => w !== '');
+    for (const eq of activeEqs) {
+      if (eq.workforceMap) {
+        for (const [disc, worker] of Object.entries(eq.workforceMap)) {
+           if (worker && newWorkers.includes(worker)) {
+               Toast.error('Erro', `O funcionário ${worker} já está alocado no equipamento ${eq.codigo} (${eq.status}).`);
+               return;
+           }
+        }
+      }
+    }
     
     // Check if status is Liberado and validate pending tasks
     if (data.status === 'Liberado') {
@@ -1144,6 +1157,16 @@ window.TasksModule = (() => {
       observacoes: finalObservacoes,
     };
     if (status === 'Concluída') { data.pctExecutado = 100; data.dataRealTermino = data.dataRealTermino || today; }
+
+    if (data.responsavel && data.responsavel !== 'Não atribuído') {
+      const activeEqs = DB.equipment.list().filter(e => e.id !== data.equipmentId && e.status !== 'Liberado');
+      for (const eq of activeEqs) {
+        if (eq.workforceMap && Object.values(eq.workforceMap).includes(data.responsavel)) {
+          Toast.error('Erro', `O funcionário ${data.responsavel} já está alocado no equipamento ${eq.codigo} (${eq.status}).`);
+          return;
+        }
+      }
+    }
 
     const eq = DB.equipment.get(data.equipmentId);
     const defaultWorker = eq && eq.workforceMap ? eq.workforceMap[data.disciplina] : '';
