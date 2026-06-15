@@ -167,7 +167,7 @@ window.QrGeneratorModule = (() => {
     Toast && Toast.show('Gerando PDF...', 'Aguarde um instante...', 'info');
     
     if (window.html2pdf) {
-      window.html2pdf().set(opt).from(wrapper).outputPdf('blob').then((blob) => {
+      window.html2pdf().set(opt).from(wrapper).output('blob').then((blob) => {
         document.body.removeChild(wrapper);
         const file = new File([blob], opt.filename, { type: "application/pdf" });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
