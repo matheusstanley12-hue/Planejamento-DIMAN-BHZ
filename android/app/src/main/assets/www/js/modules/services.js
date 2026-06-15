@@ -20,10 +20,10 @@ window.ServicesModule = (() => {
     let mySols = [];
     if (isPCM) {
       // PCM sees Usinagem needing approval, plus everything else for oversight
-      mySols = solicitacoes.filter(s => s.destino === 'Usinagem');
+      mySols = solicitacoes.filter(s => (s.destino || s.setorDestino) === 'Usinagem');
     } else if (isEncarregado) {
       // Encarregado sees their sector
-      mySols = solicitacoes.filter(s => s.destino === session.disciplina);
+      mySols = solicitacoes.filter(s => (s.destino || s.setorDestino) === session.disciplina);
     }
 
     const pendentes = mySols.filter(s => s.status === 'Aguardando Aprovação PCM' || s.status === 'Aguardando Encarregado');
@@ -94,8 +94,8 @@ window.ServicesModule = (() => {
                   <tr>
                     <td>${new Date(s.createdAt).toLocaleDateString('pt-BR')}</td>
                     <td><strong>${eq ? eq.codigo : '—'}</strong></td>
-                    <td>${s.origem || '—'}</td>
-                    <td><span class="badge badge-ghost">${s.destino || '—'}</span></td>
+                    <td>${s.origem || s.solicitanteNome || '—'}</td>
+                    <td><span class="badge badge-ghost">${s.destino || s.setorDestino || '—'}</span></td>
                     <td>
                       ${s.descricao}
                     </td>
@@ -125,9 +125,48 @@ window.ServicesModule = (() => {
   }
 
   function approvePCM(id) {
-    const osNumber = prompt('Digite o número da Ordem de Serviço (OS) para aprovar esta solicitação:');
-    if (osNumber === null) return; // Cancelled
-    if (osNumber.trim() === '') {
+    const s = window.DB.solicitacoes.list().find(x => x.id === id);
+    if (!s) return;
+
+    const modalHtml = `
+      <div class="modal-overlay" id="modal-approve">
+        <div class="modal" style="max-width:500px;">
+          <div class="modal-header">
+            <div class="modal-title">Aprovar Solicitação de OS</div>
+            <button class="modal-close" onclick="closeModal('modal-approve')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="padding-top:10px;">
+            ${s.fotoPeca ? `
+              <div style="margin-bottom:15px;text-align:center;">
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;text-align:left;"><strong>Foto da Peça / Serviço:</strong></p>
+                <img src="${s.fotoPeca}" style="max-width:100%;max-height:250px;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--border-card);" />
+              </div>
+            ` : `<p style="font-size:12px;color:#ef4444;margin-bottom:15px;">⚠️ Foto não anexada (Solicitação Antiga).</p>`}
+            
+            <p style="margin-bottom:12px;color:var(--text-secondary);font-size:13px;"><strong>Descrição:</strong> ${s.descricao}</p>
+            
+            <div class="form-group">
+              <label>Número da Ordem de Serviço (OS) *</label>
+              <input type="text" id="sv-approve-os" placeholder="Ex: OS-12345" class="form-control" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modal-approve')">Cancelar</button>
+            <button class="btn btn-success" onclick="window.ServicesModule.saveApprovePCM('${s.id}')">Confirmar Aprovação</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('services-modals').innerHTML = modalHtml;
+    openModal('modal-approve');
+  }
+
+  function saveApprovePCM(id) {
+    const osNumber = document.getElementById('sv-approve-os').value.trim();
+    if (!osNumber) {
       Toast.error('Erro', 'O número da OS é obrigatório.');
       return;
     }
@@ -138,7 +177,7 @@ window.ServicesModule = (() => {
     // Create task
     const taskData = {
       equipmentId: s.equipmentId,
-      codigo: 'OS ' + osNumber.trim(),
+      codigo: 'OS ' + osNumber,
       descricao: `[SOLICITAÇÃO] ${s.descricao}`,
       disciplina: s.destino,
       responsavel: '', // Empty until encarregado assigns
@@ -153,6 +192,7 @@ window.ServicesModule = (() => {
       observacoes: '',
       predecessoras: [],
       solicitacaoId: s.id,
+      fotoPeca: s.fotoPeca || '', // Pass photo to the task
       createdAt: window.DB.now()
     };
     
@@ -167,6 +207,7 @@ window.ServicesModule = (() => {
       osId: newTask.id 
     });
     
+    closeModal('modal-approve');
     Toast.success('Aprovada', 'Ordem de Serviço gerada e enviada para o Encarregado.');
     Router.navigate('services', { force: true });
   }
@@ -216,14 +257,20 @@ window.ServicesModule = (() => {
     
     const modalHtml = `
       <div class="modal-overlay" id="modal-assign">
-        <div class="modal">
+        <div class="modal" style="max-width:500px;">
           <div class="modal-header">
             <div class="modal-title">Destinar Mão de Obra</div>
             <button class="modal-close" onclick="closeModal('modal-assign')">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body" style="padding-top:10px;">
+            ${s.fotoPeca ? `
+              <div style="margin-bottom:15px;text-align:center;">
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;text-align:left;"><strong>Foto da Peça / Serviço:</strong></p>
+                <img src="${s.fotoPeca}" style="max-width:100%;max-height:250px;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--border-card);" />
+              </div>
+            ` : ''}
             <p style="margin-bottom:12px;color:var(--text-secondary);font-size:13px;">Selecione o executante para a atividade: <strong>${s.descricao}</strong></p>
             <div class="form-group">
               <label>Executante (${s.destino})</label>
@@ -252,19 +299,30 @@ window.ServicesModule = (() => {
       return;
     }
 
-    // Update Task
-    const task = window.DB.tasks.get(taskId);
-    if (task) {
-      window.DB.tasks.update(taskId, { responsavel: workerName, status: 'Em Andamento' });
+    const s = window.DB.solicitacoes.list().find(x => x.id === solId);
+    
+    // Pass photo to task if it didn't pass before
+    if (s && s.fotoPeca) {
+      window.DB.tasks.update(taskId, { responsavel: workerName, status: 'Aguardando Recurso', fotoPeca: s.fotoPeca });
+    } else {
+      window.DB.tasks.update(taskId, { responsavel: workerName, status: 'Aguardando Recurso' });
     }
-
+    
     // Update Solicitacao
     window.DB.solicitacoes.update(solId, { status: 'Em Execução' });
 
-    Toast.success('Mão de Obra Destinada!', workerName + ' agora é o responsável pelo serviço.');
+    Toast.success('Destinado', 'O serviço foi repassado para o executante.');
     closeModal('modal-assign');
     Router.navigate('services', { force: true });
   }
 
-  return { render, setTab, approvePCM, reject, assignWorker, saveAssign };
+  return {
+    render,
+    setTab,
+    approvePCM,
+    saveApprovePCM,
+    reject,
+    assignWorker,
+    saveAssign
+  };
 })();

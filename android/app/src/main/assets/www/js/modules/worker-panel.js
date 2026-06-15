@@ -28,32 +28,38 @@ window.WorkerPanel = (() => {
     if (!task.disciplina) return true;
 
     const disc = task.disciplina.toLowerCase();
-
-    if (session.disciplina) {
-      if (session.disciplina.toLowerCase() === disc) return true;
+    
+    // Check both session and workforce DB
+    let sDisc = (session.disciplina || '').toLowerCase();
+    let sCargo = (session.cargo || '').toLowerCase();
+    
+    const myWorker = getMyWorker(session);
+    if (myWorker) {
+       sDisc = sDisc || (myWorker.disciplina || '').toLowerCase();
+       sCargo = sCargo || (myWorker.funcao || '').toLowerCase();
     }
 
-    if (session.cargo) {
-      const cargo = session.cargo.toLowerCase();
-      
+    if (sDisc && sDisc === disc) return true;
+
+    if (sCargo) {
       if (disc.includes('mecânic') || disc.includes('mecanic')) {
-        if ((cargo.includes('mecânic') || cargo.includes('mecanic')) && !cargo.includes('torneiro')) return true;
+        if ((sCargo.includes('mecânic') || sCargo.includes('mecanic')) && !sCargo.includes('torneiro')) return true;
       } else if (disc.includes('usinagem')) {
-        if (cargo.includes('usinagem') || cargo.includes('torneiro')) return true;
+        if (sCargo.includes('usinagem') || sCargo.includes('torneiro')) return true;
       } else if (disc.includes('elétric') || disc.includes('eletric')) {
-        if (cargo.includes('elétric') || cargo.includes('eletric')) return true;
+        if (sCargo.includes('elétric') || sCargo.includes('eletric')) return true;
       } else if (disc.includes('caldeir') || disc.includes('solda')) {
-        if (cargo.includes('caldeir') || cargo.includes('soldad')) return true;
+        if (sCargo.includes('caldeir') || sCargo.includes('soldad')) return true;
       } else if (disc.includes('pintor') || disc.includes('pintura')) {
-        if (cargo.includes('pintor')) return true;
+        if (sCargo.includes('pintor')) return true;
       } else if (disc.includes('lavador') || disc.includes('lavação') || disc.includes('lavacao')) {
-        if (cargo.includes('lavador')) return true;
+        if (sCargo.includes('lavador')) return true;
       } else if (disc.includes('montag') || disc.includes('montador')) {
-        if (cargo.includes('montag') || cargo.includes('montador')) return true;
+        if (sCargo.includes('montag') || sCargo.includes('montador')) return true;
       } else if (disc.includes('lubrific')) {
-        if (cargo.includes('lubrific')) return true;
+        if (sCargo.includes('lubrific')) return true;
       } else if (disc.includes('ferramentaria')) {
-        if (cargo.includes('ferrament')) return true;
+        if (sCargo.includes('ferrament')) return true;
       }
     }
     
@@ -482,6 +488,11 @@ window.WorkerPanel = (() => {
           <div class="task-timer" id="live-timer-wp">${formatTimeDiff(myWorker.currentActionStartTime)}</div>
           <div class="task-desc">${currentT ? currentT.descricao : 'Tarefa desconhecida'}</div>
           <div class="task-meta">${eq ? eq.codigo : ''} &bull; ${currentT ? currentT.disciplina : ''}</div>
+          ${currentT && currentT.fotoPeca ? `
+            <div style="margin-bottom:15px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
+              <img src="${currentT.fotoPeca}" style="width:100%;height:120px;object-fit:cover;display:block;" />
+            </div>
+          ` : ''}
           
           ${currentT && !canExecuteTask(session, currentT) ? `
             <div class="action-buttons">
@@ -513,6 +524,11 @@ window.WorkerPanel = (() => {
           <div class="task-timer" id="live-timer-wp">${formatTimeDiff(myWorker.currentActionStartTime)}</div>
           <div class="task-desc">${currentT ? currentT.descricao : ''}</div>
           <div class="task-meta">${eq ? eq.codigo : ''} &bull; Aguardando retomada</div>
+          ${currentT && currentT.fotoPeca ? `
+            <div style="margin-bottom:15px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
+              <img src="${currentT.fotoPeca}" style="width:100%;height:120px;object-fit:cover;display:block;" />
+            </div>
+          ` : ''}
           
           ${currentT && !canExecuteTask(session, currentT) ? `
             <div class="action-buttons">
@@ -586,6 +602,11 @@ window.WorkerPanel = (() => {
             <span class="task-discipline">${t.disciplina || 'Geral'}</span>
             <span class="task-prio ${priorityClass}">${t.prioridade || 'Média'}</span>
           </div>
+          ${t.fotoPeca ? `
+          <div style="margin-top:10px;margin-bottom:10px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-card);">
+            <img src="${t.fotoPeca}" style="width:100%;height:140px;object-fit:cover;display:block;" />
+          </div>
+          ` : ''}
           <div class="task-card-title">${t.descricao}</div>
           <div class="task-card-eq">${eq ? eq.codigo + ' - ' + eq.nome : 'Sem equipamento'}</div>
           <div class="task-card-footer">
@@ -1780,6 +1801,19 @@ window.WorkerServices = (() => {
     }
 
     setTimeout(() => {
+      document.getElementById('w-sv-photo')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            document.getElementById('w-sv-photo-preview').src = evt.target.result;
+            document.getElementById('w-sv-photo-preview-container').style.display = 'block';
+            window._tempSvPhoto = evt.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
       document.getElementById('btn-w-sv-save')?.addEventListener('click', () => {
         const desc = document.getElementById('w-sv-desc').value.trim();
         const dest = document.getElementById('w-sv-dest').value;
@@ -1792,6 +1826,10 @@ window.WorkerServices = (() => {
           window.Toast.error('Erro', 'Setor de destino é obrigatório.');
           return;
         }
+        if (!window._tempSvPhoto) {
+          window.Toast.error('Erro', 'É obrigatório anexar a foto da peça.');
+          return;
+        }
 
         const eqId = document.getElementById('w-sv-eq').value;
         const statusReq = (dest === 'Usinagem') ? 'Aguardando Aprovação PCM' : 'Aguardando Encarregado';
@@ -1802,6 +1840,7 @@ window.WorkerServices = (() => {
           destino: dest,
           equipmentId: eqId,
           descricao: desc,
+          fotoPeca: window._tempSvPhoto,
           status: statusReq,
           createdAt: window.DB.now(),
           updatedAt: window.DB.now()
@@ -1810,6 +1849,7 @@ window.WorkerServices = (() => {
         window.DB.solicitacoes.add(payload);
         const msg = (dest === 'Usinagem') ? `Solicitação para Usinagem enviada ao PCM para aprovação.` : `Solicitação enviada direto para o encarregado de ${dest}.`;
         window.Toast.success('Enviado!', msg);
+        window._tempSvPhoto = null; // Clear temp photo
         window.Router.navigate('worker-services', { force: true });
       });
     }, 100);
@@ -1839,13 +1879,27 @@ window.WorkerServices = (() => {
               </select>
             </div>
             <div class="form-group">
-              <label>Descrição do Serviço *</label>
-              <textarea id="w-sv-desc" class="form-control" rows="4" placeholder="Detalhe o serviço que precisa ser realizado..." required></textarea>
+              <label>Descrição do que precisa ser feito *</label>
+              <textarea id="w-sv-desc" class="form-control" rows="3" placeholder="Detalhe a necessidade..."></textarea>
             </div>
             
-            <div style="margin-top:var(--space-4);text-align:right;">
-              <button class="btn btn-primary" id="btn-w-sv-save" style="width:100%;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;margin-right:8px;display:inline-block;vertical-align:middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+            <div class="form-group">
+              <label>Foto da Peça / Serviço *</label>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Obrigatório tirar foto para a aprovação e visualização do Torneiro/Encarregado.</p>
+              <div class="file-upload-wrapper" style="position:relative;display:inline-block;width:100%;">
+                <button type="button" class="btn btn-outline" style="width:100%;border-style:dashed;color:var(--text-secondary);" onclick="document.getElementById('w-sv-photo').click()">
+                  📸 Tirar Foto ou Anexar
+                </button>
+                <input type="file" id="w-sv-photo" accept="image/*" capture="environment" style="display:none;" />
+              </div>
+              <div id="w-sv-photo-preview-container" style="display:none;margin-top:10px;text-align:center;">
+                <img id="w-sv-photo-preview" style="max-width:100%;max-height:250px;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);" />
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+              <button id="btn-w-sv-save" class="btn btn-primary" style="width:100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
                 Enviar Solicitação
               </button>
             </div>

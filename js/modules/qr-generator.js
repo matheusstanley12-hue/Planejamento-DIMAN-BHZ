@@ -113,10 +113,17 @@ window.QrGeneratorModule = (() => {
       return alert('Aguarde o QR Code ser gerado.');
     }
     const canvas = container.querySelector('canvas');
-    const link = document.createElement('a');
-    link.download = `QR_${codigo}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+    canvas.toBlob(blob => {
+        const file = new File([blob], `QR_${codigo}.png`, { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: `QR_${codigo}.png` }).catch(e => console.error(e));
+        } else {
+            const link = document.createElement('a');
+            link.download = `QR_${codigo}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        }
+    });
   }
 
   function printModel(codigo) {
@@ -160,9 +167,21 @@ window.QrGeneratorModule = (() => {
     Toast && Toast.show('Gerando PDF...', 'Aguarde um instante...', 'info');
     
     if (window.html2pdf) {
-      window.html2pdf().set(opt).from(wrapper).save().then(() => {
+      window.html2pdf().set(opt).from(wrapper).outputPdf('blob').then((blob) => {
         document.body.removeChild(wrapper);
-        Toast && Toast.success('PDF Gerado', 'O download iniciará em breve.');
+        const file = new File([blob], opt.filename, { type: "application/pdf" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: opt.filename }).catch(e => console.error(e));
+            Toast && Toast.success('Pronto!', 'Escolha onde salvar ou enviar o PDF.');
+        } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = opt.filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            Toast && Toast.success('PDF Baixado', 'O download foi concluído.');
+        }
       }).catch(e => {
         document.body.removeChild(wrapper);
         console.error("html2pdf error:", e);

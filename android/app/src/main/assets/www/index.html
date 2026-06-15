@@ -28,6 +28,17 @@
   <script src="js/supabase.js"></script>
 
   <script>
+    const CACHE_VERSION = '25';
+    const noCacheUrls = [
+      'css/index.css',
+      'js/core/auth.js',
+      'js/core/db_v2.js',
+      'js/core/router.js',
+      'js/modules/worker-panel.js',
+      'js/modules/services.js',
+      'js/app_v2.js'
+    ];
+
     // Global Chart.js Plugin for Data Labels
     if (window.Chart) {
       Chart.register({
