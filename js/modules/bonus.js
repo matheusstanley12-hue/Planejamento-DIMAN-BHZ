@@ -26,32 +26,24 @@ window.BonusModule = (() => {
 
   function getMetrics() {
     try {
-      return JSON.parse(localStorage.getItem('diman_bonus_metrics') || '{}');
+      return JSON.parse(localStorage.getItem('diman_bonus_metrics_v2') || '{}');
     } catch(e) { return {}; }
   }
 
   function saveMetrics(metrics) {
-    localStorage.setItem('diman_bonus_metrics', JSON.stringify(metrics));
+    localStorage.setItem('diman_bonus_metrics_v2', JSON.stringify(metrics));
     Router.navigate('bonus', { force: true });
   }
 
-  window.toggleAFT = function() {
+  window.updatePenalidade = function(workerId, field, val) {
     const period = getPeriodKey();
     const metrics = getMetrics();
-    if (!metrics[period]) metrics[period] = { aft: false, fiveS: {} };
-    metrics[period].aft = !metrics[period].aft;
-    saveMetrics(metrics);
-  };
-
-  window.updateFiveS = function(workerId, val) {
-    const period = getPeriodKey();
-    const metrics = getMetrics();
-    if (!metrics[period]) metrics[period] = { aft: false, fiveS: {} };
-    let num = parseFloat(val);
-    if (isNaN(num)) num = 0;
-    if (num > 10) num = 10;
-    if (num < 0) num = 0;
-    metrics[period].fiveS[workerId] = num;
+    if (!metrics[period]) metrics[period] = { penalidades: {} };
+    if (!metrics[period].penalidades[workerId]) metrics[period].penalidades[workerId] = { faltas: 0, atestados: 0, atrasos: 0 };
+    
+    let num = parseInt(val, 10);
+    if (isNaN(num) || num < 0) num = 0;
+    metrics[period].penalidades[workerId][field] = num;
     saveMetrics(metrics);
   };
 
@@ -71,9 +63,7 @@ window.BonusModule = (() => {
     const { startDate, endDate } = getDates();
     const periodKey = getPeriodKey();
     const metrics = getMetrics();
-    const periodMetrics = metrics[periodKey] || { aft: false, fiveS: {} };
-    const aftAtivo = periodMetrics.aft;
-    const isGerente = ['Administrador', 'Gerente', 'Desenvolvedor'].includes(session.perfil);
+    const periodMetrics = metrics[periodKey] || { penalidades: {} };
 
     // --- COLETIVO: Liberação de Equipamentos (50%) ---
     const allEqs = DB.equipment.list();
@@ -87,21 +77,19 @@ window.BonusModule = (() => {
     if (plannedEqs.length > 0) {
       percLiberacao = (releasedEqs.length / plannedEqs.length) * 50;
     } else {
-      percLiberacao = 50; // Se não tem planejamento, ganha por default
+      percLiberacao = 50;
     }
 
-    // --- COLETIVO: Índice de Retrabalho (15%) ---
+    // --- COLETIVO: Retrabalho (10%) ---
     const allTasks = DB.tasks.list();
     const tasksInPeriod = allTasks.filter(t => {
        const d = new Date(t.createdAt);
        return d >= startDate && d <= endDate;
     });
     const retrabalhoTasks = tasksInPeriod.filter(t => t.disciplina === 'Retrabalho').length;
-    // Punição de 1% por cada tarefa de retrabalho na oficina (até zerar os 15%)
-    let percRetrabalho = Math.max(0, 15 - (retrabalhoTasks * 1));
+    let percRetrabalho = Math.max(0, 10 - (retrabalhoTasks * 1));
 
-    // Base Coletiva Adquirida
-    const coletivoBase = percLiberacao + percRetrabalho + (aftAtivo ? 5 : 0);
+    const coletivoBase = percLiberacao + percRetrabalho; // max 60%
 
     // Preparar Dados por Trabalhador
     const workerStats = {};
@@ -121,28 +109,27 @@ window.BonusModule = (() => {
         id: w.id,
         nome: w.nome,
         isFerias: isFerias,
-        qtdFaltas: 0,
-        horasAtestado: 0,
-        horasAtraso: 0,
-        eqsParticipou: new Set()
+        tasksConcluidas: 0,
+        tasksTotal: 0,
+        horasPorDia: {}
       };
     });
 
+    // O.S Finalizada & Atualização de Sistema
     const timesheets = DB.timesheets ? DB.timesheets.list() : [];
-    timesheets.filter(t => new Date(t.data) >= startDate && new Date(t.data) <= endDate).forEach(t => {
-      // Usar t.workerName se t.workerId não resolver, porque timesheet legado usa ID
-      let w = wfList.find(x => x.id === t.workerId || x.nome === t.workerName);
-      if (w && workerStats[w.nome]) {
-        if (t.tipo === 'Falta') workerStats[w.nome].qtdFaltas += 1;
-        if (t.tipo === 'Atestado') workerStats[w.nome].horasAtestado += parseFloat(t.horasTrabalhadas||0);
-        if (t.tipo === 'Atraso') workerStats[w.nome].horasAtraso += parseFloat(t.horasTrabalhadas||0);
+    
+    tasksInPeriod.forEach(t => {
+      if (t.responsavel && workerStats[t.responsavel]) {
+        workerStats[t.responsavel].tasksTotal++;
+        if (t.status === 'Concluída') workerStats[t.responsavel].tasksConcluidas++;
       }
     });
 
-    // Mapear Equipamentos -> Participação
-    tasksInPeriod.forEach(t => {
-      if (t.responsavel && workerStats[t.responsavel]) {
-        workerStats[t.responsavel].eqsParticipou.add(t.equipmentId);
+    timesheets.filter(t => new Date(t.data) >= startDate && new Date(t.data) <= endDate).forEach(t => {
+      let w = wfList.find(x => x.id === t.workerId || x.nome === t.workerName);
+      if (w && workerStats[w.nome] && t.tipo !== 'Falta' && t.tipo !== 'Atestado') {
+        if (!workerStats[w.nome].horasPorDia[t.data]) workerStats[w.nome].horasPorDia[t.data] = 0;
+        workerStats[w.nome].horasPorDia[t.data] += parseFloat(t.horasTrabalhadas || 0);
       }
     });
 
@@ -151,7 +138,6 @@ window.BonusModule = (() => {
     const statsArray = Object.values(workerStats).sort((a,b) => a.nome.localeCompare(b.nome));
 
     statsArray.forEach(w => {
-      let trStyle = '';
       if (w.isFerias) {
         tableHtml += `
           <tr style="border-bottom:1px solid var(--border-card); opacity:0.6;">
@@ -161,62 +147,81 @@ window.BonusModule = (() => {
         return;
       }
 
-      // --- INDIVIDUAL: OS no Prazo (10%) ---
-      let osNoPrazoCount = 0;
-      let osTotalCount = 0;
-      w.eqsParticipou.forEach(eqId => {
-        const eq = allEqs.find(e => e.id === eqId);
-        if (eq && eq.status === 'Liberado') {
-          osTotalCount++;
-          if (eq.dataFim && eq.liberacaoPlanejada && eq.dataFim <= eq.liberacaoPlanejada) {
-            osNoPrazoCount++;
-          }
+      // --- INDIVIDUAL: Atualização no Sistema (30%) ---
+      let diasPenalizados = 0;
+      Object.keys(w.horasPorDia).forEach(data => {
+        if (w.horasPorDia[data] < 8) {
+          diasPenalizados++;
         }
       });
-      let percOsPrazo = 10;
-      if (osTotalCount > 0 && osNoPrazoCount < osTotalCount) {
-        percOsPrazo = (osNoPrazoCount / osTotalCount) * 10;
-      } else if (osTotalCount === 0) {
-        percOsPrazo = 10; // Defaults to 10 if no completed OS yet
+      let percAtualizacao = Math.max(0, 30 - (diasPenalizados * 2));
+
+      // --- INDIVIDUAL: O.S Finalizada (10%) ---
+      let percOS = 10;
+      if (w.tasksTotal > 0) {
+        percOS = (w.tasksConcluidas / w.tasksTotal) * 10;
+      } else {
+        percOS = 10; // default 10 se não teve tarefas
       }
 
-      // --- INDIVIDUAL: Absenteísmo (10%) ---
-      // 0 faltas/atestados/atrasos = 10%, senão 0%
-      let percAbsenteismo = (w.qtdFaltas === 0 && w.horasAtestado === 0 && w.horasAtraso === 0) ? 10 : 0;
+      // --- PENALIDADES MANUAIS ---
+      const pen = periodMetrics.penalidades[w.id] || { faltas: 0, atestados: 0, atrasos: 0 };
+      
+      const subtotal = coletivoBase + percAtualizacao + percOS; // Max 100
+      
+      let mult = 1.0;
+      let penStatus = '';
+      if (pen.faltas > 0) { mult = 0; penStatus = 'Falta (Zera)'; }
+      else if (pen.atestados >= 2) { mult = 0; penStatus = '2+ Atestados (Zera)'; }
+      else if (pen.atrasos >= 2) { mult = 0; penStatus = '2+ Atrasos (Zera)'; }
+      else if (pen.atestados === 1 && pen.atrasos === 1) { mult = 0; penStatus = 'Atestado+Atraso (Zera)'; }
+      else if (pen.atestados === 1) { mult = 0.5; penStatus = '1 Atestado (-50%)'; }
+      else if (pen.atrasos === 1) { mult = 0.5; penStatus = '1 Atraso (-50%)'; }
 
-      // --- INDIVIDUAL: 5S / Organização (10%) ---
-      let perc5S = periodMetrics.fiveS[w.id];
-      if (perc5S === undefined) perc5S = 10; // default 10%
-
-      // TOTAL
-      const totalPremio = coletivoBase + percOsPrazo + percAbsenteismo + perc5S;
-
+      const totalPremio = subtotal * mult;
       let badgeColor = totalPremio >= 90 ? 'var(--color-success)' : (totalPremio >= 70 ? 'var(--brand-primary)' : 'var(--color-danger)');
 
       tableHtml += `
         <tr style="border-bottom:1px solid var(--border-card); transition:background 0.2s;">
           <td style="padding:15px;font-weight:bold;color:var(--text-primary);">${w.nome}</td>
+          
           <td style="padding:15px;text-align:center;">
             <span style="display:block;font-size:16px;font-weight:bold;color:var(--text-primary);">${coletivoBase.toFixed(1)}%</span>
-            <span style="font-size:10px;color:var(--text-muted);">de 70% Base</span>
+            <span style="font-size:10px;color:var(--text-muted);">de 60% Base</span>
           </td>
+          
           <td style="padding:15px;text-align:center;">
-            <span style="display:block;font-size:14px;color:${percOsPrazo===10?'var(--color-success)':'var(--color-warning)'}">${percOsPrazo.toFixed(1)}%</span>
-            <span style="font-size:10px;color:var(--text-muted);">${osNoPrazoCount}/${osTotalCount} OS no Prazo</span>
+            <span style="display:block;font-size:14px;color:${percAtualizacao===30?'var(--color-success)':'var(--color-warning)'}">${percAtualizacao.toFixed(1)}%</span>
+            <span style="font-size:10px;color:var(--text-muted);">${diasPenalizados} dias com <8h lançadas</span>
           </td>
+          
           <td style="padding:15px;text-align:center;">
-            <span style="display:block;font-size:14px;color:${percAbsenteismo===10?'var(--color-success)':'var(--color-danger)'}">${percAbsenteismo.toFixed(1)}%</span>
-            <span style="font-size:10px;color:var(--text-muted);">Faltas: ${w.qtdFaltas} | Ats/Atr: ${w.horasAtestado + w.horasAtraso}h</span>
+            <span style="display:block;font-size:14px;color:${percOS===10?'var(--color-success)':'var(--color-warning)'}">${percOS.toFixed(1)}%</span>
+            <span style="font-size:10px;color:var(--text-muted);">${w.tasksConcluidas}/${w.tasksTotal} Concluídas</span>
           </td>
+
           <td style="padding:15px;text-align:center;">
-            <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
-              <input type="number" min="0" max="10" step="1" class="form-control" style="width:60px;text-align:center;padding:4px;font-size:14px;" value="${perc5S}" onblur="window.updateFiveS('${w.id}', this.value)"> <span style="font-size:12px;color:var(--text-muted);">%</span>
+            <div style="display:flex;gap:4px;justify-content:center;">
+               <div>
+                 <span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:2px;">Faltas</span>
+                 <input type="number" min="0" step="1" class="form-control" style="width:40px;text-align:center;padding:4px;font-size:12px;height:auto;" value="${pen.faltas}" onblur="window.updatePenalidade('${w.id}', 'faltas', this.value)">
+               </div>
+               <div>
+                 <span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:2px;">Atestados</span>
+                 <input type="number" min="0" step="1" class="form-control" style="width:40px;text-align:center;padding:4px;font-size:12px;height:auto;" value="${pen.atestados}" onblur="window.updatePenalidade('${w.id}', 'atestados', this.value)">
+               </div>
+               <div>
+                 <span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:2px;">Atrasos</span>
+                 <input type="number" min="0" step="1" class="form-control" style="width:40px;text-align:center;padding:4px;font-size:12px;height:auto;" value="${pen.atrasos}" onblur="window.updatePenalidade('${w.id}', 'atrasos', this.value)">
+               </div>
             </div>
           </td>
+
           <td style="padding:15px;text-align:center;">
             <div style="display:inline-block;padding:6px 12px;border-radius:20px;font-weight:900;font-size:14px;background:rgba(0,0,0,0.03);color:${badgeColor};border:1px solid ${badgeColor};">
               ${totalPremio.toFixed(1)}%
             </div>
+            ${penStatus ? `<div style="font-size:10px;color:var(--color-danger);margin-top:4px;font-weight:bold;">${penStatus}</div>` : ''}
           </td>
         </tr>
       `;
@@ -231,7 +236,7 @@ window.BonusModule = (() => {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-6);flex-wrap:wrap;gap:var(--space-4);">
           <div>
             <h2 style="margin:0;font-size:1.8rem;font-weight:900;color:var(--text-primary);">Prêmio Produção</h2>
-            <p style="margin:0;font-size:var(--text-sm);color:var(--text-secondary);">Métricas Coletivas (80%) e Individuais (20%).</p>
+            <p style="margin:0;font-size:var(--text-sm);color:var(--text-secondary);">Métricas Coletivas (60%) e Individuais (40%).</p>
           </div>
           <div style="display:flex;gap:var(--space-2);">
             <select class="form-control" style="width:200px;" onchange="BonusModule.setFilter(this.value)">
@@ -249,19 +254,14 @@ window.BonusModule = (() => {
             <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${releasedEqs.length} de ${plannedEqs.length} liberados no prazo planejado.</div>
           </div>
           <div class="card" style="padding:var(--space-4);text-align:center;">
-            <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;font-weight:bold;margin-bottom:4px;">Índice de Retrabalho (15%)</div>
-            <div style="font-size:24px;font-weight:900;color:${percRetrabalho<15?'var(--color-danger)':'var(--color-success)'};">${percRetrabalho.toFixed(1)}%</div>
+            <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;font-weight:bold;margin-bottom:4px;">Índice de Retrabalho (10%)</div>
+            <div style="font-size:24px;font-weight:900;color:${percRetrabalho<10?'var(--color-danger)':'var(--color-success)'};">${percRetrabalho.toFixed(1)}%</div>
             <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${retrabalhoTasks} tarefas de retrabalho registradas.</div>
           </div>
           <div class="card" style="padding:var(--space-4);text-align:center;">
-            <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;font-weight:bold;margin-bottom:4px;">Segurança AFT (5%)</div>
-            <div style="font-size:24px;font-weight:900;color:${aftAtivo?'var(--color-success)':'var(--color-danger)'};">${aftAtivo ? '5.0%' : '0.0%'}</div>
-            <div style="margin-top:8px;">
-              <button onclick="window.toggleAFT()" class="btn ${aftAtivo?'btn-primary':'btn-secondary'}" style="font-size:11px;padding:4px 8px;" ${!isGerente?'disabled':''}>
-                ${aftAtivo ? 'Mês Seguro (Ativo)' : 'Registrar Mês Seguro'}
-              </button>
-            </div>
-            ${!isGerente ? '<div style="font-size:10px;color:var(--color-danger);margin-top:4px;">*Apenas Gerente</div>' : ''}
+            <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;font-weight:bold;margin-bottom:4px;">Base Coletiva Adquirida</div>
+            <div style="font-size:24px;font-weight:900;color:var(--text-primary);">${coletivoBase.toFixed(1)}%</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">De 60% possíveis.</div>
           </div>
         </div>
 
@@ -271,10 +271,10 @@ window.BonusModule = (() => {
               <thead style="background:var(--bg-base);border-bottom:2px solid var(--border-card);">
                 <tr>
                   <th style="padding:15px;text-align:left;color:var(--text-muted);font-size:12px;text-transform:uppercase;">Executante</th>
-                  <th style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px;text-transform:uppercase;">Base Coletiva</th>
-                  <th style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px;text-transform:uppercase;" title="Participação em OS no prazo">OS no Prazo (10%)</th>
-                  <th style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px;text-transform:uppercase;" title="0 faltas/atestados = 10%">Assiduidade (10%)</th>
-                  <th style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px;text-transform:uppercase;">5S (10%)</th>
+                  <th style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px;text-transform:uppercase;" title="Liberação + Retrabalho">Coletivo (60%)</th>
+                  <th style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px;text-transform:uppercase;" title="Dias com mínimo de 8h lançadas">Atualização (30%)</th>
+                  <th style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px;text-transform:uppercase;" title="Tarefas Concluídas">O.S Finalizada (10%)</th>
+                  <th style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px;text-transform:uppercase;">Penalidades</th>
                   <th style="padding:15px;text-align:center;color:var(--text-primary);font-size:12px;text-transform:uppercase;">Total Prêmio</th>
                 </tr>
               </thead>
