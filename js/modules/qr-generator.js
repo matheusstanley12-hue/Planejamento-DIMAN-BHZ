@@ -65,7 +65,7 @@ window.QrGeneratorModule = (() => {
   }
 
   function downloadDirectPDF(id, codigo, nome) {
-    const url = window.location.origin + window.location.pathname + '?qrview=' + id;
+    const url = window.location.origin + window.location.pathname + '?qrview=' + id + '#qrview?id=' + id;
     
     // Fallback if QRCode is missing
     if (typeof QRCode === 'undefined') {
