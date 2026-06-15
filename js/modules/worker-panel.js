@@ -23,6 +23,24 @@ window.WorkerPanel = (() => {
     });
   }
 
+  function canExecuteTask(session, task) {
+    if (!session || session.perfil !== 'Executante') return true;
+    if (!session.cargo || !task.disciplina) return true;
+    const cargo = session.cargo.toLowerCase();
+    const disc = task.disciplina.toLowerCase();
+    
+    if (cargo.includes('mecânic') && disc.includes('mecânic')) return true;
+    if (cargo.includes('elétric') && disc.includes('elétric')) return true;
+    if (cargo.includes('caldeir') && disc.includes('caldeir')) return true;
+    if (cargo.includes('usinagem') && disc.includes('usinagem')) return true;
+    if (cargo.includes('pintor') && disc.includes('pintor')) return true;
+    if (cargo.includes('lavador') && disc.includes('lavador')) return true;
+    if (cargo.includes('montag') && disc.includes('montag')) return true;
+    if (cargo.includes('lubrific') && disc.includes('lubrific')) return true;
+    
+    return false;
+  }
+
   function checkPredecessors(task, allTasks) {
     const preds = task.predecessoras || [];
     const blockedBy = [];
@@ -408,6 +426,14 @@ window.WorkerPanel = (() => {
           <div class="task-desc">${currentT ? currentT.descricao : 'Tarefa desconhecida'}</div>
           <div class="task-meta">${eq ? eq.codigo : ''} &bull; ${currentT ? currentT.disciplina : ''}</div>
           
+          ${currentT && !canExecuteTask(session, currentT) ? `
+            <div class="action-buttons">
+              <div style="color:var(--color-danger);font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" /></svg>
+                Acesso Restrito ao Cargo
+              </div>
+            </div>
+          ` : `
           <div class="action-buttons">
             <button class="btn-action pause" onclick="WorkerPanel.promptPause()">
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -418,6 +444,7 @@ window.WorkerPanel = (() => {
               CONCLUIR
             </button>
           </div>
+          `}
         </div>
       `;
     } else if (state === 'Em Pausa') {
@@ -430,6 +457,14 @@ window.WorkerPanel = (() => {
           <div class="task-desc">${currentT ? currentT.descricao : ''}</div>
           <div class="task-meta">${eq ? eq.codigo : ''} &bull; Aguardando retomada</div>
           
+          ${currentT && !canExecuteTask(session, currentT) ? `
+            <div class="action-buttons">
+              <div style="color:var(--color-danger);font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" /></svg>
+                Acesso Restrito ao Cargo
+              </div>
+            </div>
+          ` : `
           <div class="action-buttons">
             <button class="btn-action resume" onclick="WorkerPanel.resumeWork()">
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -440,6 +475,7 @@ window.WorkerPanel = (() => {
               CONCLUIR
             </button>
           </div>
+          `}
         </div>
       `;
     } else {
@@ -475,15 +511,13 @@ window.WorkerPanel = (() => {
       const isBlocked = blockedBy.length > 0;
       
       let actionBtn = '';
-      if (state === 'Ocioso') {
-        if (isBlocked) {
+      if (state === 'Ocioso' || (state === 'Trabalhando' && myWorker.currentTaskId !== t.id) || (state === 'Em Pausa' && myWorker.currentTaskId !== t.id)) {
+        if (!canExecuteTask(session, t)) {
+          actionBtn = `<div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" /></svg>Apenas ${t.disciplina}</div>`;
+        } else if (isBlocked) {
           actionBtn = `<div class="task-card-blocked">Bloqueada por: ${blockedBy.join(', ')}</div>`;
         } else {
           actionBtn = `<button class="btn-start-task" onclick="WorkerPanel.startTask('${t.id}')">INICIAR AGORA</button>`;
-        }
-      } else {
-         if (isBlocked) {
-          actionBtn = `<div class="task-card-blocked">Bloqueada por: ${blockedBy.join(', ')}</div>`;
         }
       }
 
@@ -1499,7 +1533,14 @@ window.WorkerPanel = (() => {
     saveRequestService,
     openReportRestriction,
     updateRestrictionTasks,
-    saveRestriction
+    saveRestriction,
+    getMyEquipments,
+    startTask,
+    promptPause,
+    promptComplete,
+    resumeWork,
+    closePauseModal,
+    savePauseState
   };
 })();
 
@@ -1513,7 +1554,7 @@ window.WorkerParts = (() => {
     if (!session || session.perfil !== 'Executante') return `<div class="page-container">Acesso restrito.</div>`;
 
     const eqs = window.DB.equipment.list() || [];
-    const myEqs = getMyEquipments(session);
+    const myEqs = window.WorkerPanel.getMyEquipments(session);
 
     if (myEqs.length === 0) {
       return `
@@ -1622,7 +1663,7 @@ window.WorkerServices = (() => {
     if (!session || session.perfil !== 'Executante') return `<div class="page-container">Acesso restrito.</div>`;
 
     const eqs = window.DB.equipment.list() || [];
-    const myEqs = getMyEquipments(session);
+    const myEqs = window.WorkerPanel.getMyEquipments(session);
 
     if (myEqs.length === 0) {
       return `
