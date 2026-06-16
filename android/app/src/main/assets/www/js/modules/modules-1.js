@@ -1091,11 +1091,11 @@ window.TasksModule = (() => {
         const comments = JSON.parse(t.observacoes);
         if (Array.isArray(comments)) {
           isJson = true;
-          obsHistoryHtml = `<div style="max-height: 80px; overflow-y: auto; font-size: 11px; margin-bottom: 8px; border: 1px solid var(--border-default); padding: 4px; border-radius: 4px; background: var(--bg-base);">
+          obsHistoryHtml = `<div style="max-height: 120px; overflow-y: auto; font-size: 12px; margin-bottom: 12px; border: 1px solid var(--border-default); padding: 8px; border-radius: 6px; background: var(--bg-base);">
             ${comments.map(c => `
-              <div style="margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.02);">
-                <span style="font-weight:bold;color:var(--brand-primary-light);">${c.user}:</span> ${c.text}
-                <span style="font-size:9px;color:var(--text-muted);display:block;">${new Date(c.createdAt).toLocaleString('pt-BR')}</span>
+              <div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.02);">
+                <span style="font-weight:700;color:var(--brand-primary-light);">${c.user}:</span> ${c.text}
+                <span style="font-size:10px;color:var(--text-muted);display:block;">${new Date(c.createdAt).toLocaleString('pt-BR')}</span>
               </div>
             `).join('')}
           </div>`;
@@ -1107,31 +1107,131 @@ window.TasksModule = (() => {
       }
     }
 
-    return `<div style="display:flex;flex-direction:column;gap:var(--space-4);">
-      <div class="form-row"><div class="form-group"><label>Equipamento *</label><select id="tk-eq" onchange="TasksModule.onFormChange()">${eqs.map(e=>`<option value="${e.id}" ${t?.equipmentId===e.id?'selected':''}>${e.codigo}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Código</label><input id="tk-cod" value="${t?.codigo||''}" /></div></div>
-      <div class="form-group"><label>Descrição *</label><input id="tk-desc" value="${t?.descricao||''}" required /></div>
-      <div class="form-row"><div class="form-group"><label>Disciplina</label><select id="tk-disc" onchange="TasksModule.onFormChange()">${discs.map(d=>`<option ${t?.disciplina===d?'selected':''}>${d}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Prioridade</label><select id="tk-prio">${prios.map(p=>`<option ${t?.prioridade===p?'selected':''}>${p}</option>`).join('')}</select></div></div>
-      <div class="form-row"><div class="form-group"><label>Responsável</label><select id="tk-resp"><option value="">—</option>${filteredWf.map(w=>`<option value="${w.nome}" ${t?.responsavel===w.nome?'selected':''}>${w.nome}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Status</label><select id="tk-status">${statuses.map(s=>`<option ${t?.status===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
-      <div class="form-row"><div class="form-group"><label>Início Planejado</label><input type="date" id="tk-ip" value="${toDateInput(t?.dataPlanejadaInicio)}" /></div>
-      <div class="form-group"><label>Término Planejado</label><input type="date" id="tk-tp" value="${toDateInput(t?.dataPlanejadaTermino)}" /></div></div>
-      <div class="form-row"><div class="form-group"><label>Horas Planejadas</label><input type="number" id="tk-hp" value="${t?.horasPlanejadas||0}" min="0" /></div>
-      <div class="form-group"><label>Horas Realizadas</label><input type="number" id="tk-hr" value="${t?.horasRealizadas||0}" min="0" /></div></div>
-      <div class="form-group"><label>% Executado: <span id="tk-pct-val">${t?.pctExecutado||0}</span>%</label>
-        <input type="range" id="tk-pct" min="0" max="100" value="${t?.pctExecutado||0}" oninput="document.getElementById('tk-pct-val').textContent=this.value" /></div>
-      <div class="checkbox-wrap"><input type="checkbox" id="tk-critico" ${t?.critico?'checked':''} /><label for="tk-critico">Marcar como Tarefa Crítica (Caminho Crítico)</label></div>
-      <div class="form-group" style="display:${(t?.fotoComprovacao) ? 'block' : 'none'}; background:var(--bg-base); padding:var(--space-3); border-radius:var(--radius-md); border:1px solid var(--border-default);">
-        <label style="margin-bottom:8px; display:block;">Foto da Conclusão (Comprovação)</label>
-        <div style="display:flex;gap:15px;overflow-x:auto;">
-          ${t?.fotoComprovacao ? `<div style="flex:0 0 auto;width:200px;"><img src="${t.fotoComprovacao}" style="width:100%;height:150px;object-fit:cover;border-radius:4px;border:1px solid var(--border-hover);cursor:pointer;" onclick="window.open(this.src)" /></div>` : ''}
+    const selectedEq = eqs.find(e => e.id === currentEqId) || {codigo: 'N/A', nome: 'Desconhecido'};
+
+    return `
+    <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+      
+      <!-- Cabeçalho Principal -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:var(--space-3); border-bottom:1px solid var(--border-default);">
+        <div>
+          <h3 style="margin:0; font-size:1.2rem; font-weight:800; color:var(--text-primary);">
+            ${t?.codigo ? t.codigo : 'Nova Tarefa'}
+            ${t?.critico ? '<span class="badge" style="background:rgba(244,67,54,0.1);color:#f44336;margin-left:8px;">Crítica</span>' : ''}
+          </h3>
+          <p style="margin:4px 0 0; font-size:0.9rem; color:var(--text-secondary);">Equipamento: <strong>${selectedEq.codigo}</strong> - ${selectedEq.nome}</p>
+        </div>
+        <div style="text-align:right;">
+          <select id="tk-status" style="font-weight:700; border:2px solid var(--border-default); border-radius:var(--radius-md); padding:4px 8px;">
+            ${statuses.map(s => `<option ${t?.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
         </div>
       </div>
-      <div class="form-group"><label>Observações</label>
-        ${obsHistoryHtml}
-        <textarea id="tk-obs" placeholder="${obsHistoryHtml ? 'Adicionar nova observação...' : 'Observações...'}">${obsTextValue}</textarea>
+
+      <!-- Duas Colunas de Informação -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-4);">
+        
+        <!-- Coluna Esquerda: Informações Gerais -->
+        <div style="background:var(--bg-card); padding:var(--space-3); border-radius:var(--radius-md); border:1px solid var(--border-default);">
+          <h4 style="margin:0 0 12px; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Detalhes</h4>
+          
+          <div class="form-group" style="display:none;"><label>Equipamento (ID Oculto)</label><select id="tk-eq" onchange="TasksModule.onFormChange()">${eqs.map(e=>`<option value="${e.id}" ${t?.equipmentId===e.id?'selected':''}>${e.codigo}</option>`).join('')}</select></div>
+          <div class="form-group" style="display:none;"><label>Código</label><input id="tk-cod" value="${t?.codigo||''}" /></div>
+          
+          <div class="form-group">
+            <label style="font-size:0.85rem; color:var(--text-secondary);">Descrição da Atividade *</label>
+            <input id="tk-desc" value="${t?.descricao||''}" required style="font-size:1rem; font-weight:600;" />
+          </div>
+          
+          <div class="form-row" style="gap:12px;">
+            <div class="form-group">
+              <label style="font-size:0.85rem; color:var(--text-secondary);">Disciplina</label>
+              <select id="tk-disc" onchange="TasksModule.onFormChange()">${discs.map(d=>`<option ${t?.disciplina===d?'selected':''}>${d}</option>`).join('')}</select>
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.85rem; color:var(--text-secondary);">Prioridade</label>
+              <select id="tk-prio">${prios.map(p=>`<option ${t?.prioridade===p?'selected':''}>${p}</option>`).join('')}</select>
+            </div>
+          </div>
+          
+          <div class="form-group" style="margin-top:12px;">
+            <label style="font-size:0.85rem; color:var(--text-secondary);">Responsável pela Execução</label>
+            <select id="tk-resp">
+              <option value="">— Sem responsável atribuído —</option>
+              ${filteredWf.map(w=>`<option value="${w.nome}" ${t?.responsavel===w.nome?'selected':''}>${w.nome}</option>`).join('')}
+            </select>
+          </div>
+          
+          <div class="checkbox-wrap" style="margin-top:16px;">
+            <input type="checkbox" id="tk-critico" ${t?.critico?'checked':''} />
+            <label for="tk-critico" style="font-weight:600; color:var(--color-danger);">Caminho Crítico (Parada)</label>
+          </div>
+        </div>
+
+        <!-- Coluna Direita: Planejamento e Horas -->
+        <div style="background:var(--bg-card); padding:var(--space-3); border-radius:var(--radius-md); border:1px solid var(--border-default);">
+          <h4 style="margin:0 0 12px; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Planejamento</h4>
+          
+          <div class="form-row" style="gap:12px;">
+            <div class="form-group">
+              <label style="font-size:0.85rem; color:var(--text-secondary);">Início Planejado</label>
+              <input type="date" id="tk-ip" value="${toDateInput(t?.dataPlanejadaInicio)}" />
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.85rem; color:var(--text-secondary);">Término Planejado</label>
+              <input type="date" id="tk-tp" value="${toDateInput(t?.dataPlanejadaTermino)}" />
+            </div>
+          </div>
+          
+          <div class="form-row" style="gap:12px; margin-top:12px;">
+            <div class="form-group">
+              <label style="font-size:0.85rem; color:var(--text-secondary);">Horas Planejadas</label>
+              <input type="number" id="tk-hp" value="${t?.horasPlanejadas||0}" min="0" style="text-align:center; font-weight:700;" />
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.85rem; color:var(--text-secondary);">Horas Trabalhadas</label>
+              <input type="number" id="tk-hr" value="${t?.horasRealizadas||0}" min="0" style="text-align:center; font-weight:700;" />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:20px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <label style="font-size:0.85rem; color:var(--text-secondary);">Progresso Físico</label>
+              <span style="font-weight:800; color:var(--brand-primary-light);"><span id="tk-pct-val">${t?.pctExecutado||0}</span>%</span>
+            </div>
+            <input type="range" id="tk-pct" min="0" max="100" value="${t?.pctExecutado||0}" oninput="document.getElementById('tk-pct-val').textContent=this.value" style="width:100%; accent-color:var(--brand-primary);" />
+          </div>
+        </div>
+
+      </div> <!-- Fim Duas Colunas -->
+
+      <!-- Seção de Evidências Fotográficas -->
+      <div style="background:var(--bg-base); padding:var(--space-3); border-radius:var(--radius-md); border:1px solid var(--border-default); display:${(t?.fotoPeca || t?.fotoComprovacao) ? 'block' : 'none'};">
+        <h4 style="margin:0 0 12px; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Evidências (Fotos)</h4>
+        <div style="display:flex; gap:20px; overflow-x:auto;">
+          
+          ${t?.fotoPeca ? `
+          <div style="flex:0 0 auto; width:220px;">
+            <p style="margin:0 0 6px; font-size:0.8rem; font-weight:700; color:var(--text-secondary);">Foto da Solicitação</p>
+            <img src="${t.fotoPeca}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; border:2px solid var(--border-hover); cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" onclick="window.open(this.src)" />
+          </div>` : ''}
+
+          ${t?.fotoComprovacao ? `
+          <div style="flex:0 0 auto; width:220px;">
+            <p style="margin:0 0 6px; font-size:0.8rem; font-weight:700; color:var(--brand-primary-light);">Foto da Conclusão</p>
+            <img src="${t.fotoComprovacao}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; border:2px solid var(--brand-primary); cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" onclick="window.open(this.src)" />
+          </div>` : ''}
+
+        </div>
       </div>
+
+      <!-- Seção de Observações e Histórico -->
+      <div style="background:var(--bg-card); padding:var(--space-3); border-radius:var(--radius-md); border:1px solid var(--border-default);">
+        <h4 style="margin:0 0 12px; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Histórico e Observações</h4>
+        ${obsHistoryHtml}
+        <textarea id="tk-obs" rows="2" placeholder="${obsHistoryHtml ? 'Adicionar nova observação ao histórico...' : 'Digite as observações da tarefa...'}" style="width:100%;"></textarea>
+      </div>
+
       <input type="hidden" id="tk-editing-id" value="${t?.id||''}" />
     </div>`;
   }
@@ -1172,7 +1272,7 @@ window.TasksModule = (() => {
     }
     const t = DB.tasks.get(id);
     if (!t) return;
-    document.getElementById('task-modal-title').textContent = 'Editar Tarefa';
+    document.getElementById('task-modal-title').textContent = 'Detalhamento da Tarefa';
     document.getElementById('task-modal-body').innerHTML = taskForm(t);
     openModal('modal-task');
   }
