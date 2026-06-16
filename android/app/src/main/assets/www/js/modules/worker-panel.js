@@ -167,7 +167,7 @@ window.WorkerPanel = (() => {
 
     const obsObj = {
       id: 'c-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-      text: \`Justificativa de alocação (Executantes de outra sonda/equipamento): \${just}\`,
+      text: `Justificativa de alocação (Executantes de outra sonda/equipamento): ${just}`,
       user: session.nome,
       userId: session.userId,
       createdAt: new Date().toISOString()
@@ -201,7 +201,7 @@ window.WorkerPanel = (() => {
       DB.tasks.update(taskId, { status: 'Em Andamento' });
     }
 
-    Toast.success('Iniciado!', \`A tarefa "\${t.descricao}" foi iniciada para os executantes selecionados.\`);
+    Toast.success('Iniciado!', `A tarefa "${t.descricao}" foi iniciada para os executantes selecionados.`);
     if (document.getElementById('modal-worker-start-task')) closeModal('modal-worker-start-task');
     Router.navigate('worker-panel', { force: true });
   }
@@ -230,14 +230,14 @@ window.WorkerPanel = (() => {
     let targetWorkers = [];
     for (let mat of matriculas) {
       let w = DB.workforce.list().find(wk => String(wk.matricula) === String(mat));
-      if (!w) return Toast.error('Erro', \`Matrícula \${mat} não encontrada no sistema.\`);
+      if (!w) return Toast.error('Erro', `Matrícula ${mat} não encontrada no sistema.`);
       targetWorkers.push(w);
     }
 
     // Check busy status
     for (let w of targetWorkers) {
       if (w.currentState && w.currentState !== 'Ocioso') {
-        return Toast.error('Atenção', \`\${w.nome} já tem uma atividade ou pausa em andamento. Finalize a tarefa atual primeiro.\`);
+        return Toast.error('Atenção', `${w.nome} já tem uma atividade ou pausa em andamento. Finalize a tarefa atual primeiro.`);
       }
     }
 
@@ -246,7 +246,7 @@ window.WorkerPanel = (() => {
     if (divergingWorkers.length > 0) {
       const names = divergingWorkers.map(w => w.nome).join(', ');
       const matriculasStr = matriculas.join(',');
-      const jModalHtml = \`
+      const jModalHtml = `
         <div class="modal-overlay" id="modal-worker-justification" style="z-index:9999;">
           <div class="modal" style="box-shadow:var(--shadow-lg);">
             <div class="modal-header">
@@ -257,17 +257,17 @@ window.WorkerPanel = (() => {
             </div>
             <div class="modal-body" style="padding-top:10px;">
               <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px;">
-                Os executantes a seguir estão alocados em outros equipamentos:<br><strong style="color:var(--color-danger);font-size:14px;">\${names}</strong>
+                Os executantes a seguir estão alocados em outros equipamentos:<br><strong style="color:var(--color-danger);font-size:14px;">${names}</strong>
               </p>
               <div class="form-group" style="margin-bottom:15px;">
                 <label>Justificativa do Desvio *</label>
                 <textarea id="start-task-justification" rows="3" style="width:100%;border-radius:6px;border:1px solid var(--border-card);padding:10px;background:var(--bg-base);" placeholder="Informe o motivo para alocá-los nesta tarefa..."></textarea>
               </div>
-              <button class="btn btn-primary" style="width:100%;height:45px;" onclick="WorkerPanel.confirmStartTaskWithJustification('\${taskId}', '\${matriculasStr}')">Confirmar e Iniciar</button>
+              <button class="btn btn-primary" style="width:100%;height:45px;" onclick="WorkerPanel.confirmStartTaskWithJustification('${taskId}', '${matriculasStr}')">Confirmar e Iniciar</button>
             </div>
           </div>
         </div>
-      \`;
+      `;
       const container = document.getElementById('worker-panel-modals');
       container.insertAdjacentHTML('beforeend', jModalHtml);
       document.getElementById('modal-worker-start-task').style.display = 'none';
@@ -1113,122 +1113,6 @@ window.WorkerPanel = (() => {
 
   // --- TASK MODALS (CREATE & EDIT) ---
 
-  function openCreateTask() {
-    const session = Auth.getSession();
-    const myEqs = getMyEquipments();
-
-    const modalHtml = `
-      <div class="modal-overlay" id="modal-worker-new-task">
-        <div class="modal modal-lg" style="box-shadow:var(--shadow-lg);">
-          <div class="modal-header">
-            <div class="modal-title">Nova Atividade</div>
-            <button class="modal-close" onclick="closeModal('modal-worker-new-task')">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div style="display:flex;flex-direction:column;gap:var(--space-4);">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Equipamento *</label>
-                  <select id="w-new-eq" style="background:var(--bg-base);border:1px solid var(--border-card);color:var(--text-primary);">
-                    ${myEqs.map(e => `<option value="${e.id}">${e.codigo} - ${e.nome}</option>`).join('')}
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Código (Opcional)</label>
-                  <input id="w-new-cod" placeholder="Ex: MEC-01" />
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Descrição da Atividade *</label>
-                <input id="w-new-desc" placeholder="Descreva a tarefa..." required />
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group" style="display:none;">
-                  <label>Disciplina</label>
-                  <input value="${session.disciplina}" disabled style="opacity:0.6;cursor:not-allowed;background:var(--bg-base);" />
-                </div>
-                <div class="form-group">
-                  <label>Responsável</label>
-                  <input value="${session.nome}" disabled style="opacity:0.6;cursor:not-allowed;background:var(--bg-base);" />
-                </div>
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Prioridade</label>
-                  <select id="w-new-prio">
-                    <option>Média</option>
-                    <option>Alta</option>
-                    <option>Crítica</option>
-                    <option>Baixa</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Status Inicial</label>
-                  <select id="w-new-status">
-                    <option>Não Iniciada</option>
-                    <option>Em Andamento</option>
-                    <option>Aguardando Peça</option>
-                    <option>Bloqueada</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Início Planejado</label>
-                  <input type="date" id="w-new-ip" value="${new Date().toISOString().slice(0,10)}" />
-                </div>
-                <div class="form-group">
-                  <label>Término Planejado</label>
-                  <input type="date" id="w-new-tp" value="${new Date().toISOString().slice(0,10)}" />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Horas Planejadas</label>
-                  <input type="number" id="w-new-hp" value="0" min="0" />
-                </div>
-                <div class="form-group" style="display:none;">
-                  <label>Horas Realizadas</label>
-                  <input type="number" id="w-new-hr" value="0" min="0" />
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>% Executado: <span id="w-new-pct-val">0</span>%</label>
-                <input type="range" id="w-new-pct" min="0" max="100" value="0" oninput="document.getElementById('w-new-pct-val').textContent=this.value" />
-              </div>
-
-              <div class="checkbox-wrap">
-                <input type="checkbox" id="w-new-critico" />
-                <label for="w-new-critico" style="cursor:pointer;">Marcar como Atividade Crítica</label>
-              </div>
-
-              <div class="form-group">
-                <label>Observações</label>
-                <textarea id="w-new-obs" rows="3" placeholder="Insira observações relevantes..."></textarea>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('modal-worker-new-task')">Cancelar</button>
-            <button class="btn btn-primary" onclick="WorkerPanel.saveNewTask()">Criar Tarefa</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const container = document.getElementById('worker-panel-modals');
-    if (container) {
-      container.innerHTML = modalHtml;
-      openModal('modal-worker-new-task');
-    }
-  }
 
   function openCreateTask(equipmentId) {
     const eqs = DB.equipment.list();
