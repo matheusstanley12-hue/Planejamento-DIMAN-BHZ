@@ -1046,7 +1046,7 @@ window.WorkerPanel = (() => {
               </div>
               
               <div class="form-row">
-                <div class="form-group">
+                <div class="form-group" style="display:none;">
                   <label>Disciplina</label>
                   <input value="${session.disciplina}" disabled style="opacity:0.6;cursor:not-allowed;background:var(--bg-base);" />
                 </div>
@@ -1093,7 +1093,7 @@ window.WorkerPanel = (() => {
                   <label>Horas Planejadas</label>
                   <input type="number" id="w-new-hp" value="0" min="0" />
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="display:none;">
                   <label>Horas Realizadas</label>
                   <input type="number" id="w-new-hr" value="0" min="0" />
                 </div>
@@ -1169,7 +1169,7 @@ window.WorkerPanel = (() => {
               </div>
 
               <div class="form-row">
-                <div class="form-group">
+                <div class="form-group" style="display:none;">
                   <label>Disciplina</label>
                   <input value="${session.disciplina}" disabled style="opacity:0.6;cursor:not-allowed;background:var(--bg-base);" />
                 </div>
@@ -1216,7 +1216,7 @@ window.WorkerPanel = (() => {
                   <label>Horas Planejadas</label>
                   <input type="number" id="w-new-hp" value="0" min="0" />
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="display:none;">
                   <label>Horas Realizadas</label>
                   <input type="number" id="w-new-hr" value="0" min="0" />
                 </div>
@@ -1268,15 +1268,15 @@ window.WorkerPanel = (() => {
       equipmentId: eqId,
       codigo: document.getElementById('w-new-cod').value.trim(),
       descricao: desc,
-      disciplina: session.disciplina,
+      disciplina: myWorker ? myWorker.disciplina : (session.disciplina || 'Geral'),
       responsavel: session.nome,
       prioridade: document.getElementById('w-new-prio').value,
       status,
       dataPlanejadaInicio: document.getElementById('w-new-ip').value,
       dataPlanejadaTermino: document.getElementById('w-new-tp').value,
       horasPlanejadas: parseFloat(document.getElementById('w-new-hp').value) || 0,
-      horasRealizadas: parseFloat(document.getElementById('w-new-hr').value) || 0,
-      pctExecutado: parseInt(document.getElementById('w-new-pct').value) || 0,
+      horasRealizadas: document.getElementById('w-new-hr') ? (parseFloat(document.getElementById('w-new-hr').value) || 0) : 0,
+      pctExecutado: document.getElementById('w-new-pct') ? (parseInt(document.getElementById('w-new-pct').value) || 0) : 0,
       critico: document.getElementById('w-new-critico').checked,
       observacoes: document.getElementById('w-new-obs').value.trim() ? JSON.stringify([{
         id: 'c-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
@@ -1369,7 +1369,7 @@ window.WorkerPanel = (() => {
                     ).join('')}
                   </select>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="display:none;">
                   <label>Horas Realizadas</label>
                   <input type="number" id="w-tk-hr" value="${t.horasRealizadas||0}" min="0" step="0.5" />
                 </div>
