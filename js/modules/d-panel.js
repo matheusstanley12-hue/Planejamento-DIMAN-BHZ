@@ -187,7 +187,7 @@ window.DPanel = (() => {
           white-space: nowrap;
           padding-right: 100%;
           box-sizing: content-box;
-          animation: ticker 25s linear infinite;
+          animation: ticker 50s linear infinite;
         }
         .ticker-move:hover {
           animation-play-state: paused;
