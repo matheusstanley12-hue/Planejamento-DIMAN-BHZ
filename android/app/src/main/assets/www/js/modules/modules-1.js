@@ -503,8 +503,12 @@ window.WorkshopModule = (() => {
 // EQUIPMENT MODULE
 // ================================================================
 window.EquipmentModule = (() => {
+  let showLiberados = false;
   function render() {
-    const eqs = DB.equipment.list();
+    let eqs = DB.equipment.list();
+    if (!showLiberados) {
+      eqs = eqs.filter(e => e.status !== 'Liberado');
+    }
     const parts = DB.parts.getAll();
     const restrictions = DB.restrictions.getAll();
     const today = new Date().toISOString().slice(0,10);
@@ -515,16 +519,23 @@ window.EquipmentModule = (() => {
           <div class="section-title-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75"/></svg></div>
           Gestão de Equipamentos
         </div>
-        <button class="btn btn-primary" onclick="EquipmentModule.openCreate()">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-          Novo Equipamento
-        </button>
+        <div style="display:flex;gap:var(--space-3);">
+          <button class="btn btn-outline" style="border-color:var(--border-hover);color:var(--text-secondary);" onclick="EquipmentModule.toggleLiberados()">
+            ${showLiberados ? 'Esconder Liberados' : 'Mostrar Liberados'}
+          </button>
+          <button class="btn btn-primary" onclick="EquipmentModule.openCreate()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            Novo Equipamento
+          </button>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:var(--space-4);" class="stagger">
         ${eqs.map(e => {
           const pct = e.pctAvanco || 0;
-          const days = e.dataLiberacaoPlanejada ? daysBetween(today, e.dataLiberacaoPlanejada) : null;
-          const daysClass = days === null ? 'ghost' : days < 0 ? 'danger' : days <= 3 ? 'warning' : 'success';
+          const refDate = (e.status === 'Liberado' && e.dataLiberacaoAtual) ? e.dataLiberacaoAtual : today;
+          const days = e.dataLiberacaoPlanejada ? daysBetween(refDate, e.dataLiberacaoPlanejada) : null;
+          const isLiberated = e.status === 'Liberado';
+          const daysClass = isLiberated ? 'success' : (days === null ? 'ghost' : days < 0 ? 'danger' : days <= 3 ? 'warning' : 'success');
           const pendParts = parts.filter(p=>p.equipmentId===e.id&&['Solicitada','Comprada','Em Transporte'].includes(p.status)).length;
           const openRestr = restrictions.filter(r=>r.equipmentId===e.id&&r.status==='Aberta').length;
           const repls = e.replanning || [];
@@ -558,7 +569,7 @@ window.EquipmentModule = (() => {
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2);">
               <div>
                 ${e.dataLiberacaoPlanejada ? `<div style="font-size:var(--text-xs);color:var(--text-muted)">Liberação prevista</div>
-                <div style="font-size:var(--text-sm);font-weight:700;color:var(--color-${daysClass})">${formatDate(e.dataLiberacaoPlanejada)} ${days!==null?`(${days<0?Math.abs(days)+' atrasado':days===0?'Hoje':days+'d'})`:''}</div>` : ''}
+                <div style="font-size:var(--text-sm);font-weight:700;color:var(--color-${daysClass})">${formatDate(e.dataLiberacaoPlanejada)} ${isLiberated ? '<span style="color:var(--color-success)">(Concluído)</span>' : (days!==null?`(${days<0?Math.abs(days)+' atrasado':days===0?'Hoje':days+'d'})`:'')}</div>` : ''}
               </div>
               <div style="display:flex;gap:var(--space-2);">
                 ${pendParts > 0 ? `<span class="badge badge-warning">${pendParts} peça${pendParts>1?'s':''}</span>` : ''}
@@ -623,6 +634,11 @@ window.EquipmentModule = (() => {
       wrapper.innerHTML = modalHtml;
       document.body.appendChild(wrapper.firstElementChild);
     }
+  }
+
+  function toggleLiberados() {
+    showLiberados = !showLiberados;
+    Router.navigate('equipment', {force:true});
   }
 
   function openCreate() {
@@ -1064,7 +1080,7 @@ window.EquipmentModule = (() => {
     }, 100);
   }
 
-  return { render, openCreate, openEdit, openDetail, save, addReplanning, saveReplanning, confirmDelete, renderLaborComparison };
+  return { render, openCreate, openEdit, openDetail, save, addReplanning, saveReplanning, confirmDelete, renderLaborComparison, toggleLiberados };
 })();
 
 // ================================================================
