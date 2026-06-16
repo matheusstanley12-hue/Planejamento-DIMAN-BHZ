@@ -36,13 +36,17 @@ window.WorkerPanel = (() => {
 
   function getMyEquipments(session) {
     const eqs = window.DB.equipment.list();
+    const allTasks = window.DB.tasks.getAll();
     const myWorker = getMyWorker(session);
     const myDirectEqId = myWorker ? myWorker.equipmentId : null;
     const myWorkerName = myWorker ? myWorker.nome : session.nome;
     
     return eqs.filter(e => {
       const map = e.workforceMap || {};
-      return Object.values(map).includes(myWorkerName) || Object.values(map).includes(session.nome) || e.id === myDirectEqId;
+      if (Object.values(map).includes(myWorkerName) || Object.values(map).includes(session.nome) || e.id === myDirectEqId) return true;
+      
+      const eqTasks = allTasks.filter(t => t.equipmentId === e.id && t.status !== 'Concluída');
+      return eqTasks.some(t => canExecuteTask(session, t));
     });
   }
 
@@ -657,6 +661,12 @@ window.WorkerPanel = (() => {
     const myEqs = getMyEquipments(session);
     const myEqIds = myEqs.map(e => e.id);
     let myTasks = tasks.filter(t => myEqIds.includes(t.equipmentId));
+    
+    // Add tasks without equipment that the worker can execute
+    const unassignedTasks = tasks.filter(t => !t.equipmentId && t.status !== 'Concluída' && canExecuteTask(session, t));
+    unassignedTasks.forEach(t => {
+      if (!myTasks.find(x => x.id === t.id)) myTasks.push(t);
+    });
 
     if (eqFilter) myTasks = myTasks.filter(t => t.equipmentId === eqFilter);
 
