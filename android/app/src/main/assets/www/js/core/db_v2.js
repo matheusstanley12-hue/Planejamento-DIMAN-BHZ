@@ -231,15 +231,22 @@ window.DB = (() => {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'diman_store' }, payload => {
           if (payload.new && payload.new.key === 'all') {
             localStorage.setItem(payload.new.collection, JSON.stringify(payload.new.data));
-            // Force re-render of current view only if no modal is open and user is not typing
             if (window.Router) {
-              const hasOpenModal = document.querySelector('.modal-overlay.open, .modal.open');
-              const isTyping = document.querySelector('input:focus, textarea:focus, select:focus');
-              if (!hasOpenModal && !isTyping) {
-                const current = window.Router.getCurrent();
-                if (current) window.Router.navigate(current, { force: true });
+              const current = window.Router.getCurrent();
+              const liveViews = ['dashboard', 'manager-dashboard'];
+              
+              if (current && liveViews.includes(current)) {
+                // Auto-refresh ONLY on dashboard views (TV screens, charts)
+                const hasOpenModal = document.querySelector('.modal-overlay.open, .modal.open');
+                if (!hasOpenModal) {
+                  window.Router.navigate(current, { force: true });
+                }
               } else {
-                if (window.Toast) window.Toast.info('Sincronização', 'Dados atualizados em segundo plano. Atualize a página quando finalizar a edição.', 4000);
+                // On interactive views (tasks, equipments, worker-panel), do not disrupt the user with forced reloads.
+                if (window.Toast) {
+                  // Use a distinct ID or simple message so it doesn't spam
+                  // window.Toast.info('Sincronização', 'Dados atualizados. Recarregue a página para ver as mudanças.', 3000);
+                }
               }
             }
           }
