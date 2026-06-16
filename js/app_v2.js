@@ -279,7 +279,7 @@ function showLoginPage() {
         <!-- Logo -->
         <div style="text-align:center;margin-bottom:var(--space-6)">
           <div style="display:inline-flex;align-items:center;justify-content:center;margin-bottom:var(--space-4);padding:8px;background:white;border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,0.25);animation:glow-pulse 3s ease-in-out infinite;">
-            <img src="logo.png" style="width:110px;height:110px;object-fit:contain;" alt="Logo GEOSOL" />
+            <img src="logo.png?v=${window.CACHE_VERSION || Date.now()}" style="width:110px;height:110px;object-fit:contain;" alt="Logo GEOSOL" />
           </div>
           <h1 style="font-size:var(--text-2xl);font-weight:800;letter-spacing:-0.03em;margin-bottom:4px;">Central de Planejamento e Controle DIMAN</h1>
           <div style="font-size:var(--text-xs);color:var(--text-muted);font-weight:var(--font-semibold);letter-spacing:0.12em;text-transform:uppercase;">Sistema inteligente da manutenção</div>
@@ -588,7 +588,7 @@ function renderShell(session) {
         <div class="sidebar-brand" style="justify-content:space-between;align-items:center;padding-right:var(--space-4);">
           <div style="display:flex;align-items:center;">
             <div class="sidebar-logo" style="width:36px;height:36px;background:white;border-radius:6px;padding:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <img src="logo.png" style="width:100%;height:100%;object-fit:contain;" alt="GEOSOL" />
+              <img src="logo.png?v=${window.CACHE_VERSION || Date.now()}" style="width:100%;height:100%;object-fit:contain;" alt="GEOSOL" />
             </div>
             <div class="sidebar-brand-text" style="margin-left:12px;">
               <div class="sidebar-brand-name">DIMAN-BHZ</div>
@@ -622,7 +622,7 @@ function renderShell(session) {
               </svg>
             </div>
             <div style="width:40px;height:40px;background:white;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform 0.2s;padding:4px;flex-shrink:0;" onclick="toggleSidebar()" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" title="Abrir/Fechar Menu Lateral" class="topbar-title-wrap">
-              <img src="logo.png" style="width:100%;height:100%;object-fit:contain;" alt="GEOSOL Logo" />
+              <img src="logo.png?v=${window.CACHE_VERSION || Date.now()}" style="width:100%;height:100%;object-fit:contain;" alt="GEOSOL Logo" />
             </div>
             <div class="topbar-title-wrap">
               <div style="font-weight:900;font-size:1.2rem;letter-spacing:-0.03em;line-height:1;">DIMAN</div>
