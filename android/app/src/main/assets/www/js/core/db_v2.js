@@ -204,8 +204,8 @@ window.DB = (() => {
   async function initSupabase() {
     if (!supabaseClient) return;
     try {
-      // 1. Initial fetch
-      const { data, error } = await supabaseClient.from('diman_store').select('*');
+      // 1. Initial fetch (Excluding photos to avoid massive memory usage)
+      const { data, error } = await supabaseClient.from('diman_store').select('*').not('collection', 'ilike', 'photo_%');
       if (error) { 
          console.error('Supabase fetch error:', error); 
          if (window.Toast) window.Toast.error('Falha de Conexão Nuvem', error.message || 'Erro ao conectar com o Supabase. Você está offline ou a chave é inválida.');
@@ -230,6 +230,9 @@ window.DB = (() => {
         .channel('diman-sync')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'diman_store' }, payload => {
           if (payload.new && payload.new.key === 'all') {
+            // Ignore photos in realtime to save local storage and memory
+            if (payload.new.collection && payload.new.collection.startsWith('photo_')) return;
+
             localStorage.setItem(payload.new.collection, JSON.stringify(payload.new.data));
             if (window.Router) {
               const current = window.Router.getCurrent();

@@ -310,7 +310,21 @@ window.EquipmentPanel = (() => {
               <small style="color:var(--text-muted);font-size:10px;display:block;margin-top:2px;">Segure Ctrl (ou Cmd) para selecionar mais de uma tarefa.</small>
             </div>
 
-            <div class="form-group" style="margin-bottom:var(--space-5);">
+            <div class="form-group" style="margin-bottom:var(--space-4);">
+              <div id="new-task-photos" style="margin-bottom:var(--space-4); display:none; background:var(--bg-base); padding:var(--space-3); border-radius:var(--radius-md); border:1px solid var(--border-default);">
+                <label style="margin-bottom:8px; display:block;">Fotos da Atividade</label>
+                <div style="display:flex;gap:15px;overflow-x:auto;">
+                  <div id="new-task-photo-peca-container" style="display:none;flex:0 0 auto;width:200px;">
+                    <span style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;font-weight:700;">Foto da Solicitação</span>
+                    <img id="new-task-photo-peca" src="" style="width:100%;height:150px;object-fit:cover;border-radius:4px;border:1px solid var(--border-hover);cursor:pointer;" onclick="window.open(this.src)" />
+                  </div>
+                  <div id="new-task-photo-comp-container" style="display:none;flex:0 0 auto;width:200px;">
+                    <span style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;font-weight:700;">Foto da Conclusão</span>
+                    <img id="new-task-photo-comp" src="" style="width:100%;height:150px;object-fit:cover;border-radius:4px;border:1px solid var(--border-hover);cursor:pointer;" onclick="window.open(this.src)" />
+                  </div>
+                </div>
+              </div>
+
               <label>Observações e Comentários</label>
               <div id="new-task-obs-history" style="max-height: 120px; overflow-y: auto; font-size: 11px; margin-bottom: var(--space-3); border: 1px solid var(--border-default); padding: var(--space-2); border-radius: var(--radius-sm); background: var(--bg-base); display: none;"></div>
               <div style="display: flex; gap: 6px;">
@@ -886,12 +900,39 @@ window.EquipmentPanel = (() => {
         obsHistoryEl.style.display = 'none';
       }
       
+      // Populate photos if available
+      const photoContainer = document.getElementById('new-task-photos');
+      const photoPecaC = document.getElementById('new-task-photo-peca-container');
+      const photoPecaImg = document.getElementById('new-task-photo-peca');
+      const photoCompC = document.getElementById('new-task-photo-comp-container');
+      const photoCompImg = document.getElementById('new-task-photo-comp');
+      
+      let hasPhotos = false;
+      if (t.fotoPeca) {
+        photoPecaImg.src = t.fotoPeca;
+        photoPecaC.style.display = 'block';
+        hasPhotos = true;
+      } else {
+        photoPecaC.style.display = 'none';
+      }
+      
+      if (t.fotoComprovacao) {
+        photoCompImg.src = t.fotoComprovacao;
+        photoCompC.style.display = 'block';
+        hasPhotos = true;
+      } else {
+        photoCompC.style.display = 'none';
+      }
+      
+      photoContainer.style.display = hasPhotos ? 'block' : 'none';
+
       // Select the predecessor options
       const preds = t.predecessoras || [];
       Array.from(predsSelect.options).forEach(opt => {
         opt.selected = preds.includes(opt.value);
       });
     } else {
+      document.getElementById('new-task-photos').style.display = 'none';
       titleEl.innerHTML = `Nova Atividade - <span style="color:var(--brand-primary-light);">${disciplina.toUpperCase()}</span>`;
       const today = new Date().toISOString().slice(0,10);
       document.getElementById('new-task-desc').value = '';

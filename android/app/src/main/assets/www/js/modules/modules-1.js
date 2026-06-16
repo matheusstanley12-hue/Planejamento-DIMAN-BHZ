@@ -1310,6 +1310,13 @@ window.TasksModule = (() => {
       <div class="form-group"><label>% Executado: <span id="tk-pct-val">${t?.pctExecutado||0}</span>%</label>
         <input type="range" id="tk-pct" min="0" max="100" value="${t?.pctExecutado||0}" oninput="document.getElementById('tk-pct-val').textContent=this.value" /></div>
       <div class="checkbox-wrap"><input type="checkbox" id="tk-critico" ${t?.critico?'checked':''} /><label for="tk-critico">Marcar como Tarefa Crítica (Caminho Crítico)</label></div>
+      <div class="form-group" style="display:${(t?.fotoPeca || t?.fotoComprovacao) ? 'block' : 'none'}; background:var(--bg-base); padding:var(--space-3); border-radius:var(--radius-md); border:1px solid var(--border-default);">
+        <label style="margin-bottom:8px; display:block;">Fotos da Atividade</label>
+        <div style="display:flex;gap:15px;overflow-x:auto;">
+          ${t?.fotoPeca ? `<div style="flex:0 0 auto;width:200px;"><span style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;font-weight:700;">Foto da Solicitação</span><img src="${t.fotoPeca}" style="width:100%;height:150px;object-fit:cover;border-radius:4px;border:1px solid var(--border-hover);cursor:pointer;" onclick="window.open(this.src)" /></div>` : ''}
+          ${t?.fotoComprovacao ? `<div style="flex:0 0 auto;width:200px;"><span style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;font-weight:700;">Foto da Conclusão</span><img src="${t.fotoComprovacao}" style="width:100%;height:150px;object-fit:cover;border-radius:4px;border:1px solid var(--border-hover);cursor:pointer;" onclick="window.open(this.src)" /></div>` : ''}
+        </div>
+      </div>
       <div class="form-group"><label>Observações</label>
         ${obsHistoryHtml}
         <textarea id="tk-obs" placeholder="${obsHistoryHtml ? 'Adicionar nova observação...' : 'Observações...'}">${obsTextValue}</textarea>
