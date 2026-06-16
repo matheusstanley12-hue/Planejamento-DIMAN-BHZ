@@ -144,10 +144,9 @@ window.ManualsAdmin = (() => {
 
   async function deleteManual(id) {
     if (!(await window.confirmAsync('Atenção', 'Tem certeza que deseja excluir este manual? Ele deixará de ser visível para os executantes.', true))) return;
-      window.DB.manuals.delete(id);
-      if (window.Toast) window.Toast.success('Excluído', 'Manual excluído com sucesso.');
-      window.Router.navigate('manuals', { force: true });
-    }
+    window.DB.manuals.delete(id);
+    if (window.Toast) window.Toast.success('Excluído', 'Manual excluído com sucesso.');
+    window.Router.navigate('manuals', { force: true });
   }
 
   return { render, deleteManual, showAddManualModal };
