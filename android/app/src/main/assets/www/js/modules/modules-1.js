@@ -17,55 +17,27 @@ window.Dashboard = (() => {
   function chartDefaults() {
     return {
       responsive: true, maintainAspectRatio: false,
-      layout: { padding: { top: 20, bottom: 10, left: 10, right: 10 } },
+      layout: { padding: { top: 10, bottom: 10, left: 0, right: 0 } },
       interaction: { mode: 'index', intersect: false },
       plugins: { 
         legend: { 
-          position: 'top',
-          align: 'end',
-          labels: { 
-            color: '#64748B', 
-            font: { family: 'Inter', size: 11, weight: '600' },
-            usePointStyle: true,
-            pointStyle: 'circle',
-            boxWidth: 8,
-            padding: 20
-          } 
+          position: 'top', align: 'end',
+          labels: { color: '#64748B', font: { family: 'Inter', size: 11, weight: '600' }, usePointStyle: true, pointStyle: 'circle', padding: 20 } 
         },
         datalabels: {
-          color: '#1E293B',
-          font: { weight: '800', size: 11, family: 'Inter' },
-          anchor: 'end',
-          align: 'top',
-          offset: 4,
-          formatter: (value) => {
-            if (!value || value <= 0) return '';
-            const rounded = Math.round(value * 10) / 10;
-            return rounded;
-          }
+          color: '#334155', font: { weight: '800', size: 10, family: 'Inter' },
+          anchor: 'end', align: 'top', offset: 2,
+          formatter: (v) => (v && v > 0) ? Math.round(v*10)/10 : ''
         },
         tooltip: {
-          backgroundColor: 'rgba(15, 23, 42, 0.9)',
-          titleFont: { family: 'Inter', size: 13 },
-          bodyFont: { family: 'Inter', size: 12 },
-          padding: 12,
-          cornerRadius: 8,
-          displayColors: true
+          backgroundColor: 'rgba(15, 23, 42, 0.95)', titleFont: { family: 'Inter', size: 13, weight: '700' },
+          bodyFont: { family: 'Inter', size: 12, weight: '500' }, padding: 12, cornerRadius: 8, displayColors: true,
+          borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1
         }
       },
       scales: {
-        x: { 
-          ticks: { color: '#64748B', font: { size: 10, family: 'Inter' }, maxRotation: 45, minRotation: 45 }, 
-          grid: { display: false },
-          border: { display: false }
-        },
-        y: { 
-          grace: '30%',
-          ticks: { color: '#94A3B8', font: { size: 10, family: 'Inter' }, padding: 10 }, 
-          grid: { color: '#F1F5F9', drawBorder: false },
-          border: { display: false },
-          beginAtZero: true
-        }
+        x: { ticks: { color: '#94A3B8', font: { size: 11, family: 'Inter' } }, grid: { display: false }, border: { display: false } },
+        y: { grace: '20%', ticks: { color: '#CBD5E1', font: { size: 11, family: 'Inter' } }, grid: { color: 'rgba(0,0,0,0.03)' }, border: { display: false }, beginAtZero: true }
       }
     };
   }
@@ -104,21 +76,15 @@ window.Dashboard = (() => {
     const desvio = aderencia - 100;
     const avancoPlan = 100;
     const avancoReal = avancoGeral;
-    const statusColor = aderencia >= 90 ? 'var(--color-success)' : (aderencia >= 70 ? 'var(--color-warning)' : 'var(--color-danger)');
+    const statusColor = aderencia >= 90 ? '#10b981' : (aderencia >= 70 ? '#f59e0b' : '#ef4444');
 
     // Listas
-    const proximasLibs = eqs.filter(e => e.status !== 'Liberado' && e.dataLiberacaoPlanejada)
-                            .sort((a,b) => a.dataLiberacaoPlanejada.localeCompare(b.dataLiberacaoPlanejada))
-                            .slice(0, 5);
-                            
-    const alertas = eqs.filter(e => e.status !== 'Liberado' && e.dataLiberacaoPlanejada && e.dataLiberacaoPlanejada < todayStr)
-                       .sort((a,b) => a.dataLiberacaoPlanejada.localeCompare(b.dataLiberacaoPlanejada))
-                       .slice(0, 5);
+    const proximasLibs = eqs.filter(e => e.status !== 'Liberado' && e.dataLiberacaoPlanejada).sort((a,b) => a.dataLiberacaoPlanejada.localeCompare(b.dataLiberacaoPlanejada)).slice(0, 5);
+    const alertas = eqs.filter(e => e.status !== 'Liberado' && e.dataLiberacaoPlanejada && e.dataLiberacaoPlanejada < todayStr).sort((a,b) => a.dataLiberacaoPlanejada.localeCompare(b.dataLiberacaoPlanejada)).slice(0, 5);
 
     setTimeout(() => {
       try {
         const textColor = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#64748b';
-        const borderColor = getComputedStyle(document.body).getPropertyValue('--border-default').trim() || 'rgba(150,150,150,0.2)';
         Chart.defaults.color = textColor;
         Chart.defaults.font.family = 'Inter';
         
@@ -129,11 +95,8 @@ window.Dashboard = (() => {
            const counts = sts.map(s => eqs.filter(e => e.status === s).length);
            charts.status = new Chart(ctxStatus, {
              type: 'doughnut',
-             data: {
-               labels: sts,
-               datasets: [{ data: counts, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 2, borderColor: 'var(--bg-card)' }]
-             },
-             options: { cutout: '70%', maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 10 } } } } }
+             data: { labels: sts, datasets: [{ data: counts, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 0, hoverOffset: 4 }] },
+             options: { cutout: '75%', maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } } }
            });
         }
         
@@ -146,20 +109,24 @@ window.Dashboard = (() => {
             if(e.dataLiberacaoPlanejada) { const m = parseInt(e.dataLiberacaoPlanejada.split('-')[1],10); if(m>=1&&m<=12) mP[m-1]++; }
             if(e.status==='Liberado' && (e.dataLiberacaoAtual || e.dataFim)) { const m = parseInt((e.dataLiberacaoAtual||e.dataFim).split('-')[1],10); if(m>=1&&m<=12) mR[m-1]++; }
           });
+          
+          let gradientR = ctxAno.getContext('2d').createLinearGradient(0, 0, 0, 400);
+          gradientR.addColorStop(0, 'rgba(16, 185, 129, 0.8)');
+          gradientR.addColorStop(1, 'rgba(16, 185, 129, 0.1)');
+
           charts.ano = new Chart(ctxAno, {
             type: 'bar',
             data: { labels: mStr, datasets: [
-              { type: 'line', label: 'Realizado', data: mR, borderColor: '#10b981', backgroundColor: '#10b981', fill: false, tension: 0.4, borderWidth: 3 },
-              { type: 'bar', label: 'Planejado', data: mP, backgroundColor: borderColor, borderRadius: 4, barPercentage: 0.5 }
+              { type: 'line', label: 'Realizado', data: mR, borderColor: '#10b981', backgroundColor: gradientR, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#fff', pointBorderColor: '#10b981', pointBorderWidth: 2, pointRadius: 4 },
+              { type: 'bar', label: 'Planejado', data: mP, backgroundColor: '#E2E8F0', borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }
             ]},
-            options: { ...chartDefaults(), maintainAspectRatio: false, scales: { y: { grid: { color: borderColor }, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+            options: { ...chartDefaults(), maintainAspectRatio: false }
           });
         }
 
+        // 3. Categoria
         const catsFull = ['Sondas de Pesquisas', 'Bomba de pesquisa', 'Sondas Poços', 'Bombas de poços', 'Subconjuntos', 'Programação de almoxarifado'];
         const catsLabels = ['Sondas Pesq', 'Bombas Pesq', 'Sondas Poço', 'Bombas Poço', 'Subconjuntos', 'Almoxarifado'];
-        
-        // 3. Categoria
         const ctxCat = document.getElementById('mega-ch-cat');
         if (ctxCat) {
           const cP = catsFull.map(c => eqs.filter(e => (e.tipo||'') === c && e.dataLiberacaoPlanejada && e.dataLiberacaoPlanejada.startsWith(currentMonthPrefix)).length);
@@ -167,10 +134,10 @@ window.Dashboard = (() => {
           charts.cat = new Chart(ctxCat, {
             type: 'bar',
             data: { labels: catsLabels, datasets: [
-              { label: 'Realizado', data: cR, backgroundColor: '#0ea5e9', borderRadius: 4 },
-              { label: 'Planejado', data: cP, backgroundColor: borderColor, borderRadius: 4 }
+              { label: 'Realizado', data: cR, backgroundColor: '#0ea5e9', borderRadius: 6, borderSkipped: false },
+              { label: 'Planejado', data: cP, backgroundColor: '#E2E8F0', borderRadius: 6, borderSkipped: false }
             ]},
-            options: { ...chartDefaults(), indexAxis: 'y', maintainAspectRatio: false, scales: { x: { grid: { color: borderColor }, ticks: { precision: 0 } }, y: { grid: { display: false } } } }
+            options: { ...chartDefaults(), maintainAspectRatio: false }
           });
         }
 
@@ -182,8 +149,8 @@ window.Dashboard = (() => {
           const tFim = tasks.filter(t => t.pctExecutado >= 100).length;
           charts.tasksChart = new Chart(ctxTasks, {
             type: 'pie',
-            data: { labels: ['Não iniciada', 'Andamento', 'Concluída'], datasets: [{ data: [tNao, tAnd, tFim], backgroundColor: ['#ef4444', '#f59e0b', '#10b981'], borderWidth:2, borderColor:'var(--bg-card)' }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 10 } } } } }
+            data: { labels: ['Não iniciada', 'Andamento', 'Concluída'], datasets: [{ data: [tNao, tAnd, tFim], backgroundColor: ['#ef4444', '#f59e0b', '#10b981'], borderWidth:0, hoverOffset: 4 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } } }
           });
         }
 
@@ -196,12 +163,12 @@ window.Dashboard = (() => {
           const pEnt = parts.filter(p => p.status === 'Entregue').length;
           charts.partsChart = new Chart(ctxParts, {
             type: 'doughnut',
-            data: { labels: ['Solicitada', 'Comprada', 'Em Transporte', 'Entregue'], datasets: [{ data: [pSol, pCom, pTra, pEnt], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'], borderWidth:2, borderColor:'var(--bg-card)' }] },
-            options: { cutout: '60%', maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 10 } } } } }
+            data: { labels: ['Solicitada', 'Comprada', 'Em Transporte', 'Entregue'], datasets: [{ data: [pSol, pCom, pTra, pEnt], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'], borderWidth:0, hoverOffset: 4 }] },
+            options: { cutout: '65%', maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } } }
           });
         }
 
-        // 6. Esforço HH por Categoria
+        // 6. Esforço HH
         const ctxEffort = document.getElementById('mega-ch-effort');
         if (ctxEffort) {
           const hhP = catsFull.map(c => tasks.filter(t => { const eq=DB.equipment.get(t.equipmentId); return eq && (eq.tipo||'') === c; }).reduce((s,t)=>s+(t.horasPlanejadas||0),0));
@@ -209,32 +176,29 @@ window.Dashboard = (() => {
           charts.effort = new Chart(ctxEffort, {
             type: 'bar',
             data: { labels: catsLabels, datasets: [
-              { label: 'Real (hh)', data: hhR, backgroundColor: '#8b5cf6', borderRadius: 4 },
-              { label: 'Plan (hh)', data: hhP, backgroundColor: borderColor, borderRadius: 4 }
+              { label: 'Real (hh)', data: hhR, backgroundColor: '#8b5cf6', borderRadius: 6, borderSkipped: false },
+              { label: 'Plan (hh)', data: hhP, backgroundColor: '#E2E8F0', borderRadius: 6, borderSkipped: false }
             ]},
-            options: { ...chartDefaults(), maintainAspectRatio: false, scales: { y: { grid: { color: borderColor } }, x: { grid: { display: false } } } }
+            options: { ...chartDefaults(), maintainAspectRatio: false }
           });
         }
 
         // 7. Mapa de Atrasos
         const ctxDelay = document.getElementById('mega-ch-delay');
         if (ctxDelay) {
-          const del = [0,0,0,0]; // No Prazo, 1-3, 4-7, >7
+          const del = [0,0,0,0];
           const delayedEqs = eqs.filter(e => e.status !== 'Liberado');
           delayedEqs.forEach(e => {
             if (!e.dataLiberacaoPlanejada) return;
             const dPlan = new Date(e.dataLiberacaoPlanejada);
             const dToday = new Date(todayStr);
             const diffDays = Math.ceil((dToday - dPlan) / (1000 * 60 * 60 * 24));
-            if (diffDays <= 0) del[0]++;
-            else if (diffDays <= 3) del[1]++;
-            else if (diffDays <= 7) del[2]++;
-            else del[3]++;
+            if (diffDays <= 0) del[0]++; else if (diffDays <= 3) del[1]++; else if (diffDays <= 7) del[2]++; else del[3]++;
           });
           charts.delay = new Chart(ctxDelay, {
             type: 'bar',
-            data: { labels: ['No Prazo', '1-3 Dias', '4-7 Dias', '> 7 Dias'], datasets: [{ label: 'Qtd. Máquinas', data: del, backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#7f1d1d'], borderRadius: 4 }] },
-            options: { ...chartDefaults(), indexAxis: 'y', maintainAspectRatio: false, plugins: { legend:{display:false} }, scales: { x: { grid: { color: borderColor } }, y: { grid: { display: false } } } }
+            data: { labels: ['No Prazo', '1-3 Dias', '4-7 Dias', '> 7 Dias'], datasets: [{ label: 'Qtd. Máquinas', data: del, backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#7f1d1d'], borderRadius: 6, borderSkipped: false }] },
+            options: { ...chartDefaults(), maintainAspectRatio: false, plugins: { legend:{display:false} } }
           });
         }
 
@@ -245,197 +209,213 @@ window.Dashboard = (() => {
           const roleCount = roles.map(r => wf.filter(w => (w.cargo||'').includes(r)).length);
           charts.worker = new Chart(ctxWorker, {
             type: 'polarArea',
-            data: { labels: roles, datasets: [{ data: roleCount, backgroundColor: ['rgba(59,130,246,0.6)', 'rgba(16,185,129,0.6)', 'rgba(245,158,11,0.6)', 'rgba(239,68,68,0.6)', 'rgba(139,92,246,0.6)'], borderWidth:1, borderColor:'var(--bg-card)' }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 10 } } } }, scales: { r: { grid: { color: borderColor }, ticks: { display: false } } } }
+            data: { labels: roles, datasets: [{ data: roleCount, backgroundColor: ['rgba(59,130,246,0.7)', 'rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)', 'rgba(139,92,246,0.7)'], borderWidth:0 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } }, scales: { r: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { display: false } } } }
           });
         }
       } catch(e) { console.warn('Mega Chart Error', e); }
     }, 100);
 
-    const microCard = (title, val, iconColor) => `
-      <div style="flex: 0 0 auto; min-width: 130px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-lg); padding: var(--space-3); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between;">
-        <div style="width: 20px; height: 20px; border-radius: 6px; background: ${iconColor}20; border: 1px solid ${iconColor}40; display:flex; align-items:center; justify-content:center; margin-bottom: 8px;">
-          <div style="width: 6px; height: 6px; border-radius: 50%; background: ${iconColor};"></div>
+    const microCard = (title, val, iconColor) => \`
+      <div style="flex: 1 1 150px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; min-width:140px;">
+        <div style="position: absolute; top:0; right:0; width: 60px; height: 60px; background: radial-gradient(circle, \${iconColor}25 0%, transparent 70%); transform: translate(20%, -20%); border-radius: 50%;"></div>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom: 12px; position:relative; z-index:2;">
+          <div style="width: 32px; height: 32px; border-radius: 10px; background: \${iconColor}15; border: 1px solid \${iconColor}30; display:flex; align-items:center; justify-content:center;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: \${iconColor}; box-shadow: 0 0 10px \${iconColor};"></div>
+          </div>
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="\${title}">\${title}</div>
         </div>
-        <div style="font-size: 22px; font-weight: 900; color: var(--text-primary); line-height: 1;">${val}</div>
-        <div style="font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${title}">${title}</div>
+        <div style="font-size: 32px; font-weight: 900; color: var(--text-primary); line-height: 1; letter-spacing: -0.03em; position:relative; z-index:2;">\${val}</div>
       </div>
-    `;
+    \`;
     
-    const chartCard = (title, id) => `
-      <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-4); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; min-height: 300px; height: 100%; overflow:hidden;">
-        <div style="font-size:13px; font-weight:800; color:var(--text-primary); margin-bottom:16px; flex-shrink: 0;">${title}</div>
+    const chartCard = (title, id) => \`
+      <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:20px; padding:24px; box-shadow: 0 8px 30px rgba(0,0,0,0.03); display:flex; flex-direction:column; min-height: 340px; height: 100%; overflow:hidden;">
+        <div style="font-size:15px; font-weight:800; color:var(--text-primary); margin-bottom:20px; flex-shrink: 0; letter-spacing: -0.02em;">\${title}</div>
         <div style="flex:1; position:relative; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center;">
            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
-             <canvas id="${id}"></canvas>
+             <canvas id="\${id}"></canvas>
            </div>
         </div>
       </div>
-    `;
+    \`;
 
-    const html = `
-    <div style="width:100%; max-width:100%; padding:var(--space-5); display:flex; flex-direction:column; gap:var(--space-4);">
+    const html = \`
+    <div style="width:100%; max-width:100%; padding:var(--space-6); display:flex; flex-direction:column; gap:var(--space-5);">
       
       <!-- HEADER -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-        <div style="display:flex; align-items:center; gap: 12px;">
-          <div style="width: 40px; height: 40px; background: var(--brand-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff;">
-            <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <div style="display:flex; align-items:center; gap: 16px;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--brand-primary), #0ea5e9); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);">
+            <svg style="width:24px;height:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
           </div>
           <div>
-            <h1 style="font-size:var(--text-xl); font-weight:900; color:var(--text-primary); margin:0;">Dashboard Executivo</h1>
-            <p style="font-size:var(--text-xs); color:var(--text-muted); margin:2px 0 0 0;">Visão geral em tempo real · ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</p>
+            <h1 style="font-size:24px; font-weight:900; color:var(--text-primary); margin:0; letter-spacing: -0.03em;">Dashboard Executivo</h1>
+            <p style="font-size:12px; color:var(--text-muted); margin:4px 0 0 0; font-weight:500;">Visão geral em tempo real · \${new Date().toLocaleDateString('pt-BR')} \${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</p>
           </div>
         </div>
-        <button class="btn btn-primary" style="display:flex; align-items:center; gap:8px;" onclick="Router.navigate('dashboard',{force:true})">
-          <svg style="width:14px;height:14px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          Atualizar
+        <button class="btn btn-primary" style="display:flex; align-items:center; gap:8px; border-radius: 10px; padding: 10px 20px; font-weight: 700; background: #0f172a; border: none;" onclick="Router.navigate('dashboard',{force:true})">
+          <svg style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Atualizar Dados
         </button>
       </div>
 
-      <!-- SECTION 1: Micro Cards (Horizontal Scroll) -->
-      <div style="display:flex; gap: var(--space-3); overflow-x: auto; padding-bottom: 8px; margin-bottom: -8px;">
-        ${microCard('Em Manutenção', emManutencao, '#3b82f6')}
-        ${microCard('Liberados', liberados, '#10b981')}
-        ${microCard('Atrasados', atrasados, '#ef4444')}
-        ${microCard('Aguardando Peças', aguardandoPecas, '#f59e0b')}
-        ${microCard('Paralisados / F. Peça', paralisados, '#ef4444')}
-        ${microCard('Total de Tarefas', tarefasTotal, '#3b82f6')}
-        ${microCard('Tarefas Concluídas', tarefasConcluidas, '#10b981')}
-        ${microCard('Tarefas Críticas', tarefasCriticas, '#ef4444')}
-        ${microCard('Restrições Abertas', restrAbertas, '#f59e0b')}
-        ${microCard('Avanço Geral', avancoGeral + '%', '#0ea5e9')}
-        ${microCard('Horas Realizadas', horasRealizadas + 'h', '#8b5cf6')}
-        ${microCard('Aderência', aderencia + '%', '#ef4444')}
+      <!-- SECTION 1: Micro Cards (Grid) -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px;">
+        \${microCard('Em Manutenção', emManutencao, '#3b82f6')}
+        \${microCard('Liberados', liberados, '#10b981')}
+        \${microCard('Atrasados', atrasados, '#ef4444')}
+        \${microCard('Paralisados / F. Peça', paralisados, '#ef4444')}
+        \${microCard('Aguardando Peças', aguardandoPecas, '#f59e0b')}
+        \${microCard('Restrições Abertas', restrAbertas, '#f59e0b')}
+        \${microCard('Total de Tarefas', tarefasTotal, '#3b82f6')}
+        \${microCard('Tarefas Concluídas', tarefasConcluidas, '#10b981')}
+        \${microCard('Tarefas Críticas', tarefasCriticas, '#ef4444')}
+        \${microCard('Avanço Geral', avancoGeral + '%', '#0ea5e9')}
+        \${microCard('Horas Realizadas', horasRealizadas + 'h', '#8b5cf6')}
+        \${microCard('Aderência', aderencia + '%', '#ef4444')}
       </div>
 
       <!-- SECTION 2: Curva de Avanço -->
-      <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-5); display:flex; flex-direction:column; box-shadow:var(--shadow-sm);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-          <div style="font-size:14px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
-            <svg style="width:16px;color:var(--brand-primary)" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:20px; padding:32px; display:flex; flex-direction:column; box-shadow: 0 8px 30px rgba(0,0,0,0.03);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 32px;">
+          <div style="font-size:16px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:12px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(14,165,233,0.1);display:flex;align-items:center;justify-content:center;">
+              <svg style="width:18px;color:#0ea5e9" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
             Curva de Avanço Real
           </div>
-          <div class="badge" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; font-weight:800;">${desvio > 0 ? '+' : ''}${desvio}% de desvio</div>
+          <div style="background:\${desvio > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'}; color:\${desvio > 0 ? '#10b981' : '#ef4444'}; font-weight:800; padding:6px 16px; border-radius:20px; font-size:12px; letter-spacing:0.5px;">\${desvio > 0 ? '+' : ''}\${desvio}% DE DESVIO</div>
         </div>
 
-        <div style="display:flex; align-items:center; gap: 40px; width:100%;">
+        <div style="display:flex; align-items:center; gap: 40px; width:100%; flex-wrap: wrap;">
           
-          <div style="display:flex; gap: 16px;">
-            <div style="background: var(--bg-surface); padding: 12px 24px; border-radius: 12px; text-align:center;">
-              <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Planejado</div>
-              <div style="font-size:32px; font-weight:900; color:#0ea5e9; line-height:1; margin-top:4px;">${avancoPlan}%</div>
+          <div style="display:flex; gap: 16px; flex: 0 0 auto;">
+            <div style="background: var(--bg-surface); padding: 16px 32px; border-radius: 16px; text-align:center;">
+              <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Planejado</div>
+              <div style="font-size:40px; font-weight:900; color:#0ea5e9; line-height:1; margin-top:8px;">\${avancoPlan}%</div>
             </div>
-            <div style="display:flex; align-items:center; font-weight:800; color:var(--border-default); font-size:18px;">VS</div>
-            <div style="background: var(--bg-surface); padding: 12px 24px; border-radius: 12px; text-align:center;">
-              <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Realizado</div>
-              <div style="font-size:32px; font-weight:900; color:${statusColor}; line-height:1; margin-top:4px;">${avancoReal}%</div>
+            <div style="display:flex; align-items:center; font-weight:800; color:var(--text-muted); font-size:18px;">VS</div>
+            <div style="background: var(--bg-surface); padding: 16px 32px; border-radius: 16px; text-align:center;">
+              <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Realizado</div>
+              <div style="font-size:40px; font-weight:900; color:\${statusColor}; line-height:1; margin-top:8px;">\${avancoReal}%</div>
             </div>
           </div>
 
-          <div style="flex:1; display:flex; flex-direction:column; gap: 16px;">
+          <div style="flex:1; display:flex; flex-direction:column; gap: 24px; min-width:300px;">
             <!-- Line 1: Plan -->
-            <div style="display:flex; align-items:center; gap:16px;">
-              <div style="width:60px; font-size:10px; color:var(--text-muted); font-weight:600;">Planejado</div>
-              <div style="flex:1; height:4px; background:var(--bg-surface); border-radius:2px; position:relative;">
-                <div style="position:absolute; top:0; left:0; height:100%; width:100%; background:#0ea5e9; border-radius:2px;"></div>
+            <div style="display:flex; align-items:center; gap:20px;">
+              <div style="width:70px; font-size:12px; color:var(--text-muted); font-weight:700;">Planejado</div>
+              <div style="flex:1; height:8px; background:var(--bg-surface); border-radius:4px; position:relative;">
+                <div style="position:absolute; top:0; left:0; height:100%; width:100%; background:linear-gradient(90deg, #38bdf8, #0ea5e9); border-radius:4px;"></div>
               </div>
-              <div style="width:30px; font-size:10px; font-weight:800;">100%</div>
+              <div style="width:40px; font-size:12px; font-weight:800; text-align:right;">100%</div>
             </div>
             <!-- Line 2: Real -->
-            <div style="display:flex; align-items:center; gap:16px;">
-              <div style="width:60px; font-size:10px; color:var(--text-muted); font-weight:600;">Realizado</div>
-              <div style="flex:1; height:4px; background:var(--bg-surface); border-radius:2px; position:relative;">
-                <div style="position:absolute; top:0; left:0; height:100%; width:${avancoReal}%; background:${statusColor}; border-radius:2px; transition:width 1s;"></div>
+            <div style="display:flex; align-items:center; gap:20px;">
+              <div style="width:70px; font-size:12px; color:var(--text-muted); font-weight:700;">Realizado</div>
+              <div style="flex:1; height:8px; background:var(--bg-surface); border-radius:4px; position:relative;">
+                <div style="position:absolute; top:0; left:0; height:100%; width:\${avancoReal}%; background:\${statusColor}; border-radius:4px; transition:width 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px \${statusColor}40;"></div>
               </div>
-              <div style="width:30px; font-size:10px; font-weight:800;">${avancoReal}%</div>
+              <div style="width:40px; font-size:12px; font-weight:800; text-align:right;">\${avancoReal}%</div>
             </div>
           </div>
 
-          <div style="display:flex; flex-direction:column; gap: 8px; border-left:1px solid var(--border-card); padding-left: 24px;">
-            <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-secondary);"><div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div> Crítico</div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-secondary);"><div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Atenção</div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-secondary);"><div style="width:8px;height:8px;border-radius:50%;background:#10b981;"></div> OK</div>
+          <div style="display:flex; flex-direction:column; gap: 12px; border-left:1px solid var(--border-card); padding-left: 32px; flex: 0 0 auto;">
+            <div style="display:flex; align-items:center; gap:10px; font-size:12px; font-weight:600; color:var(--text-secondary);"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.5);"></div> Crítico (< 70%)</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:12px; font-weight:600; color:var(--text-secondary);"><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;box-shadow:0 0 8px rgba(245,158,11,0.5);"></div> Atenção (70% - 89%)</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:12px; font-weight:600; color:var(--text-secondary);"><div style="width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 8px rgba(16,185,129,0.5);"></div> OK (≥ 90%)</div>
           </div>
         </div>
       </div>
 
       <!-- SECTION 3: 8 Charts in Grid -->
-      <div style="display:grid; grid-template-columns: repeat(12, 1fr); gap:var(--space-4);">
+      <style>
+        .mega-charts-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
+        @media (max-width: 1200px) {
+          .mega-charts-grid > div { grid-column: span 6 !important; }
+        }
+        @media (max-width: 768px) {
+          .mega-charts-grid > div { grid-column: span 12 !important; }
+        }
+      </style>
+      <div class="mega-charts-grid">
         
-        <!-- Row 1: 3 Charts -->
-        <div style="grid-column: span 4;">${chartCard('1. Saúde da Frota', 'mega-ch-status')}</div>
-        <div style="grid-column: span 4;">${chartCard('2. Pipeline de Peças (Suprimentos)', 'mega-ch-parts')}</div>
-        <div style="grid-column: span 4;">${chartCard('3. Status das Tarefas', 'mega-ch-tasks')}</div>
+        <!-- Row 1 -->
+        <div style="grid-column: span 3;">\${chartCard('Saúde da Frota', 'mega-ch-status')}</div>
+        <div style="grid-column: span 3;">\${chartCard('Status das Tarefas', 'mega-ch-tasks')}</div>
+        <div style="grid-column: span 6;">\${chartCard('Volume de Entregas por Categoria', 'mega-ch-cat')}</div>
 
-        <!-- Row 2: 3 Charts -->
-        <div style="grid-column: span 4;">${chartCard('4. Mapa de Atrasos da Frota', 'mega-ch-delay')}</div>
-        <div style="grid-column: span 4;">${chartCard('5. Projeção vs Execução Anual', 'mega-ch-ano')}</div>
-        <div style="grid-column: span 4;">${chartCard('6. Apropriação de Esforço (HH) por Categoria', 'mega-ch-effort')}</div>
-        
-        <!-- Row 3: 2 Charts -->
-        <div style="grid-column: span 6;">${chartCard('7. Especialidades Alocadas (Mão de Obra)', 'mega-ch-worker')}</div>
-        <div style="grid-column: span 6;">${chartCard('8. Volume de Entregas por Categoria', 'mega-ch-cat')}</div>
+        <!-- Row 2 -->
+        <div style="grid-column: span 8;">\${chartCard('Projeção vs Execução Anual', 'mega-ch-ano')}</div>
+        <div style="grid-column: span 4;">\${chartCard('Pipeline de Peças', 'mega-ch-parts')}</div>
+
+        <!-- Row 3 -->
+        <div style="grid-column: span 4;">\${chartCard('Mapa de Atrasos', 'mega-ch-delay')}</div>
+        <div style="grid-column: span 4;">\${chartCard('Apropriação de Esforço (HH)', 'mega-ch-effort')}</div>
+        <div style="grid-column: span 4;">\${chartCard('Especialidades Alocadas', 'mega-ch-worker')}</div>
 
       </div>
 
       <!-- SECTION 4: Lists -->
-      <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:var(--space-4);">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap:24px;">
         
         <!-- Próximas Liberações -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-4); box-shadow:var(--shadow-sm); min-height:200px; display:flex; flex-direction:column;">
-          <div style="font-size:12px; font-weight:800; color:var(--text-primary); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
-            🚀 Próximas Liberações
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:20px; padding:24px; box-shadow:0 8px 30px rgba(0,0,0,0.03); min-height:250px; display:flex; flex-direction:column;">
+          <div style="font-size:15px; font-weight:800; color:var(--text-primary); margin-bottom:20px; display:flex; align-items:center; gap:12px; letter-spacing:-0.02em;">
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;font-size:14px;">🚀</div>
+            Próximas Liberações
           </div>
-          <div style="display:flex; flex-direction:column; gap:8px; flex:1; overflow-y:auto;">
-            ${proximasLibs.length === 0 ? '<div style="color:var(--text-muted);font-size:12px;text-align:center;margin-top:20px;">Nenhum equipamento agendado.</div>' : ''}
-            ${proximasLibs.map(e => {
+          <div style="display:flex; flex-direction:column; gap:12px; flex:1; overflow-y:auto; padding-right:8px;">
+            \${proximasLibs.length === 0 ? '<div style="color:var(--text-muted);font-size:13px;text-align:center;margin-top:30px;font-weight:500;">Nenhum equipamento agendado.</div>' : ''}
+            \${proximasLibs.map(e => {
               const d = window.daysBetween ? window.daysBetween(todayStr, e.dataLiberacaoPlanejada) : 0;
-              return `
-              <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-surface); border-radius:8px; padding:12px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:24px;height:24px;border-radius:50%;background:#0ea5e9;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;">${(e.codigo||'').substring(0,2)}</div>
+              return \`
+              <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-surface); border-radius:12px; padding:16px; transition:transform 0.2s; cursor:pointer;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+                <div style="display:flex; align-items:center; gap:16px;">
+                  <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #0ea5e9, #38bdf8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;">\${(e.codigo||'').substring(0,2)}</div>
                   <div>
-                    <div style="font-size:12px;font-weight:800;color:var(--text-primary);">${e.codigo}</div>
-                    <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;">${e.cliente || 'Sem cliente'}</div>
+                    <div style="font-size:14px;font-weight:800;color:var(--text-primary);">\${e.codigo}</div>
+                    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-top:2px;">\${e.cliente || 'Sem cliente'}</div>
                   </div>
                 </div>
                 <div style="text-align:right;">
-                  <div style="font-size:10px;font-weight:800;color:#f59e0b;">${e.dataLiberacaoPlanejada ? e.dataLiberacaoPlanejada.split('-').reverse().join('/') : ''}</div>
-                  <div style="font-size:9px;color:var(--text-muted);">${d} dias</div>
+                  <div style="font-size:12px;font-weight:800;color:#f59e0b;">\${e.dataLiberacaoPlanejada ? e.dataLiberacaoPlanejada.split('-').reverse().join('/') : ''}</div>
+                  <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-top:2px;">\${d} dias</div>
                 </div>
               </div>
-            `}).join('')}
+            \`}).join('')}
           </div>
         </div>
 
         <!-- Alertas Críticos -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:var(--space-4); box-shadow:var(--shadow-sm); min-height:200px; display:flex; flex-direction:column;">
-          <div style="font-size:12px; font-weight:800; color:var(--text-primary); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
-            ⚠️ Alertas Críticos
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:20px; padding:24px; box-shadow:0 8px 30px rgba(0,0,0,0.03); min-height:250px; display:flex; flex-direction:column;">
+          <div style="font-size:15px; font-weight:800; color:var(--text-primary); margin-bottom:20px; display:flex; align-items:center; gap:12px; letter-spacing:-0.02em;">
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;font-size:14px;">⚠️</div>
+            Alertas Críticos
           </div>
-          <div style="display:flex; flex-direction:column; gap:8px; flex:1; overflow-y:auto;">
-            ${alertas.length === 0 ? '<div style="color:var(--text-muted);font-size:12px;text-align:center;margin-top:20px;">Nenhum equipamento crítico.</div>' : ''}
-            ${alertas.map(e => {
+          <div style="display:flex; flex-direction:column; gap:12px; flex:1; overflow-y:auto; padding-right:8px;">
+            \${alertas.length === 0 ? '<div style="color:var(--text-muted);font-size:13px;text-align:center;margin-top:30px;font-weight:500;">Nenhum equipamento crítico.</div>' : ''}
+            \${alertas.map(e => {
               const d = window.daysBetween ? window.daysBetween(e.dataLiberacaoPlanejada, todayStr) : 0;
-              return `
-              <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-surface); border-radius:8px; padding:12px; border-left:3px solid #ef4444;">
+              return \`
+              <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-surface); border-radius:12px; padding:16px; border-left:4px solid #ef4444; transition:transform 0.2s; cursor:pointer;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
                 <div>
-                  <div style="font-size:12px;font-weight:800;color:var(--text-primary);">${e.codigo}</div>
-                  <div style="font-size:9px;color:var(--color-danger);text-transform:uppercase;">Atrasado</div>
+                  <div style="font-size:14px;font-weight:800;color:var(--text-primary);">\${e.codigo}</div>
+                  <div style="font-size:11px;color:#ef4444;text-transform:uppercase;font-weight:700;margin-top:2px;">Atrasado</div>
                 </div>
                 <div style="text-align:right;">
-                  <div style="font-size:14px;font-weight:900;color:#ef4444;">${d} dias</div>
+                  <div style="font-size:18px;font-weight:900;color:#ef4444;line-height:1;">\${d} dias</div>
                 </div>
               </div>
-            `}).join('')}
+            \`}).join('')}
           </div>
         </div>
 
       </div>
 
     </div>
-    `;
+    \`;
 
     return html;
   }
