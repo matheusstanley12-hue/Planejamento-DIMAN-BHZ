@@ -1235,6 +1235,7 @@ window.WorkerPanel = (() => {
 
   function saveNewTask() {
     const session = Auth.getSession();
+    const myWorker = getMyWorker(session);
     const desc = document.getElementById('w-new-desc').value.trim();
     if (!desc) {
       Toast.error('Erro', 'Descrição da atividade é obrigatória.');
