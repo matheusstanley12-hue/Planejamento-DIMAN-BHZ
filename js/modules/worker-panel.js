@@ -5,6 +5,29 @@
 window.WorkerPanel = (() => {
   let activeTab = 'hoje'; // 'atrasadas' | 'hoje' | 'futuras' | 'concluidas'
   let eqFilter = '';
+
+  function compressImage(file, callback) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
+        else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        callback(canvas.toDataURL('image/jpeg', 0.6));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
   
   function getMyWorker(session) {
     const workers = window.DB.workforce.list();
@@ -289,7 +312,7 @@ window.WorkerPanel = (() => {
 
     if (t) {
       let updatePayload = { horasRealizadas: (t.horasRealizadas || 0) + Math.max(0, Math.round(elapsedHrs * 100) / 100) };
-      if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason === 'Outros') {
+      if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros')) {
         updatePayload.status = reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') ? 'Aguardando Peça' : 'Pausada';
         updatePayload.pauseReason = reason;
         updatePayload.pauseStartTime = now.toISOString();
@@ -297,7 +320,7 @@ window.WorkerPanel = (() => {
       DB.tasks.update(t.id, updatePayload);
     }
 
-    if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason === 'Outros') {
+    if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros')) {
       DB.workforce.update(myWorker.id, {
         currentState: 'Ocioso',
         currentTaskId: null,
@@ -487,12 +510,10 @@ window.WorkerPanel = (() => {
   function previewPhoto(event) {
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.getElementById('photo-preview').src = e.target.result;
+      compressImage(file, function(base64) {
+        document.getElementById('photo-preview').src = base64;
         document.getElementById('photo-preview-container').style.display = 'block';
-      }
-      reader.readAsDataURL(file);
+      });
     }
   }
 
@@ -515,9 +536,7 @@ window.WorkerPanel = (() => {
     
     // Process photo as base64
     const file = fileInput.files[0];
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const base64Img = e.target.result;
+    compressImage(file, function(base64Img) {
       
       // If working, stop and save time
       if (myWorker.currentState === 'Trabalhando') {
@@ -600,8 +619,7 @@ window.WorkerPanel = (() => {
       closeModal('modal-worker-complete');
       Toast.success('Sucesso', 'Tarefa concluída e foto anexada!');
       Router.navigate('worker-panel', { force: true });
-    };
-    reader.readAsDataURL(file);
+    });
   }
 
   function formatTimeDiff(isoStart) {
@@ -1364,14 +1382,11 @@ window.WorkerPanel = (() => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          const b64 = evt.target.result;
+        compressImage(file, function(b64) {
           document.getElementById('w-tk-photo-b64').value = b64;
           document.getElementById('w-tk-photo-img').src = b64;
           document.getElementById('w-tk-photo-preview').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+        });
       });
     }
   }
@@ -2030,13 +2045,11 @@ window.WorkerServices = (() => {
       document.getElementById('w-sv-photo')?.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = function(evt) {
-            document.getElementById('w-sv-photo-preview').src = evt.target.result;
+          compressImage(file, function(b64) {
+            document.getElementById('w-sv-photo-preview').src = b64;
             document.getElementById('w-sv-photo-preview-container').style.display = 'block';
-            window._tempSvPhoto = evt.target.result;
-          };
-          reader.readAsDataURL(file);
+            window._tempSvPhoto = b64;
+          });
         }
       });
 
