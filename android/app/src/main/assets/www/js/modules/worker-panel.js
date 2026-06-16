@@ -1913,7 +1913,8 @@ window.WorkerPanel = (() => {
     promptComplete,
     previewPhoto,
     finalizeTask,
-    getMyEquipments
+    getMyEquipments,
+    compressImage
   };
 })();
 
@@ -2096,7 +2097,7 @@ window.WorkerServices = (() => {
       document.getElementById('w-sv-photo')?.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-          compressImage(file, function(b64) {
+          window.WorkerPanel.compressImage(file, function(b64) {
             document.getElementById('w-sv-photo-preview').src = b64;
             document.getElementById('w-sv-photo-preview-container').style.display = 'block';
             window._tempSvPhoto = b64;

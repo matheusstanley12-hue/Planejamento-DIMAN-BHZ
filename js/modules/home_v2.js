@@ -85,9 +85,9 @@ window.HomeModule = (() => {
       const prioridade = e.prioridade || 'Normal';
       let prioBadge = '';
       if (prioridade === 'Urgente') {
-        prioBadge = `<span class="badge badge-danger">Urgente</span>`;
+        prioBadge = `<span class="badge badge-danger" style="margin-left: 6px;">Urgente</span>`;
       } else if (prioridade === 'Alta') {
-        prioBadge = `<span class="badge badge-orange">Alta</span>`;
+        prioBadge = `<span class="badge badge-orange" style="margin-left: 6px;">Alta</span>`;
       }
 
       const cardHtml = `
@@ -103,35 +103,37 @@ window.HomeModule = (() => {
            data-pecas="${hasPecas}" 
            onclick="window.Router.navigate('equipment-panel', {id: '${e.id}'})" 
            style="cursor:grab;display:flex;flex-direction:column;padding:var(--space-4);border-top:4px solid ${pct>=100?'var(--color-success)':pct>0?'var(--brand-primary-light)':'var(--text-muted)'}; margin-bottom: 2px; flex-shrink: 0; min-height: fit-content; height: auto;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-2);">
-          <div style="min-width: 0; flex: 1; padding-right: 8px;">
-            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+        <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:var(--space-2);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
               <div style="font-size:1.15rem;font-weight:900;color:var(--text-primary);letter-spacing:-0.02em;white-space:nowrap;">${e.codigo}</div>
-              ${prioBadge}
+              ${prioBadge.replace('margin-left: 6px;', 'margin-left: 0;')}
             </div>
-            <div style="font-size:10px;font-weight:600;color:var(--text-secondary);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">O.S.: ${e.os || '—'} &middot; Cliente: ${e.cliente || '—'}</div>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+              ${isAdmin ? `
+                <button class="btn btn-secondary btn-icon" 
+                        style="padding: 2px; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-card); cursor: pointer;" 
+                        title="Editar Equipamento"
+                        onclick="event.stopPropagation(); window.EquipmentModule.openEdit('${e.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 14px; height: 14px; color: var(--text-secondary);">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.83 20.04a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                </button>
+              ` : ''}
+              ${isAdmin ? `
+                <select onchange="event.stopPropagation(); window.HomeModule.updateEquipmentStatus('${e.id}', this.value)" 
+                        onclick="event.stopPropagation();" 
+                        class="badge ${e.status === 'Liberado' ? 'badge-success' : e.status === 'Em Manutenção' ? 'badge-primary' : e.status === 'Paralisado' ? 'badge-danger' : e.status === 'Falta de Peças' ? 'badge-warning' : e.status === 'Falta de Mão de Obra' ? 'badge-danger' : 'badge-ghost'}" 
+                        style="border:none; cursor:pointer; font-weight:700; padding:2px 8px; outline:none; font-family:var(--font-sans); text-align:center; -webkit-appearance:none; -moz-appearance:none; appearance:none; white-space:nowrap;">
+                  ${['Em Manutenção', 'Liberado', 'Paralisado', 'Falta de Peças', 'Backlog', 'Falta de Mão de Obra'].map(s => `
+                    <option value="${s}" ${e.status === s ? 'selected' : ''} style="background:var(--bg-modal); color:var(--text-primary); font-weight:normal;">${s}</option>
+                  `).join('')}
+                </select>
+              ` : statusBadge(e.status)}
+            </div>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            ${isAdmin ? `
-              <button class="btn btn-secondary btn-icon" 
-                      style="padding: 2px; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-card); cursor: pointer;" 
-                      title="Editar Equipamento"
-                      onclick="event.stopPropagation(); window.EquipmentModule.openEdit('${e.id}')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 14px; height: 14px; color: var(--text-secondary);">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.83 20.04a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-              </button>
-            ` : ''}
-            ${isAdmin ? `
-              <select onchange="event.stopPropagation(); window.HomeModule.updateEquipmentStatus('${e.id}', this.value)" 
-                      onclick="event.stopPropagation();" 
-                      class="badge ${e.status === 'Liberado' ? 'badge-success' : e.status === 'Em Manutenção' ? 'badge-primary' : e.status === 'Paralisado' ? 'badge-danger' : e.status === 'Falta de Peças' ? 'badge-warning' : e.status === 'Falta de Mão de Obra' ? 'badge-danger' : 'badge-ghost'}" 
-                      style="border:none; cursor:pointer; font-weight:700; padding:2px 8px; outline:none; font-family:var(--font-sans); text-align:center; -webkit-appearance:none; -moz-appearance:none; appearance:none;">
-                ${['Em Manutenção', 'Liberado', 'Paralisado', 'Falta de Peças', 'Backlog', 'Falta de Mão de Obra'].map(s => `
-                  <option value="${s}" ${e.status === s ? 'selected' : ''} style="background:var(--bg-modal); color:var(--text-primary); font-weight:normal;">${s}</option>
-                `).join('')}
-              </select>
-            ` : statusBadge(e.status)}
+          <div style="font-size:10px;font-weight:600;color:var(--text-secondary); line-height:1.4;">
+            O.S.: ${e.os || '—'} <br> Cliente: ${e.cliente || '—'}
           </div>
         </div>
         
