@@ -138,6 +138,26 @@ window.Dashboard = (() => {
           });
         }
 
+        // 4.5 Execução do 2º Turno (Horizontal Bar)
+        const ctxTurno = document.getElementById('mega-ch-turno');
+        if (ctxTurno) {
+          const workers2nd = wf.filter(w => w.turno === '2º Turno');
+          const workers2ndIds = workers2nd.map(w => w.id);
+          const eqNamesT2 = eqs.slice(0, 8).map(e => e.codigo);
+          
+          const tP2 = eqs.slice(0, 8).map(e => Math.round(tasks.filter(t => t.equipmentId === e.id && workers2nd.some(w => w.nome === t.responsavel || t.responsavel === w.id)).reduce((s,t) => s+(t.horasPlanejadas||0),0)));
+          const tR2 = eqs.slice(0, 8).map(e => Math.round(timesheets.filter(ts => ts.equipmentId === e.id && workers2ndIds.includes(ts.workerId)).reduce((s,ts) => s+(ts.horasTrabalhadas||0),0)));
+          
+          charts.turnoChart = new Chart(ctxTurno, {
+            type: 'bar',
+            data: { labels: eqNamesT2, datasets: [
+              { label: 'Realizado (h)', data: tR2, backgroundColor: '#10b981', borderRadius: 4, barThickness: 8 },
+              { label: 'Planejado (h)', data: tP2, backgroundColor: '#f59e0b', borderRadius: 4, barThickness: 8 }
+            ]},
+            options: { indexAxis: 'y', layout: { padding: { right: 30 } }, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 10, color: titleColor } } }, scales: { x: { display: false }, y: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 10 } } } } }
+          });
+        }
+
         // 5. Gráficos Setores Plan x Real (Column Bar)
         const ctxCat = document.getElementById('mega-ch-cat');
         if (ctxCat) {
@@ -223,6 +243,9 @@ window.Dashboard = (() => {
         <div style="grid-column: span 4;">${chartCard('Tarefas por Equipamento', 'mega-ch-tasks')}</div>
         <div style="grid-column: span 4;">${chartCard('Avanço por Equipamento', 'mega-ch-avanco')}</div>
         <div style="grid-column: span 4;">${chartCard('Planejado x Realizado por Setores', 'mega-ch-cat')}</div>
+
+        <!-- Row 3 -->
+        <div style="grid-column: span 12;">${chartCard('Execução do 2º Turno (Plan x Real) por Equipamento', 'mega-ch-turno')}</div>
 
       </div>
 

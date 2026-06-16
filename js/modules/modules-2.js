@@ -672,13 +672,19 @@ window.WorkforceModule = (() => {
                 ${allSectors.map(s => `
                   <button class="btn btn-sm ${activeSector === s ? 'btn-primary' : 'btn-ghost'}" style="border:1px solid var(--border-color);" onclick="WorkforceModule.setSector('${s}')">${s}</button>
                 `).join('')}
+                <button class="btn btn-sm ${activeSector === '2º Turno' ? 'btn-primary' : 'btn-ghost'}" style="border:1px solid var(--border-color);" onclick="WorkforceModule.setSector('2º Turno')">2º Turno</button>
               </div>
             `;
             
-            const sectorsToRender = activeSector === 'Todos' ? allSectors : [activeSector];
+            const sectorsToRender = activeSector === 'Todos' ? allSectors : 
+                                    activeSector === '2º Turno' ? allSectors : [activeSector];
             
             return filterHtml + sectorsToRender.map(sector => {
-              const sectorWorkers = workers.filter(w => (w.disciplina || 'Sem Setor') === sector);
+              const sectorWorkers = workers.filter(w => {
+                const wSector = w.disciplina || 'Sem Setor';
+                if (activeSector === '2º Turno') return wSector === sector && w.turno === '2º Turno';
+                return wSector === sector;
+              });
               if (sectorWorkers.length === 0) return '';
               return `
                 <h3 style="margin-top:var(--space-2);margin-bottom:var(--space-3);color:var(--text-primary);border-bottom:1px solid var(--border-color);padding-bottom:var(--space-2);font-size:16px;display:flex;align-items:center;gap:8px;">
@@ -879,6 +885,16 @@ window.WorkforceModule = (() => {
             <option value="05002101" ${(!worker?.centroCusto || worker?.centroCusto === '05002101') ? 'selected' : ''}>05002101</option>
           </select>
         </div>
+        <div class="form-group"><label>Turno</label>
+          <select id="wk-turno">
+            <option value="1º Turno" ${worker?.turno === '1º Turno' || !worker?.turno ? 'selected' : ''}>1º Turno</option>
+            <option value="2º Turno" ${worker?.turno === '2º Turno' ? 'selected' : ''}>2º Turno</option>
+            <option value="3º Turno" ${worker?.turno === '3º Turno' ? 'selected' : ''}>3º Turno</option>
+            <option value="Comercial" ${worker?.turno === 'Comercial' ? 'selected' : ''}>Comercial</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
         <div class="form-group"><label>Status</label>
           <select id="wk-status">
             <option ${worker?.status === 'Ativo' ? 'selected' : ''}>Ativo</option>
@@ -924,6 +940,7 @@ window.WorkforceModule = (() => {
       disciplina: document.getElementById('wk-disc').value,
       centroCusto: document.getElementById('wk-cc').value,
       status: document.getElementById('wk-status').value,
+      turno: document.getElementById('wk-turno').value,
       equipmentId,
       justificativa
     };
