@@ -216,31 +216,31 @@ window.Dashboard = (() => {
       } catch(e) { console.warn('Mega Chart Error', e); }
     }, 100);
 
-    const microCard = (title, val, iconColor) => \`
+    const microCard = (title, val, iconColor) => `
       <div style="flex: 1 1 150px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; min-width:140px;">
-        <div style="position: absolute; top:0; right:0; width: 60px; height: 60px; background: radial-gradient(circle, \${iconColor}25 0%, transparent 70%); transform: translate(20%, -20%); border-radius: 50%;"></div>
+        <div style="position: absolute; top:0; right:0; width: 60px; height: 60px; background: radial-gradient(circle, ${iconColor}25 0%, transparent 70%); transform: translate(20%, -20%); border-radius: 50%;"></div>
         <div style="display:flex; align-items:center; gap:12px; margin-bottom: 12px; position:relative; z-index:2;">
-          <div style="width: 32px; height: 32px; border-radius: 10px; background: \${iconColor}15; border: 1px solid \${iconColor}30; display:flex; align-items:center; justify-content:center;">
-            <div style="width: 10px; height: 10px; border-radius: 50%; background: \${iconColor}; box-shadow: 0 0 10px \${iconColor};"></div>
+          <div style="width: 32px; height: 32px; border-radius: 10px; background: ${iconColor}15; border: 1px solid ${iconColor}30; display:flex; align-items:center; justify-content:center;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: ${iconColor}; box-shadow: 0 0 10px ${iconColor};"></div>
           </div>
-          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="\${title}">\${title}</div>
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${title}">${title}</div>
         </div>
-        <div style="font-size: 32px; font-weight: 900; color: var(--text-primary); line-height: 1; letter-spacing: -0.03em; position:relative; z-index:2;">\${val}</div>
+        <div style="font-size: 32px; font-weight: 900; color: var(--text-primary); line-height: 1; letter-spacing: -0.03em; position:relative; z-index:2;">${val}</div>
       </div>
-    \`;
+    `;
     
-    const chartCard = (title, id) => \`
+    const chartCard = (title, id) => `
       <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:20px; padding:24px; box-shadow: 0 8px 30px rgba(0,0,0,0.03); display:flex; flex-direction:column; min-height: 340px; height: 100%; overflow:hidden;">
-        <div style="font-size:15px; font-weight:800; color:var(--text-primary); margin-bottom:20px; flex-shrink: 0; letter-spacing: -0.02em;">\${title}</div>
+        <div style="font-size:15px; font-weight:800; color:var(--text-primary); margin-bottom:20px; flex-shrink: 0; letter-spacing: -0.02em;">${title}</div>
         <div style="flex:1; position:relative; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center;">
            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
-             <canvas id="\${id}"></canvas>
+             <canvas id="${id}"></canvas>
            </div>
         </div>
       </div>
-    \`;
+    `;
 
-    const html = \`
+    const html = `
     <div style="width:100%; max-width:100%; padding:var(--space-6); display:flex; flex-direction:column; gap:var(--space-5);">
       
       <!-- HEADER -->
@@ -251,7 +251,7 @@ window.Dashboard = (() => {
           </div>
           <div>
             <h1 style="font-size:24px; font-weight:900; color:var(--text-primary); margin:0; letter-spacing: -0.03em;">Dashboard Executivo</h1>
-            <p style="font-size:12px; color:var(--text-muted); margin:4px 0 0 0; font-weight:500;">Visão geral em tempo real · \${new Date().toLocaleDateString('pt-BR')} \${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</p>
+            <p style="font-size:12px; color:var(--text-muted); margin:4px 0 0 0; font-weight:500;">Visão geral em tempo real · ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</p>
           </div>
         </div>
         <button class="btn btn-primary" style="display:flex; align-items:center; gap:8px; border-radius: 10px; padding: 10px 20px; font-weight: 700; background: #0f172a; border: none;" onclick="Router.navigate('dashboard',{force:true})">
@@ -262,18 +262,18 @@ window.Dashboard = (() => {
 
       <!-- SECTION 1: Micro Cards (Grid) -->
       <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px;">
-        \${microCard('Em Manutenção', emManutencao, '#3b82f6')}
-        \${microCard('Liberados', liberados, '#10b981')}
-        \${microCard('Atrasados', atrasados, '#ef4444')}
-        \${microCard('Paralisados / F. Peça', paralisados, '#ef4444')}
-        \${microCard('Aguardando Peças', aguardandoPecas, '#f59e0b')}
-        \${microCard('Restrições Abertas', restrAbertas, '#f59e0b')}
-        \${microCard('Total de Tarefas', tarefasTotal, '#3b82f6')}
-        \${microCard('Tarefas Concluídas', tarefasConcluidas, '#10b981')}
-        \${microCard('Tarefas Críticas', tarefasCriticas, '#ef4444')}
-        \${microCard('Avanço Geral', avancoGeral + '%', '#0ea5e9')}
-        \${microCard('Horas Realizadas', horasRealizadas + 'h', '#8b5cf6')}
-        \${microCard('Aderência', aderencia + '%', '#ef4444')}
+        ${microCard('Em Manutenção', emManutencao, '#3b82f6')}
+        ${microCard('Liberados', liberados, '#10b981')}
+        ${microCard('Atrasados', atrasados, '#ef4444')}
+        ${microCard('Paralisados / F. Peça', paralisados, '#ef4444')}
+        ${microCard('Aguardando Peças', aguardandoPecas, '#f59e0b')}
+        ${microCard('Restrições Abertas', restrAbertas, '#f59e0b')}
+        ${microCard('Total de Tarefas', tarefasTotal, '#3b82f6')}
+        ${microCard('Tarefas Concluídas', tarefasConcluidas, '#10b981')}
+        ${microCard('Tarefas Críticas', tarefasCriticas, '#ef4444')}
+        ${microCard('Avanço Geral', avancoGeral + '%', '#0ea5e9')}
+        ${microCard('Horas Realizadas', horasRealizadas + 'h', '#8b5cf6')}
+        ${microCard('Aderência', aderencia + '%', '#ef4444')}
       </div>
 
       <!-- SECTION 2: Curva de Avanço -->
@@ -285,7 +285,7 @@ window.Dashboard = (() => {
             </div>
             Curva de Avanço Real
           </div>
-          <div style="background:\${desvio > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'}; color:\${desvio > 0 ? '#10b981' : '#ef4444'}; font-weight:800; padding:6px 16px; border-radius:20px; font-size:12px; letter-spacing:0.5px;">\${desvio > 0 ? '+' : ''}\${desvio}% DE DESVIO</div>
+          <div style="background:${desvio > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'}; color:${desvio > 0 ? '#10b981' : '#ef4444'}; font-weight:800; padding:6px 16px; border-radius:20px; font-size:12px; letter-spacing:0.5px;">${desvio > 0 ? '+' : ''}${desvio}% DE DESVIO</div>
         </div>
 
         <div style="display:flex; align-items:center; gap: 40px; width:100%; flex-wrap: wrap;">
@@ -293,12 +293,12 @@ window.Dashboard = (() => {
           <div style="display:flex; gap: 16px; flex: 0 0 auto;">
             <div style="background: var(--bg-surface); padding: 16px 32px; border-radius: 16px; text-align:center;">
               <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Planejado</div>
-              <div style="font-size:40px; font-weight:900; color:#0ea5e9; line-height:1; margin-top:8px;">\${avancoPlan}%</div>
+              <div style="font-size:40px; font-weight:900; color:#0ea5e9; line-height:1; margin-top:8px;">${avancoPlan}%</div>
             </div>
             <div style="display:flex; align-items:center; font-weight:800; color:var(--text-muted); font-size:18px;">VS</div>
             <div style="background: var(--bg-surface); padding: 16px 32px; border-radius: 16px; text-align:center;">
               <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Realizado</div>
-              <div style="font-size:40px; font-weight:900; color:\${statusColor}; line-height:1; margin-top:8px;">\${avancoReal}%</div>
+              <div style="font-size:40px; font-weight:900; color:${statusColor}; line-height:1; margin-top:8px;">${avancoReal}%</div>
             </div>
           </div>
 
@@ -315,9 +315,9 @@ window.Dashboard = (() => {
             <div style="display:flex; align-items:center; gap:20px;">
               <div style="width:70px; font-size:12px; color:var(--text-muted); font-weight:700;">Realizado</div>
               <div style="flex:1; height:8px; background:var(--bg-surface); border-radius:4px; position:relative;">
-                <div style="position:absolute; top:0; left:0; height:100%; width:\${avancoReal}%; background:\${statusColor}; border-radius:4px; transition:width 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px \${statusColor}40;"></div>
+                <div style="position:absolute; top:0; left:0; height:100%; width:${avancoReal}%; background:${statusColor}; border-radius:4px; transition:width 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px ${statusColor}40;"></div>
               </div>
-              <div style="width:40px; font-size:12px; font-weight:800; text-align:right;">\${avancoReal}%</div>
+              <div style="width:40px; font-size:12px; font-weight:800; text-align:right;">${avancoReal}%</div>
             </div>
           </div>
 
@@ -342,18 +342,18 @@ window.Dashboard = (() => {
       <div class="mega-charts-grid">
         
         <!-- Row 1 -->
-        <div style="grid-column: span 3;">\${chartCard('Saúde da Frota', 'mega-ch-status')}</div>
-        <div style="grid-column: span 3;">\${chartCard('Status das Tarefas', 'mega-ch-tasks')}</div>
-        <div style="grid-column: span 6;">\${chartCard('Volume de Entregas por Categoria', 'mega-ch-cat')}</div>
+        <div style="grid-column: span 3;">${chartCard('Saúde da Frota', 'mega-ch-status')}</div>
+        <div style="grid-column: span 3;">${chartCard('Status das Tarefas', 'mega-ch-tasks')}</div>
+        <div style="grid-column: span 6;">${chartCard('Volume de Entregas por Categoria', 'mega-ch-cat')}</div>
 
         <!-- Row 2 -->
-        <div style="grid-column: span 8;">\${chartCard('Projeção vs Execução Anual', 'mega-ch-ano')}</div>
-        <div style="grid-column: span 4;">\${chartCard('Pipeline de Peças', 'mega-ch-parts')}</div>
+        <div style="grid-column: span 8;">${chartCard('Projeção vs Execução Anual', 'mega-ch-ano')}</div>
+        <div style="grid-column: span 4;">${chartCard('Pipeline de Peças', 'mega-ch-parts')}</div>
 
         <!-- Row 3 -->
-        <div style="grid-column: span 4;">\${chartCard('Mapa de Atrasos', 'mega-ch-delay')}</div>
-        <div style="grid-column: span 4;">\${chartCard('Apropriação de Esforço (HH)', 'mega-ch-effort')}</div>
-        <div style="grid-column: span 4;">\${chartCard('Especialidades Alocadas', 'mega-ch-worker')}</div>
+        <div style="grid-column: span 4;">${chartCard('Mapa de Atrasos', 'mega-ch-delay')}</div>
+        <div style="grid-column: span 4;">${chartCard('Apropriação de Esforço (HH)', 'mega-ch-effort')}</div>
+        <div style="grid-column: span 4;">${chartCard('Especialidades Alocadas', 'mega-ch-worker')}</div>
 
       </div>
 
@@ -367,24 +367,24 @@ window.Dashboard = (() => {
             Próximas Liberações
           </div>
           <div style="display:flex; flex-direction:column; gap:12px; flex:1; overflow-y:auto; padding-right:8px;">
-            \${proximasLibs.length === 0 ? '<div style="color:var(--text-muted);font-size:13px;text-align:center;margin-top:30px;font-weight:500;">Nenhum equipamento agendado.</div>' : ''}
-            \${proximasLibs.map(e => {
+            ${proximasLibs.length === 0 ? '<div style="color:var(--text-muted);font-size:13px;text-align:center;margin-top:30px;font-weight:500;">Nenhum equipamento agendado.</div>' : ''}
+            ${proximasLibs.map(e => {
               const d = window.daysBetween ? window.daysBetween(todayStr, e.dataLiberacaoPlanejada) : 0;
-              return \`
+              return `
               <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-surface); border-radius:12px; padding:16px; transition:transform 0.2s; cursor:pointer;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
                 <div style="display:flex; align-items:center; gap:16px;">
-                  <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #0ea5e9, #38bdf8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;">\${(e.codigo||'').substring(0,2)}</div>
+                  <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #0ea5e9, #38bdf8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;">${(e.codigo||'').substring(0,2)}</div>
                   <div>
-                    <div style="font-size:14px;font-weight:800;color:var(--text-primary);">\${e.codigo}</div>
-                    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-top:2px;">\${e.cliente || 'Sem cliente'}</div>
+                    <div style="font-size:14px;font-weight:800;color:var(--text-primary);">${e.codigo}</div>
+                    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-top:2px;">${e.cliente || 'Sem cliente'}</div>
                   </div>
                 </div>
                 <div style="text-align:right;">
-                  <div style="font-size:12px;font-weight:800;color:#f59e0b;">\${e.dataLiberacaoPlanejada ? e.dataLiberacaoPlanejada.split('-').reverse().join('/') : ''}</div>
-                  <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-top:2px;">\${d} dias</div>
+                  <div style="font-size:12px;font-weight:800;color:#f59e0b;">${e.dataLiberacaoPlanejada ? e.dataLiberacaoPlanejada.split('-').reverse().join('/') : ''}</div>
+                  <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-top:2px;">${d} dias</div>
                 </div>
               </div>
-            \`}).join('')}
+            `}).join('')}
           </div>
         </div>
 
@@ -395,27 +395,27 @@ window.Dashboard = (() => {
             Alertas Críticos
           </div>
           <div style="display:flex; flex-direction:column; gap:12px; flex:1; overflow-y:auto; padding-right:8px;">
-            \${alertas.length === 0 ? '<div style="color:var(--text-muted);font-size:13px;text-align:center;margin-top:30px;font-weight:500;">Nenhum equipamento crítico.</div>' : ''}
-            \${alertas.map(e => {
+            ${alertas.length === 0 ? '<div style="color:var(--text-muted);font-size:13px;text-align:center;margin-top:30px;font-weight:500;">Nenhum equipamento crítico.</div>' : ''}
+            ${alertas.map(e => {
               const d = window.daysBetween ? window.daysBetween(e.dataLiberacaoPlanejada, todayStr) : 0;
-              return \`
+              return `
               <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-surface); border-radius:12px; padding:16px; border-left:4px solid #ef4444; transition:transform 0.2s; cursor:pointer;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
                 <div>
-                  <div style="font-size:14px;font-weight:800;color:var(--text-primary);">\${e.codigo}</div>
+                  <div style="font-size:14px;font-weight:800;color:var(--text-primary);">${e.codigo}</div>
                   <div style="font-size:11px;color:#ef4444;text-transform:uppercase;font-weight:700;margin-top:2px;">Atrasado</div>
                 </div>
                 <div style="text-align:right;">
-                  <div style="font-size:18px;font-weight:900;color:#ef4444;line-height:1;">\${d} dias</div>
+                  <div style="font-size:18px;font-weight:900;color:#ef4444;line-height:1;">${d} dias</div>
                 </div>
               </div>
-            \`}).join('')}
+            `}).join('')}
           </div>
         </div>
 
       </div>
 
     </div>
-    \`;
+    `;
 
     return html;
   }
