@@ -102,7 +102,7 @@ window.HomeModule = (() => {
            data-restr="${hasRestr}" 
            data-pecas="${hasPecas}" 
            onclick="window.Router.navigate('equipment-panel', {id: '${e.id}'})" 
-           style="cursor:grab;display:flex;flex-direction:column;padding:var(--space-4);border-top:4px solid ${pct>=100?'var(--color-success)':pct>0?'var(--brand-primary-light)':'var(--text-muted)'}; margin-bottom: 2px; flex-shrink: 0;">
+           style="cursor:grab;display:flex;flex-direction:column;padding:var(--space-4);border-top:4px solid ${pct>=100?'var(--color-success)':pct>0?'var(--brand-primary-light)':'var(--text-muted)'}; margin-bottom: 2px; flex-shrink: 0; min-height: fit-content; height: auto;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-2);">
           <div>
             <div style="display:flex;align-items:center;">
@@ -154,7 +154,7 @@ window.HomeModule = (() => {
           </div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:var(--space-2);border-top:1px solid var(--border-card);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:var(--space-3);padding-top:var(--space-2);border-top:1px solid var(--border-card);">
           <div style="font-size:10px;color:var(--text-muted);">Desvio no Prazo:</div>
           <div style="font-size:var(--text-xs);font-weight:800;color:var(--color-${desvio>0?'danger':desvio<0?'success':'text-secondary'});">${desvio>0?'+':''}${desvio} dias</div>
         </div>
