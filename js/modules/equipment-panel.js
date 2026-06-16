@@ -997,6 +997,13 @@ window.EquipmentPanel = (() => {
     if (editingTaskId) {
       const t = DB.tasks.get(editingTaskId);
       if (t) {
+        if (t.status === 'Concluída') {
+          const session = window.Auth.getSession();
+          if (!session || (session.perfil !== 'Administrador' && session.perfil !== 'Desenvolvedor')) {
+            Toast.error('Acesso Negado', 'Somente o Administrador do Sistema pode editar tarefas já concluídas.');
+            return;
+          }
+        }
         let comments = [];
         let isJson = false;
         if (t.observacoes) {

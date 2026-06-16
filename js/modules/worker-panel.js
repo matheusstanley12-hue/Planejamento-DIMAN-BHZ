@@ -1435,6 +1435,14 @@ window.WorkerPanel = (() => {
   function saveEditedTask(id) {
     const t = DB.tasks.get(id);
     if (!t) return;
+    
+    if (t.status === 'Concluída') {
+      const session = window.Auth.getSession();
+      if (!session || (session.perfil !== 'Administrador' && session.perfil !== 'Desenvolvedor')) {
+        Toast.error('Acesso Negado', 'Somente o Administrador do Sistema pode editar tarefas já concluídas.');
+        return;
+      }
+    }
 
     const status = document.getElementById('w-tk-status').value;
     const pct = parseInt(document.getElementById('w-tk-pct').value) || 0;
