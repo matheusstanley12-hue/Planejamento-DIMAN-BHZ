@@ -164,13 +164,15 @@ window.DPanel = (() => {
     const items = top.map((t, idx) => `<span style="margin: 0 40px;">${emojis[idx] || '🏅'} <strong>${t.nome}</strong> (${t.count} tarefas executadas)</span>`).join('');
 
     return `
-      <marquee scrollamount="6" behavior="scroll" direction="left" onmouseover="this.stop();" onmouseout="this.start();" style="padding: 10px 0; background-color: var(--bg-elevated); border-bottom: 1px solid var(--border-card); margin-top: var(--space-6); margin-left: calc(var(--space-6) * -1); margin-right: calc(var(--space-6) * -1); margin-bottom: calc(var(--space-6) * -1); width: calc(100% + var(--space-6) * 2); font-size: 1.1rem; color: var(--text-primary); display: flex; align-items: center;">
-        <span style="font-weight: 800; color: var(--brand-primary-light); margin-right: 40px; text-transform: uppercase;">🚀 TOP EXECUTANTES DO MÊS:</span>
-        ${items}
-        <span style="font-weight: 800; color: var(--brand-primary-light); margin-left: 40px; margin-right: 15px; text-transform: uppercase;">🚀 PARABÉNS PELO EMPENHO!</span>
-        <span style="font-weight: 700; color: var(--text-secondary); margin-right: 15px; font-style: italic;">Geopar Lapidando talentos</span>
-        <img src="logo.png" style="height:24px; vertical-align:middle; margin-right: 40px; border-radius: 4px;">
-      </marquee>
+      <div style="position: sticky; bottom: 0; z-index: 50; background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) 0%, rgba(139, 92, 246, 0.15) 50%, rgba(16, 185, 129, 0.1) 100%); border-top: 2px solid var(--brand-primary-light); border-bottom: 2px solid var(--brand-primary-light); margin-left: calc(var(--space-6) * -1); margin-right: calc(var(--space-6) * -1); margin-bottom: calc(var(--space-6) * -1); margin-top: var(--space-6); width: calc(100% + var(--space-6) * 2); box-shadow: 0 -4px 12px rgba(0,0,0,0.15); display: block; overflow: hidden;">
+        <marquee scrollamount="6" behavior="scroll" direction="left" onmouseover="this.stop();" onmouseout="this.start();" style="padding: 10px 0; font-size: 1.1rem; color: var(--text-primary); white-space: nowrap; line-height: 24px;">
+          <span style="font-weight: 800; color: var(--brand-primary-light); margin-right: 40px; text-transform: uppercase; vertical-align: middle;">🚀 TOP EXECUTANTES DO MÊS:</span>
+          <span style="vertical-align: middle;">${items}</span>
+          <span style="font-weight: 800; color: var(--brand-primary-light); margin-left: 40px; margin-right: 15px; text-transform: uppercase; vertical-align: middle;">🚀 PARABÉNS PELO EMPENHO!</span>
+          <span style="font-weight: 700; color: var(--text-secondary); margin-right: 15px; font-style: italic; vertical-align: middle;">Geopar Lapidando talentos</span>
+          <img src="logo.png" style="height:24px; vertical-align: middle; margin-right: 40px; border-radius: 4px; display: inline-block;">
+        </marquee>
+      </div>
     `;
   }
 
