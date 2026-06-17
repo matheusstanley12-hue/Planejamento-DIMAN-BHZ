@@ -119,13 +119,15 @@ window.WorkerPanel = (() => {
             <div class="modal-title">Iniciar Tarefa</div>
             <button class="modal-close" onclick="closeModal('modal-worker-start-task')">
               <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
           <div class="modal-body" style="padding-top:10px;">
-            <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px;">A tarefa será iniciada para você automaticamente.</p>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px;">Quem vai executar essa tarefa?</p>
             <div id="start-task-executors-list">
+              <label style="display:flex;align-items:center;gap:8px;margin-bottom:15px;cursor:pointer;background:var(--bg-base);padding:10px;border-radius:6px;border:1px solid var(--border-card);">
+                 <input type="checkbox" id="include-myself" checked style="width:18px;height:18px;accent-color:var(--brand-primary);" />
+                 <span style="font-size:14px;font-weight:600;color:var(--text-primary);">Incluir a mim mesmo nesta tarefa</span>
+              </label>
             </div>
-            <button class="btn btn-ghost" style="width:100%;margin-bottom:15px;border:1px dashed var(--border-card);color:var(--brand-primary);" onclick="WorkerPanel.addExecutorInput()">+ Adicionar outro executante (ajudante)</button>
+            <button class="btn btn-ghost" style="width:100%;margin-bottom:15px;border:1px dashed var(--border-card);color:var(--brand-primary);" onclick="WorkerPanel.addExecutorInput()">+ Adicionar outro executante</button>
             <button class="btn btn-primary" style="width:100%;height:45px;" onclick="WorkerPanel.startTask('${taskId}')">Iniciar Tarefa</button>
           </div>
         </div>
@@ -214,8 +216,12 @@ window.WorkerPanel = (() => {
 
     const session = Auth.getSession();
     const myWorker = getMyWorker(session);
-    if (myWorker && !matriculas.includes(myWorker.matricula)) {
-      matriculas.push(myWorker.matricula);
+    
+    const includeMyself = document.getElementById('include-myself');
+    if (includeMyself && includeMyself.checked && myWorker) {
+      if (!matriculas.includes(myWorker.matricula)) {
+        matriculas.push(myWorker.matricula);
+      }
     }
     
     if (matriculas.length === 0) {
