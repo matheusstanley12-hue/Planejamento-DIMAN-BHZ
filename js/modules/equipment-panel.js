@@ -1110,11 +1110,7 @@ window.EquipmentPanel = (() => {
       : (defaultWorker && selectedWorker !== defaultWorker);
 
     if (isWorkerChanged) {
-      const justification = await window.promptAsync(
-        'Justificativa',
-        `Justificativa para alteração de Mão de Obra (de "${previousWorker || defaultWorker || 'Ninguém'}" para "${selectedWorker || 'Ninguém'}"):`,
-        'Digite a justificativa...'
-      );
+      const justification = window.prompt(`Justificativa para alteração de Mão de Obra (de "${previousWorker || defaultWorker || 'Ninguém'}" para "${selectedWorker || 'Ninguém'}"):`);
       if (justification === null) {
         return; // Abort saving!
       }
