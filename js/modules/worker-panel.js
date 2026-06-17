@@ -321,7 +321,8 @@ window.WorkerPanel = (() => {
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.promptDependency(${wIdParam})">🔗 Dependência</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('DSS', ${wIdParam})">🛡️ DSS</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('Fim Expediente', ${wIdParam})">🏠 Fim Expediente</button>
-              <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);grid-column: span 2;" onclick="WorkerPanel.promptOtherReason(${wIdParam})">Outros</button>
+              <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('5S', ${wIdParam})">🧹 5S</button>
+              <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.promptOtherReason(${wIdParam})">Outros</button>
             </div>
           </div>
         </div>
@@ -465,7 +466,9 @@ window.WorkerPanel = (() => {
 
     if (t) {
       let updatePayload = { horasRealizadas: (t.horasRealizadas || 0) + Math.max(0, Math.round(elapsedHrs * 100) / 100) };
-      if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros') || reason.startsWith('Dependência')) {
+      const freesWorker = reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros') || reason.startsWith('Dependência') || reason === 'Fim Expediente' || reason === '5S';
+      
+      if (freesWorker) {
         updatePayload.status = reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') ? 'Aguardando Peça' : (reason.startsWith('Dependência') ? 'Aguardando Setor' : 'Pausada');
         updatePayload.pauseReason = reason;
         updatePayload.pauseStartTime = now.toISOString();
@@ -473,14 +476,16 @@ window.WorkerPanel = (() => {
       DB.tasks.update(t.id, updatePayload);
     }
 
-    if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros') || reason.startsWith('Dependência')) {
+    const freesWorker = reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros') || reason.startsWith('Dependência') || reason === 'Fim Expediente' || reason === '5S';
+    
+    if (freesWorker) {
       DB.workforce.update(myWorker.id, {
         currentState: 'Ocioso',
         currentTaskId: null,
         currentPauseReason: '',
         currentActionStartTime: null
       });
-      Toast.info('Tarefa Pausada', `A tarefa foi pausada. Você está livre para iniciar outra atividade.`);
+      Toast.info('Tarefa Pausada', `A tarefa foi pausada pelo motivo: ${reason}. Você está livre para iniciar outra atividade.`);
     } else {
       DB.workforce.update(myWorker.id, {
         currentState: 'Em Pausa',
@@ -872,7 +877,11 @@ window.WorkerPanel = (() => {
     const state = myWorker.currentState || 'Ocioso';
     
     const allWorkers = window.DB.workforce.list();
-    const activeWorkers = allWorkers.filter(w => 
+    // Apenas o worker logado deve aparecer na área principal com botões de ação
+    const activeWorkers = (state === 'Trabalhando' || state === 'Em Pausa') && myWorker.currentTaskId && myTasks.find(t => t.id === myWorker.currentTaskId) ? [myWorker] : [];
+    
+    // Todos os executantes ativos na fila para mostrar "EM EXECUÇÃO" (usado abaixo)
+    const allActiveWorkers = allWorkers.filter(w => 
       (w.currentState === 'Trabalhando' || w.currentState === 'Em Pausa') && 
       w.currentTaskId && 
       myTasks.find(t => t.id === w.currentTaskId)
@@ -1038,17 +1047,23 @@ window.WorkerPanel = (() => {
         if (t.pauseStartTime) {
           timeStr = `<span class="live-pause-timer" data-start="${t.pauseStartTime}"> - ${formatTimeDiff(t.pauseStartTime)}</span>`;
         }
+        
+        // Verifica quem deve retomar vs quem deve continuar
+        const myWorkerName = myWorker ? myWorker.nome : session.nome;
+        const isMyTask = t.responsavel === myWorkerName;
+        const btnText = isMyTask ? 'RETOMAR TAREFA' : 'CONTINUAR TAREFA';
+
         actionBtn = `
           <div style="width:100%; display:flex; flex-direction:column; gap:8px;">
             <div style="font-size:12px;color:#ef4444;font-weight:600;display:flex;align-items:center;gap:4px;">
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               ${pauseReason}${timeStr}
             </div>
-            <button class="btn btn-outline" style="width:100%;height:32px;border-color:var(--brand-primary);color:var(--brand-primary);" onclick="WorkerPanel.promptResumeTask('${t.id}')">RETOMAR TAREFA</button>
+            <button class="btn btn-outline" style="width:100%;height:32px;border-color:var(--brand-primary);color:var(--brand-primary);" onclick="WorkerPanel.promptResumeTask('${t.id}')">${btnText}</button>
           </div>
         `;
       } else if (t.status === 'Em Andamento') {
-        const executingWorkers = activeWorkers.filter(w => w.currentTaskId === t.id);
+        const executingWorkers = allActiveWorkers.filter(w => w.currentTaskId === t.id);
         
         // Auto-fix: if status is Em Andamento but nobody is working on it
         if (executingWorkers.length === 0) {
