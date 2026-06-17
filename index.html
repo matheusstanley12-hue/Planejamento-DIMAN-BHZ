@@ -28,7 +28,7 @@
   <script src="js/supabase.js"></script>
 
   <script>
-    const CACHE_VERSION = '140';
+    const CACHE_VERSION = '141';
     const noCacheUrls = [
       'css/index.css',
       'js/core/auth.js',
@@ -84,7 +84,27 @@
   <!-- Modules -->
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/layout.css?v=140" />
+  <link rel="stylesheet" href="css/layout.css?v=141" />
+  <script>
+    // AUTO-WIPE SCRIPT (Executa sozinho sem o usuário precisar clicar em nada)
+    if (!localStorage.getItem('wiped_v141')) {
+      const keepKeys = ['diman_equipment', 'diman_workforce', 'diman_users', 'diman_settings'];
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('diman_') && !keepKeys.includes(k)) {
+          localStorage.setItem(k, '[]');
+        }
+      });
+      try {
+        let eqs = JSON.parse(localStorage.getItem('diman_equipment') || '[]');
+        eqs = eqs.map(e => ({ ...e, timeline: [], replanning: [], pctGeral: 0 }));
+        localStorage.setItem('diman_equipment', JSON.stringify(eqs));
+      } catch (e) {}
+      localStorage.setItem('diman_unsynced', 'true');
+      localStorage.setItem('wiped_v141', 'true');
+      alert("LIMPEZA PROFUNDA CONCLUÍDA! O sistema foi completamente zerado (mantendo apenas equipamentos).");
+      window.location.reload();
+    }
+  </script>
   <link rel="stylesheet" href="css/pro-dashboard.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/gantt.css" />
@@ -335,46 +355,46 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <script src="js/core/events.js"></script>
-  <script src="js/core/db_v2.js?v=140"></script>
+  <script src="js/core/db_v2.js?v=141"></script>
   <script src="js/core/auth.js"></script>
   <script src="js/core/notifications.js"></script>
 
   <!-- 2. MODULES -->
   <!-- Empty stubs (superseded) -->
-  <script src="js/modules/labor-analysis.js?v=140"></script>
-  <script src="js/modules/dashboard.js?v=140"></script>
-  <script src="js/modules/equipment.js?v=140"></script>
+  <script src="js/modules/labor-analysis.js?v=141"></script>
+  <script src="js/modules/dashboard.js?v=141"></script>
+  <script src="js/modules/equipment.js?v=141"></script>
 
 
   <!-- Feature modules batches -->
-  <script src="js/modules/home_v2.js?v=140"></script>
-  <script src="js/modules/released.js?v=140"></script>
-  <script src="js/modules/waiting.js?v=140"></script>
-  <script src="js/modules/equipment-panel.js?v=140"></script>
-  <script src="js/modules/checklists.js?v=140"></script>
-  <script src="js/modules/equipment-table.js?v=140"></script>
-  <script src="js/modules/modules-1.js?v=140"></script>
-  <script src="js/modules/modules-2.js?v=140"></script>
-  <script src="js/modules/modules-3.js?v=140"></script>
-  <script src="js/modules/worker-panel.js?v=140"></script>
-  <script src="js/modules/workforce-time.js?v=140"></script>
-  <script src="js/modules/bonus.js?v=140"></script>
-  <script src="js/modules/attendance.js?v=140"></script>
-  <script src="js/modules/services.js?v=140"></script>
-  <script src="js/modules/manuals.js?v=140"></script>
-  <script src="js/modules/meetings.js?v=140"></script>
-  <script src="js/modules/vacations.js?v=140"></script>
-  <script src="js/modules/tasks-ongoing.js?v=140"></script>
+  <script src="js/modules/home_v2.js?v=141"></script>
+  <script src="js/modules/released.js?v=141"></script>
+  <script src="js/modules/waiting.js?v=141"></script>
+  <script src="js/modules/equipment-panel.js?v=141"></script>
+  <script src="js/modules/checklists.js?v=141"></script>
+  <script src="js/modules/equipment-table.js?v=141"></script>
+  <script src="js/modules/modules-1.js?v=141"></script>
+  <script src="js/modules/modules-2.js?v=141"></script>
+  <script src="js/modules/modules-3.js?v=141"></script>
+  <script src="js/modules/worker-panel.js?v=141"></script>
+  <script src="js/modules/workforce-time.js?v=141"></script>
+  <script src="js/modules/bonus.js?v=141"></script>
+  <script src="js/modules/attendance.js?v=141"></script>
+  <script src="js/modules/services.js?v=141"></script>
+  <script src="js/modules/manuals.js?v=141"></script>
+  <script src="js/modules/meetings.js?v=141"></script>
+  <script src="js/modules/vacations.js?v=141"></script>
+  <script src="js/modules/tasks-ongoing.js?v=141"></script>
 
   <!-- D-1 | D | D+1 Panel -->
-  <script src="js/modules/d-panel.js?v=140"></script>
+  <script src="js/modules/d-panel.js?v=141"></script>
 
   <!-- QR Modules -->
-  <script src="js/modules/qr-generator.js?v=140"></script>
-  <script src="js/modules/qr-view_v2.js?v=140"></script>
+  <script src="js/modules/qr-generator.js?v=141"></script>
+  <script src="js/modules/qr-view_v2.js?v=141"></script>
 
   <!-- 3. APP BOOTSTRAP -->
-  <script src="js/app_v2.js?v=140"></script>
+  <script src="js/app_v2.js?v=141"></script>
 
   <!-- Loading screen removal -->
   <script>
