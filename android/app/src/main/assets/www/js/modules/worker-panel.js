@@ -122,14 +122,10 @@ window.WorkerPanel = (() => {
             </button>
           </div>
           <div class="modal-body" style="padding-top:10px;">
-            <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px;">Quem vai executar essa tarefa?</p>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px;">A tarefa será iniciada para você automaticamente.</p>
             <div id="start-task-executors-list">
-              <div class="form-group executor-item" style="margin-bottom:15px;">
-                <label style="text-transform:uppercase;font-size:10px;font-weight:700;color:var(--text-muted);">Matrícula do Executante (deixe o seu se for você mesmo):</label>
-                <input type="text" class="start-task-matricula-input" value="${myWorker ? myWorker.matricula : ''}" style="width:100%;border-radius:6px;border:1px solid var(--border-card);padding:10px;color:var(--text-primary);background:var(--bg-base);margin-top:5px;"/>
-              </div>
             </div>
-            <button class="btn btn-ghost" style="width:100%;margin-bottom:15px;border:1px dashed var(--border-card);color:var(--brand-primary);" onclick="WorkerPanel.addExecutorInput()">+ Adicionar executante</button>
+            <button class="btn btn-ghost" style="width:100%;margin-bottom:15px;border:1px dashed var(--border-card);color:var(--brand-primary);" onclick="WorkerPanel.addExecutorInput()">+ Adicionar outro executante (ajudante)</button>
             <button class="btn btn-primary" style="width:100%;height:45px;" onclick="WorkerPanel.startTask('${taskId}')">Iniciar Tarefa</button>
           </div>
         </div>
@@ -218,6 +214,9 @@ window.WorkerPanel = (() => {
 
     const session = Auth.getSession();
     const myWorker = getMyWorker(session);
+    if (myWorker && !matriculas.includes(myWorker.matricula)) {
+      matriculas.push(myWorker.matricula);
+    }
     
     if (matriculas.length === 0) {
       if (myWorker) matriculas.push(String(myWorker.matricula));
