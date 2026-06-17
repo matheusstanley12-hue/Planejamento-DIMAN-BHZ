@@ -194,6 +194,7 @@
   padding: 0 5px;
   flex-shrink: 0;
 }
+.nav-badge:empty { display: none !important; }
 #sidebar.collapsed .nav-label,
 #sidebar.collapsed .nav-badge,
 #sidebar.collapsed .sidebar-brand-text { display: none; }
