@@ -834,6 +834,7 @@ window.WorkerPanel = (() => {
 
     // Live Status Panel
     let statusPanelHtml = '';
+    const state = myWorker.currentState || 'Ocioso';
     
     const allWorkers = window.DB.workforce.list();
     const activeWorkers = allWorkers.filter(w => 
