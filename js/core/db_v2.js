@@ -294,6 +294,27 @@ window.DB = (() => {
     }
   };
 
+  window.FactoryReset = async function() {
+    if(!confirm("TEM CERTEZA? Isso vai apagar todas as tarefas, horas, restrições e custos. Manterá apenas equipamentos e lista de funcionários.")) return;
+    
+    const keepKeys = [KEYS.equipment, KEYS.workforce, KEYS.users, KEYS.settings];
+    Object.values(KEYS).forEach(k => {
+      if(!keepKeys.includes(k)) {
+        localStorage.setItem(k, '[]');
+      }
+    });
+    
+    // Clear equipment timelines and progress
+    let eqs = get(KEYS.equipment);
+    eqs = eqs.map(e => ({ ...e, timeline: [], replanning: [], pctGeral: 0 }));
+    localStorage.setItem(KEYS.equipment, JSON.stringify(eqs));
+
+    localStorage.setItem('diman_unsynced', 'true');
+    await forceSyncAll();
+    alert("Sistema completamente limpo. Iniciando do zero!");
+    window.location.href = window.location.pathname;
+  };
+
   // ==================== EQUIPMENT ====================
   const equipment = {
     list: () => get(KEYS.equipment),
