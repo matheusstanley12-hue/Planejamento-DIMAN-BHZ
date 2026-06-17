@@ -119,6 +119,8 @@ window.WorkerPanel = (() => {
             <div class="modal-title">Iniciar Tarefa</div>
             <button class="modal-close" onclick="closeModal('modal-worker-start-task')">
               <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
           <div class="modal-body" style="padding-top:10px;">
             <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px;">Quem vai executar essa tarefa?</p>
             
