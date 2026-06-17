@@ -121,12 +121,14 @@ window.WorkerPanel = (() => {
               <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           <div class="modal-body" style="padding-top:10px;">
             <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px;">Quem vai executar essa tarefa?</p>
-            <div id="start-task-executors-list">
-              <label style="display:flex;align-items:center;gap:8px;margin-bottom:15px;cursor:pointer;background:var(--bg-base);padding:10px;border-radius:6px;border:1px solid var(--border-card);">
-                 <input type="checkbox" id="include-myself" checked style="width:18px;height:18px;accent-color:var(--brand-primary);" />
+            
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:15px;cursor:pointer;background:var(--bg-base);padding:10px;border-radius:6px;border:1px solid var(--border-card);">
+                 <input type="checkbox" id="include-myself" checked style="width:18px;height:18px;accent-color:var(--brand-primary);flex-shrink:0;" />
                  <span style="font-size:14px;font-weight:600;color:var(--text-primary);">Incluir a mim mesmo nesta tarefa</span>
-              </label>
-            </div>
+            </label>
+            
+            <div id="start-task-executors-list"></div>
+            
             <button class="btn btn-ghost" style="width:100%;margin-bottom:15px;border:1px dashed var(--border-card);color:var(--brand-primary);" onclick="WorkerPanel.addExecutorInput()">+ Adicionar outro executante</button>
             <button class="btn btn-primary" style="width:100%;height:45px;" onclick="WorkerPanel.startTask('${taskId}')">Iniciar Tarefa</button>
           </div>
@@ -148,8 +150,8 @@ window.WorkerPanel = (() => {
     div.innerHTML = `
       <label style="text-transform:uppercase;font-size:10px;font-weight:700;color:var(--text-muted);">Matrícula do Ajudante:</label>
       <div style="display:flex;gap:8px;margin-top:5px;">
-        <input type="text" class="start-task-matricula-input" placeholder="Digite a matrícula..." style="flex:1;border-radius:6px;border:1px solid var(--border-card);padding:10px;color:var(--text-primary);background:var(--bg-base);"/>
-        <button class="btn btn-ghost btn-sm" style="color:var(--color-danger);font-weight:bold;padding:0 12px;border:1px solid var(--border-card);" onclick="this.parentElement.parentElement.remove()">X</button>
+        <input type="number" inputmode="numeric" class="start-task-matricula-input" placeholder="Matrícula..." style="flex:1;border-radius:6px;border:1px solid var(--border-card);padding:10px;color:var(--text-primary);background:var(--bg-base);font-size:16px;"/>
+        <button class="btn btn-ghost btn-sm" style="color:var(--color-danger);font-weight:bold;padding:0 12px;border:1px solid var(--border-card);background:var(--bg-elevated);" onclick="this.parentElement.parentElement.remove()">X</button>
       </div>
     `;
     list.appendChild(div);
