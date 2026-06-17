@@ -800,107 +800,33 @@ window.AIAssistant = (() => {
     return JSON.stringify({ equipamentos: minifiedEqs, tarefas_abertas: minifiedTasks, pecas_pendentes: minifiedParts, restricoes_abertas: restrData.filter(r => r.status === 'Aberta').map(r => ({ eq: eqs.find(x => x.id === r.equipmentId)?.codigo || '', desc: r.descricao, status: r.status })) });
   }
 
-  async function simulateAdvancedAI(query, contextData) {
-    // Simulate network delay to make it feel like a real API call
-    await new Promise(r => setTimeout(r, 1500 + Math.random() * 1000));
+  async function fetchPollinationsAI(query, contextData) {
+    const prompt = `Você é o Assistente de IA avançado do DIMAN (Sistema Inteligente da Manutenção).
+Sua função é fornecer respostas super inteligentes, precisas, analíticas e profissionais baseadas EXCLUSIVAMENTE nos dados JSON abaixo.
+Regras Absolutas:
+1. NUNCA revele que você é uma IA pública (ChatGPT, OpenAI, Gemini, Pollinations, etc). Aja puramente como "Cérebro de IA Nativo do DIMAN". O usuário nunca deve suspeitar.
+2. Responda em Português do Brasil com formatação Markdown rica (negrito, listas, emojis industriais como ⚙️, 🔧, 📦, 🚨, 🛑, 📊).
+3. Seja completo. Se o usuário perguntar de um equipamento (ex: 265), procure os dados dele, liste o status atual, avanço físico, tarefas abertas (e os nomes de quem está executando), peças críticas faltando (com prazos) e bloqueios.
+4. Se perguntar sobre o panorama geral, conte quantas máquinas estão na oficina, atrasadas, peças no caminho crítico e restrições globais.
+5. Aja como um consultor sênior de planejamento de manutenção. Identifique gargalos e recomende ações baseado nos dados.
+
+Dados Atuais em Tempo Real do Banco de Dados:
+${contextData}`;
+
+    const res = await fetch('https://text.pollinations.ai/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: prompt },
+          { role: 'user', content: query }
+        ],
+        model: 'openai'
+      })
+    });
     
-    const data = JSON.parse(contextData);
-    const q = normalize(query);
-    let resp = "";
-    const greetings = [
-      "🔍 **Análise Concluída:** ",
-      "📊 **Relatório Neural Gerado:** ",
-      "⚙️ **Diagnóstico do Sistema:** ",
-      "🧠 **Processamento Finalizado:** "
-    ];
-    resp += greetings[Math.floor(Math.random() * greetings.length)] + "\\n\\n";
-
-    if (data.equipamentos.length > 0 && /\\d+/.test(q)) {
-      // User asked about specific equipment
-      data.equipamentos.forEach(eq => {
-        resp += `### Análise Focada: ${eq.codigo}\\n`;
-        resp += `• **Status Operacional:** ${eq.status} (Avanço: ${eq.pctAvanco || 0}%)\\n`;
-        resp += `• **Previsão de Liberação:** ${eq.liberacao}\\n\\n`;
-        
-        const eqTasks = data.tarefas_abertas.filter(t => t.eq === eq.codigo);
-        if (eqTasks.length > 0) {
-          resp += `**Força de Trabalho Ativa:**\\n`;
-          eqTasks.forEach(t => {
-            resp += `- 🔧 *${t.desc}* — Executante(s): ${t.resp || 'Aguardando alocação'}\\n`;
-          });
-          resp += "\\n";
-        } else {
-          resp += `**Força de Trabalho:** Nenhuma atividade operacional sendo executada neste exato momento.\\n\\n`;
-        }
-
-        const eqParts = data.pecas_pendentes.filter(p => p.eq === eq.codigo);
-        if (eqParts.length > 0) {
-          resp += `**Gargalos de Suprimentos:**\\n`;
-          eqParts.forEach(p => {
-            resp += `- 📦 ${p.critica ? '🚨 **[CRÍTICA]** ' : ''}${p.desc} (${p.status}) — Chegada: ${p.prazo}\\n`;
-          });
-          resp += "\\n";
-        }
-
-        const eqRestr = data.restricoes_abertas.filter(r => r.eq === eq.codigo);
-        if (eqRestr.length > 0) {
-          resp += `**Bloqueios Identificados:**\\n`;
-          eqRestr.forEach(r => {
-            resp += `- 🛑 ${r.desc}\\n`;
-          });
-          resp += "\\n";
-        }
-
-        // Analytical insight
-        resp += `💡 **Insight Gerencial:** `;
-        if (eq.status === 'Concluído' || eq.status === 'Liberado') {
-          resp += `O ativo encontra-se liberado para a operação, sem impeditivos sistêmicos identificados.`;
-        } else if (eqRestr.length > 0 || eqParts.some(p => p.critica)) {
-          resp += `O equipamento apresenta **risco altíssimo de atraso**. O gargalo principal encontra-se nas peças críticas e restrições ativas. Recomendo intervenção imediata junto à equipe de Suprimentos para mitigar o impacto no cronograma.`;
-        } else if (eqTasks.length === 0) {
-          resp += `O equipamento está disponível para intervenção, mas há uma ociosidade na alocação de mão de obra. Sugiro direcionar mecânicos para alavancar o avanço físico.`;
-        } else {
-          resp += `A curva de manutenção segue o fluxo padrão. Continue monitorando o avanço físico para garantir a liberação na data planejada.`;
-        }
-        resp += "\\n\\n---\\n\\n";
-      });
-      return resp;
-    } 
-
-    if (/peca|pesa|material|almoxarifado/.test(q)) {
-      resp += `**Visão Geral de Suprimentos da Oficina**\\n\\n`;
-      resp += `Mapeei **${data.pecas_pendentes.length}** itens pendentes no radar da oficina.\\n`;
-      const crit = data.pecas_pendentes.filter(p => p.critica);
-      if (crit.length > 0) {
-        resp += `\\n🚨 **ALERTA MÁXIMO (${crit.length} Peças no Caminho Crítico):**\\n`;
-        crit.forEach(p => resp += `- [${p.eq}] **${p.desc}** — ${p.status} (Previsão: ${p.prazo})\\n`);
-      }
-      resp += `\\n💡 **Insight:** O acompanhamento desses itens críticos é vital. A ausência de qualquer um deles resultará em replanejamento compulsório dos equipamentos.`;
-      return resp;
-    }
-
-    if (/restrica|bloqueio|pendencia/.test(q)) {
-      resp += `**Mapa de Restrições e Bloqueios**\\n\\n`;
-      if (data.restricoes_abertas.length === 0) return resp + "✅ Excelente notícia! Não identifiquei nenhuma restrição ativa travando o andamento da oficina neste momento.";
-      
-      resp += `Atualmente temos **${data.restricoes_abertas.length}** restrições ativas prejudicando o fluxo:\\n`;
-      data.restricoes_abertas.forEach(r => resp += `- 🛑 [${r.eq}] ${r.desc}\\n`);
-      return resp;
-    }
-
-    // Default holistic response
-    const ativosManutencao = data.equipamentos.filter(e => e.status === 'Em Manutenção');
-    const atrasados = data.equipamentos.filter(e => e.status === 'Em Manutenção' && window.daysBetween && window.daysBetween(new Date().toISOString().slice(0,10), e.liberacao) < 0);
-    
-    resp += `**Panorama Holístico da Oficina**\\n\\n`;
-    resp += `• **Equipamentos na Oficina:** ${ativosManutencao.length}\\n`;
-    if (atrasados.length > 0) resp += `• **Equipamentos Atrasados:** 🔴 ${atrasados.length}\\n`;
-    resp += `• **Frentes de Trabalho (Tarefas):** ${data.tarefas_abertas.length}\\n`;
-    resp += `• **Gargalos (Peças Pendentes):** ${data.pecas_pendentes.length}\\n`;
-    resp += `• **Bloqueios (Restrições):** ${data.restricoes_abertas.length}\\n\\n`;
-    
-    resp += `💡 **Insight Geral:** A oficina está operando com um volume significativo de interdependências. Para um detalhamento cirúrgico, me forneça o código de um equipamento específico (ex: SSM-265) ou pergunte sobre "peças críticas" e "caminho crítico".`;
-    return resp;
+    if (!res.ok) throw new Error("Servidor Neural Indisponível");
+    return await res.text();
   }
 
   async function sendQuery(query) {
@@ -919,7 +845,7 @@ window.AIAssistant = (() => {
 
     try {
       const dbContext = buildSystemContext(query);
-      const responseText = await simulateAdvancedAI(query, dbContext);
+      const responseText = await fetchPollinationsAI(query, dbContext);
       document.getElementById('ai-typing')?.remove();
       addMessage('ai', responseText);
     } catch(err) {
