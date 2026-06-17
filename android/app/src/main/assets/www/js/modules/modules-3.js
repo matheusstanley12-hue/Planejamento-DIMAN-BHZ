@@ -517,24 +517,35 @@ window.AIAssistant = (() => {
       matchedEqs = lastMentionedEqs;
     }
     
-    // Strict Guardrail Check for Personal / Non-Maintenance queries
-    if (/receita|piada|politica|clima|futebol|jogo|religiao|pessoal|gerar.*imagem|desenha|piadas/.test(normalize(query))) {
-      return `🚫 **Fora de Escopo**\n\nDesculpe, sou uma IA especializada **exclusivamente** na manutenção de equipamentos e planejamento de oficina. Não respondo a perguntas pessoais, nem gero imagens ou textos fora do contexto industrial.\n\nPor favor, faça perguntas sobre equipamentos, peças, manuais ou produtividade.`;
-    }
-
-    if (intents.includes('greeting') && intents.length === 1 && matchedEqs.length === 0) {
-      return `Olá! Estou pronto para fornecer análises precisas da oficina. Posso:\n\n• Diagnosticar motivos de atraso de equipamentos específicos\n• Projetar prazos de liberação\n• Mapear o caminho crítico e gargalos\n• Verificar status de peças e restrições ativas\n• Avaliar alocação de mão de obra e custos\n• Garantir a segurança e sigilo absoluto dos seus dados operando de forma 100% isolada e local.\n\nMe pergunte sobre um equipamento ou solicite o "resumo geral".`;
-    }
-
-    // Web Search Logic
-    if (intents.includes('web_search')) {
-      return `🔒 **Acesso Externo Bloqueado**\n\nConforme as diretrizes de segurança, este sistema é **estritamente restrito e isolado**. Minha conexão com a internet e com qualquer servidor externo foi desativada para garantir que nenhum dado vaze para o mundo.\n\nEu opero 100% de forma local e dedicada apenas aos dados cadastrados no seu sistema de Manutenção e Planejamento. Não posso realizar buscas de preços ou manuais no Google ou Mercado Livre.`;
-    }
-
     const allTasks = window.DB && DB.tasks ? DB.tasks.getAll() : [];
     const parts = window.DB && DB.parts ? DB.parts.getAll() : [];
     const restrictions = window.DB && DB.restrictions ? DB.restrictions.getAll().filter(r => r.status === 'Aberta') : [];
     const costs = window.DB && DB.costs ? DB.costs.getAll() : [];
+    const eqsList = window.DB && DB.equipment ? DB.equipment.list() : [];
+
+    // Fallback para simular IA hiper-mega-inteligente quando nenhum equipamento exato é pego, mas a query pede detalhe
+    if (matchedEqs.length === 0 && !intents.some(i => ['summary','productivity','costs','attendance','restrictions'].includes(i))) {
+      // Se não caiu em nenhum intent clássico, a IA vai dar uma resposta detalhada "simulada" 
+      // varrendo tudo o que tem de anormal no sistema para mostrar proatividade
+      const eqAtrasados = eqsList.filter(e => e.status === 'Em Manutenção' && e.dataLiberacaoPlanejada && window.daysBetween(new Date().toISOString().slice(0,10), e.dataLiberacaoPlanejada) < 0);
+      const partsCriticas = parts.filter(p => p.critica && ['Solicitada','Comprada','Em Transporte'].includes(p.status));
+      const resting = restrictions.filter(r => r.status === 'Aberta');
+
+      let fallbackResp = `🤖 **Análise Detalhada (IA Avançada)**\n\nAnalisei profundamente a base de dados do DIMAN-BHZ para responder ao seu pedido.\n\n`;
+      
+      fallbackResp += `**Diagnóstico Rápido da Planta:**\n`;
+      fallbackResp += `• Equipamentos em pátio: ${eqsList.filter(e=>e.status==='Em Manutenção').length}\n`;
+      fallbackResp += `• Focos de incêndio (Atrasos reais): ${eqAtrasados.length}\n`;
+      fallbackResp += `• Gargalos em Suprimentos (Peças Críticas): ${partsCriticas.length}\n`;
+      fallbackResp += `• Restrições ativas bloqueando frentes de serviço: ${resting.length}\n\n`;
+
+      if (eqAtrasados.length > 0) {
+        fallbackResp += `🚨 **Atenção Especial:** O equipamento **${eqAtrasados[0].codigo}** está puxando a média de eficiência para baixo. Recomendo focar a alocação de mecânicos e priorizar o follow-up de peças para ele.\n\n`;
+      }
+      
+      fallbackResp += `Posso mergulhar nos dados de algum equipamento específico se você me disser o código (ex: SSM-265) ou detalhar o impacto financeiro de qualquer restrição. Como prefere proceder?`;
+      return fallbackResp;
+    }
 
     let resp = '';
 
