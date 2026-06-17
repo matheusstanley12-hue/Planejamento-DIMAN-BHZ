@@ -318,9 +318,10 @@ window.WorkerPanel = (() => {
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('Almoço', ${wIdParam})">🍽️ Almoço</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('Banheiro', ${wIdParam})">🚻 Banheiro</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.promptMissingParts(${wIdParam})">⚙️ Falta de Peças</button>
+              <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.promptDependency(${wIdParam})">🔗 Dependência</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('DSS', ${wIdParam})">🛡️ DSS</button>
               <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.pauseWork('Fim Expediente', ${wIdParam})">🏠 Fim Expediente</button>
-              <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);" onclick="WorkerPanel.promptOtherReason(${wIdParam})">Outros</button>
+              <button class="btn btn-outline" style="height:60px;flex-direction:column;gap:5px;border-color:var(--border-card);grid-column: span 2;" onclick="WorkerPanel.promptOtherReason(${wIdParam})">Outros</button>
             </div>
           </div>
         </div>
@@ -365,6 +366,41 @@ window.WorkerPanel = (() => {
     if (!desc) return Toast.error('Erro', 'Por favor, descreva as peças faltantes.');
     closeModal('modal-worker-missing-parts');
     pauseWork(`Falta de Peças: ${desc}`, workerId);
+  }
+
+  function promptDependency(workerId) {
+    const wIdParam = workerId ? `'${workerId}'` : 'null';
+    closeModal('modal-worker-pause');
+    setTimeout(() => {
+      const modalHtml = `
+        <div class="modal-overlay" id="modal-worker-dependency">
+          <div class="modal" style="box-shadow:var(--shadow-lg);">
+            <div class="modal-header">
+              <div class="modal-title">Dependência</div>
+              <button class="modal-close" onclick="closeModal('modal-worker-dependency')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div class="modal-body" style="padding-top:10px;">
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px;">Justifique qual setor ou atividade a tarefa está aguardando:</p>
+              <textarea id="dependency-desc" class="form-input" rows="3" placeholder="Ex: Aguardando solda, aguardando lavador..." style="margin-bottom:15px;"></textarea>
+              <button class="btn btn-primary" style="width:100%;height:45px;" onclick="WorkerPanel.submitDependency(${wIdParam})">Pausar por Dependência</button>
+            </div>
+          </div>
+        </div>
+      `;
+      const container = document.getElementById('worker-panel-modals') || document.createElement('div');
+      if (!container.id) { container.id = 'worker-panel-modals'; document.body.appendChild(container); }
+      container.innerHTML = modalHtml;
+      openModal('modal-worker-dependency');
+    }, 100);
+  }
+
+  function submitDependency(workerId) {
+    const desc = document.getElementById('dependency-desc').value.trim();
+    if (!desc) return Toast.error('Erro', 'Por favor, justifique a dependência.');
+    closeModal('modal-worker-dependency');
+    pauseWork(`Dependência: ${desc}`, workerId);
   }
 
   function promptOtherReason(workerId) {
@@ -429,15 +465,15 @@ window.WorkerPanel = (() => {
 
     if (t) {
       let updatePayload = { horasRealizadas: (t.horasRealizadas || 0) + Math.max(0, Math.round(elapsedHrs * 100) / 100) };
-      if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros')) {
-        updatePayload.status = reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') ? 'Aguardando Peça' : 'Pausada';
+      if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros') || reason.startsWith('Dependência')) {
+        updatePayload.status = reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') ? 'Aguardando Peça' : (reason.startsWith('Dependência') ? 'Aguardando Setor' : 'Pausada');
         updatePayload.pauseReason = reason;
         updatePayload.pauseStartTime = now.toISOString();
       }
       DB.tasks.update(t.id, updatePayload);
     }
 
-    if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros')) {
+    if (reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros') || reason.startsWith('Dependência')) {
       DB.workforce.update(myWorker.id, {
         currentState: 'Ocioso',
         currentTaskId: null,
@@ -1981,6 +2017,8 @@ window.WorkerPanel = (() => {
     submitResumeTask,
     promptMissingParts,
     submitMissingParts,
+    promptDependency,
+    submitDependency,
     promptOtherReason,
     submitOtherReason,
     promptComplete,
