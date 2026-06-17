@@ -152,7 +152,7 @@ window.Auth = (() => {
       case 'Desenvolvedor': return getAllPermissions();
       case 'Administrador': return getAllPermissions();
       case 'Gerente': return { ...getAllPermissions(), users: false };
-      case 'Planejador': return { ...getAllPermissions(), users: false, audit: false };
+      case 'Planejador': return getAllPermissions();
       case 'Coordenador': return { dashboard: true, equipment: true, tasks: true, gantt: true, parts: true, workforce: true, workshop: true, restrictions: true, timeline: true, kpi: false, ai: true, reports: false, audit: false, users: false, planning: false, impacts: false, costs: false, lessons: true, criticalPath: true, meetingMode: false, history: true, managerDashboard: false, simulator: false, workerPanel: false };
       case 'Encarregado': return getAllPermissions();
       case 'Supervisor': return { dashboard: true, equipment: true, tasks: true, gantt: true, parts: true, workforce: true, workshop: true, restrictions: true, timeline: true, kpi: false, ai: true, reports: false, audit: false, users: false, planning: false, impacts: false, costs: false, lessons: true, criticalPath: true, meetingMode: false, history: true, managerDashboard: false, simulator: false, workerPanel: false };
