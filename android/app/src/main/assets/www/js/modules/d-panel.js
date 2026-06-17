@@ -493,13 +493,15 @@ window.DPanel = (() => {
           </div>
           <span style="font-size:var(--text-xs);color:var(--text-muted)">Ranking do Mês (Tarefas Concluídas)</span>
         </div>
-        <div style="display:flex; gap:var(--space-4); flex-wrap:wrap;">
+        <div style="display:flex; flex-direction:column; gap:var(--space-2);">
           ${top.map((t, idx) => `
-            <div style="flex:1; min-width:140px; display:flex; align-items:center; gap:var(--space-3); background:var(--bg-base); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4); border-left:3px solid ${colors[idx]};">
-              <div style="font-size:1.8rem; line-height:1;">${emojis[idx]}</div>
-              <div>
-                <div style="font-size:var(--text-sm); font-weight:700; color:var(--text-primary); margin-bottom:2px;">${t.nome.split(' ')[0]}</div>
-                <div style="font-size:var(--text-xs); color:var(--text-secondary);">${t.count} tarefas</div>
+            <div style="display:flex; align-items:center; gap:var(--space-3); background:var(--bg-base); border-radius:var(--radius-md); padding:var(--space-2) var(--space-4); border-left:3px solid ${colors[idx]};">
+              <div style="font-size:1.5rem; line-height:1; width: 30px; text-align: center;">${emojis[idx]}</div>
+              <div style="flex:1;">
+                <div style="font-size:var(--text-sm); font-weight:700; color:var(--text-primary); margin-bottom:2px;">${t.nome}</div>
+              </div>
+              <div style="font-size:var(--text-xs); font-weight:600; color:var(--text-secondary); background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:12px;">
+                ${t.count} tarefas
               </div>
             </div>
           `).join('')}
