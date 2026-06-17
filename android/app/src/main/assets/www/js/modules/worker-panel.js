@@ -843,13 +843,18 @@ window.WorkerPanel = (() => {
     );
 
     // Auto-update timer display
-    if (!window.workerTimerInterval) {
-      window.workerTimerInterval = setInterval(() => {
+    if (window.workerTimerInterval) {
+      clearInterval(window.workerTimerInterval);
+    }
+    
+    window.workerTimerInterval = setInterval(() => {
+      try {
         const workers = window.DB.workforce.list();
         
         document.querySelectorAll('.live-timer-wp').forEach(el => {
           const wId = el.getAttribute('data-worker-id');
-          const w = workers.find(wk => wk.id === wId);
+          if (!wId) return;
+          const w = workers.find(wk => String(wk.id) === String(wId));
           if (w && w.currentActionStartTime) {
             el.innerText = formatTimeDiff(w.currentActionStartTime);
           }
@@ -861,8 +866,10 @@ window.WorkerPanel = (() => {
             span.innerText = ` - ${formatTimeDiff(start)}`;
           }
         });
-      }, 1000);
-    }
+      } catch (err) {
+        console.error('Timer interval error:', err);
+      }
+    }, 1000);
 
     if (activeWorkers.length > 0) {
       statusPanelHtml = activeWorkers.map(w => {
