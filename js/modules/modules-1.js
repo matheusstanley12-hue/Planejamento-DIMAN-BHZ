@@ -1052,7 +1052,40 @@ window.EquipmentModule = (() => {
 // ================================================================
 window.TasksModule = (() => {
 
+  let _viewMode = 'equipments'; // 'equipments' | 'realtime'
+
+  function setViewMode(mode) {
+    _viewMode = mode;
+    if (window.Router) window.Router.navigate(window.Router.current, { force: true });
+  }
+
   function render() {
+    if (_viewMode === 'realtime' && window.TasksOngoingModule) {
+      let ongoingHtml = window.TasksOngoingModule.render();
+      // Remove the outer page-container from ongoingHtml to prevent nested padding
+      ongoingHtml = ongoingHtml.replace('<div class="page-container">', '<div class="ongoing-wrapper">');
+      return `
+        <div class="page-container">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="section-title-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              </div>
+              Gestão de Tarefas
+            </div>
+            <div style="display:flex;gap:var(--space-2);">
+              <button class="btn btn-outline btn-sm" onclick="TasksModule.setViewMode('equipments')">Visão por Equipamentos</button>
+              <button class="btn btn-primary btn-sm" onclick="TasksModule.setViewMode('realtime')">Tempo Real (Painel)</button>
+              <button class="btn btn-primary btn-sm" onclick="TasksModule.openCreate()" style="margin-left:8px;">+ Nova Tarefa</button>
+            </div>
+          </div>
+          <div style="margin-top:-20px;">
+            ${ongoingHtml}
+          </div>
+        </div>
+      `;
+    }
+
     const eqFilter = window.GlobalEqFilter;
     const eqs = DB.equipment.list();
     const tasks = DB.tasks.getAll();
@@ -1112,7 +1145,11 @@ window.TasksModule = (() => {
               </div>
               Gestão de Tarefas
             </div>
-            <button class="btn btn-primary" onclick="TasksModule.openCreate()">+ Nova Tarefa</button>
+            <div style="display:flex;gap:var(--space-2);">
+              <button class="btn btn-primary btn-sm" onclick="TasksModule.setViewMode('equipments')">Visão por Equipamentos</button>
+              <button class="btn btn-outline btn-sm" onclick="TasksModule.setViewMode('realtime')">Tempo Real (Painel)</button>
+              <button class="btn btn-primary btn-sm" onclick="TasksModule.openCreate()" style="margin-left:8px;">+ Nova Tarefa</button>
+            </div>
           </div>
           
           <div style="margin-bottom:var(--space-5);font-size:var(--text-sm);color:var(--text-muted);">
@@ -1709,5 +1746,5 @@ window.TasksModule = (() => {
     }
   }
 
-  return { render, openCreate, openEdit, save, deleteTask, setEq, onFormChange };
+  return { render, openCreate, openEdit, save, deleteTask, setEq, onFormChange, setViewMode };
 })();

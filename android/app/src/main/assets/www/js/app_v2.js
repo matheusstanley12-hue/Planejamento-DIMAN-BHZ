@@ -481,7 +481,6 @@ function renderShell(session) {
     { route:'equipment',  label:'Equipamentos',          icon:'wrench-screwdriver', perm:'equipment', section:'PLANEJAMENTO' },
     { route:'released',   label:'Equip. Liberados',      icon:'check-circle',   perm:'dashboard',   section:'' },
     { route:'tasks',      label:'Tarefas',               icon:'clipboard-list', perm:'tasks',       section:'' },
-    { route:'tasks-ongoing', label:'Tarefas Em andamento', icon:'play', perm:'tasks', section:'' },
 
     { route:'services',   label: ['Desenvolvedor', 'Administrador', 'Planejador', 'Gerente'].includes(session.perfil) ? 'Serviços de Usinagem' : 'Serviços / Mão de Obra', icon:'clipboard-document-check', perm:'dashboard', section:'' },
     { route:'planning',   label:'Planejamento',          icon:'calendar',       perm:'planning',    section:'' },
