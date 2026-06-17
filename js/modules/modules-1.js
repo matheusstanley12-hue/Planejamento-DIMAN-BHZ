@@ -75,15 +75,25 @@ window.Dashboard = (() => {
         Chart.defaults.color = textColor;
         Chart.defaults.font.family = 'Inter';
         
-        // 1. Status Geral (Doughnut)
+        // Helper for gradients
+        const createGrad = (ctxCanvas, c1, c2, horizontal=false) => {
+          if (!ctxCanvas) return c1;
+          const ctx = ctxCanvas.getContext('2d');
+          const gradient = horizontal ? ctx.createLinearGradient(0, 0, 400, 0) : ctx.createLinearGradient(0, 0, 0, 400);
+          gradient.addColorStop(0, c1);
+          gradient.addColorStop(1, c2);
+          return gradient;
+        };
+
+        // 1. Status Geral (Column)
         const ctxStatus = document.getElementById('mega-ch-status');
         if (ctxStatus) {
            const sts = ['Operando', 'Liberado', 'Em Manutenção', 'Aguardando Peça', 'Paralisado'];
            const counts = sts.map(s => eqs.filter(e => e.status === s).length);
            charts.status = new Chart(ctxStatus, {
              type: 'bar',
-             data: { labels: sts, datasets: [{ data: counts, backgroundColor: ['#10b981', '#eab308', '#f97316', '#ef4444', '#a855f7'], borderRadius: 4, barThickness: 24 }] },
-             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, layout: { padding: 10 }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 10 } } }, y: { display: false } } }
+             data: { labels: sts, datasets: [{ data: counts, backgroundColor: [createGrad(ctxStatus, '#34d399', '#059669'), createGrad(ctxStatus, '#fde047', '#ca8a04'), createGrad(ctxStatus, '#fb923c', '#ea580c'), createGrad(ctxStatus, '#f87171', '#dc2626'), createGrad(ctxStatus, '#c084fc', '#9333ea')], borderRadius: 6, maxBarThickness: 48 }] },
+             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, layout: { padding: 10 }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 11, weight: '600' } } }, y: { display: false } } }
            });
         }
         
@@ -101,11 +111,11 @@ window.Dashboard = (() => {
           charts.ano = new Chart(ctxAno, {
             type: 'bar',
             data: { labels: mStr, datasets: [
-              { type: 'line', label: 'Aderência (%)', data: aderenciaArr, borderColor: '#eab308', backgroundColor: '#eab308', borderWidth: 2, tension: 0.3, yAxisID: 'y1' },
-              { type: 'bar', label: 'Liberações Realizadas', data: mR, backgroundColor: '#ef4444', borderRadius: 4, barThickness: 16, yAxisID: 'y' },
-              { type: 'bar', label: 'Liberações Planejadas', data: mP, backgroundColor: '#3b82f6', borderRadius: 4, barThickness: 16, yAxisID: 'y' }
+              { type: 'line', label: 'Aderência (%)', data: aderenciaArr, borderColor: '#eab308', backgroundColor: '#fef08a', borderWidth: 3, tension: 0.4, yAxisID: 'y1', pointRadius: 4, pointBackgroundColor: '#ca8a04' },
+              { type: 'bar', label: 'Liberações Realizadas', data: mR, backgroundColor: createGrad(ctxAno, '#f87171', '#dc2626'), borderRadius: 6, maxBarThickness: 32, yAxisID: 'y' },
+              { type: 'bar', label: 'Liberações Planejadas', data: mP, backgroundColor: createGrad(ctxAno, '#60a5fa', '#2563eb'), borderRadius: 6, maxBarThickness: 32, yAxisID: 'y' }
             ]},
-            options: { layout: { padding: { top: 20 } }, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 10, color: titleColor, font: { weight: '600' } } } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: textColor } }, y: { display: false, position: 'left' }, y1: { display: false, position: 'right', min: 0, max: 100 } } }
+            options: { layout: { padding: { top: 20 } }, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 12, color: titleColor, font: { weight: '600' } } } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { weight: '500' } } }, y: { display: false, position: 'left' }, y1: { display: false, position: 'right', min: 0, max: 100 } } }
           });
         }
 
@@ -118,10 +128,10 @@ window.Dashboard = (() => {
           charts.tasksChart = new Chart(ctxTasks, {
             type: 'bar',
             data: { labels: eqNames, datasets: [
-              { label: 'Realizado (h)', data: tR, backgroundColor: '#ef4444', borderRadius: 4, barThickness: 8 },
-              { label: 'Planejado (h)', data: tP, backgroundColor: '#3b82f6', borderRadius: 4, barThickness: 8 }
+              { label: 'Realizado (h)', data: tR, backgroundColor: createGrad(ctxTasks, '#f87171', '#dc2626', true), borderRadius: 4, maxBarThickness: 16 },
+              { label: 'Planejado (h)', data: tP, backgroundColor: createGrad(ctxTasks, '#60a5fa', '#2563eb', true), borderRadius: 4, maxBarThickness: 16 }
             ]},
-            options: { indexAxis: 'y', layout: { padding: { right: 30 } }, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 10, color: titleColor } } }, scales: { x: { display: false }, y: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 10 } } } } }
+            options: { indexAxis: 'y', layout: { padding: { right: 30 } }, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 12, color: titleColor, font: { weight: '600' } } } }, scales: { x: { display: false }, y: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 11, weight: '500' } } } } }
           });
         }
 
@@ -133,8 +143,8 @@ window.Dashboard = (() => {
           const eqAvVals = eqSort.map(e => e.pctAvanco||0);
           charts.avanco = new Chart(ctxAvanco, {
             type: 'bar',
-            data: { labels: eqAvNames, datasets: [{ label: 'Avanço (%)', data: eqAvVals, backgroundColor: '#a855f7', borderRadius: 4, barThickness: 10 }] },
-            options: { indexAxis: 'y', layout: { padding: { right: 30 } }, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 10 } } } } }
+            data: { labels: eqAvNames, datasets: [{ label: 'Avanço (%)', data: eqAvVals, backgroundColor: createGrad(ctxAvanco, '#c084fc', '#9333ea', true), borderRadius: 6, maxBarThickness: 24 }] },
+            options: { indexAxis: 'y', layout: { padding: { right: 40 } }, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 11, weight: '500' } } } } }
           });
         }
 
@@ -151,10 +161,10 @@ window.Dashboard = (() => {
           charts.turnoChart = new Chart(ctxTurno, {
             type: 'bar',
             data: { labels: eqNamesT2, datasets: [
-              { label: 'Realizado (h)', data: tR2, backgroundColor: '#10b981', borderRadius: 4, barThickness: 8 },
-              { label: 'Planejado (h)', data: tP2, backgroundColor: '#f59e0b', borderRadius: 4, barThickness: 8 }
+              { label: 'Realizado (h)', data: tR2, backgroundColor: createGrad(ctxTurno, '#34d399', '#059669', true), borderRadius: 4, maxBarThickness: 16 },
+              { label: 'Planejado (h)', data: tP2, backgroundColor: createGrad(ctxTurno, '#fcd34d', '#d97706', true), borderRadius: 4, maxBarThickness: 16 }
             ]},
-            options: { indexAxis: 'y', layout: { padding: { right: 30 } }, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 10, color: titleColor } } }, scales: { x: { display: false }, y: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 10 } } } } }
+            options: { indexAxis: 'y', layout: { padding: { right: 30 } }, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 12, color: titleColor, font: { weight: '600' } } } }, scales: { x: { display: false }, y: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 11, weight: '500' } } } } }
           });
         }
 
@@ -168,10 +178,10 @@ window.Dashboard = (() => {
           charts.cat = new Chart(ctxCat, {
             type: 'bar',
             data: { labels: catsLabels, datasets: [
-              { label: 'Realizado', data: cR, backgroundColor: '#10b981', borderRadius: 4, barThickness: 12 },
-              { label: 'Planejado', data: cP, backgroundColor: '#a855f7', borderRadius: 4, barThickness: 12 }
+              { label: 'Realizado', data: cR, backgroundColor: createGrad(ctxCat, '#34d399', '#059669'), borderRadius: 6, maxBarThickness: 24 },
+              { label: 'Planejado', data: cP, backgroundColor: createGrad(ctxCat, '#c084fc', '#9333ea'), borderRadius: 6, maxBarThickness: 24 }
             ]},
-            options: { layout: { padding: { top: 20 } }, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 10, color: titleColor } } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 10 } } }, y: { display: false } } }
+            options: { layout: { padding: { top: 20 } }, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 12, color: titleColor, font: { weight: '600' } } } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: textColor, font: { size: 11, weight: '500' } } }, y: { display: false } } }
           });
         }
 
