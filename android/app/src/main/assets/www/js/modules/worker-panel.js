@@ -469,9 +469,13 @@ window.WorkerPanel = (() => {
       const freesWorker = reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') || reason.startsWith('Outros') || reason.startsWith('Dependência') || reason === 'Fim Expediente' || reason === '5S';
       
       if (freesWorker) {
-        updatePayload.status = reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') ? 'Aguardando Peça' : (reason.startsWith('Dependência') ? 'Aguardando Setor' : 'Pausada');
-        updatePayload.pauseReason = reason;
-        updatePayload.pauseStartTime = now.toISOString();
+        const workers = DB.workforce.list() || [];
+        const otherActive = workers.some(w => w.id !== myWorker.id && (w.currentState === 'Trabalhando' || w.currentState === 'Em Pausa') && w.currentTaskId == t.id);
+        if (!otherActive) {
+          updatePayload.status = reason.startsWith('Falta de Peças') || reason.startsWith('Falta de Peça') ? 'Aguardando Peça' : (reason.startsWith('Dependência') ? 'Aguardando Setor' : 'Pausada');
+          updatePayload.pauseReason = reason;
+          updatePayload.pauseStartTime = now.toISOString();
+        }
       }
       DB.tasks.update(t.id, updatePayload);
     }
@@ -533,7 +537,9 @@ window.WorkerPanel = (() => {
     const myWorker = getMyWorker(session);
     if (!myWorker) return Toast.error('Erro', 'Cadastro não encontrado.');
     if (myWorker.currentState && myWorker.currentState !== 'Ocioso') {
-      return Toast.error('Atenção', `${myWorker.nome}, você já tem uma atividade ou pausa em andamento. Por gentileza, finalize a sua tarefa primeiro.`);
+      if (myWorker.currentTaskId != taskId) {
+        return Toast.error('Atenção', `${myWorker.nome}, você já tem uma atividade ou pausa em andamento. Por gentileza, finalize a sua tarefa primeiro.`);
+      }
     }
 
     const t = DB.tasks.get(taskId);
@@ -634,9 +640,9 @@ window.WorkerPanel = (() => {
       if (t) {
         // Check if there are other workers executing this task or past timesheets
         const workers = DB.workforce.list() || [];
-        const otherActive = workers.some(w => w.id !== myWorker.id && (w.currentState === 'Trabalhando' || w.currentState === 'Em Pausa') && w.currentTaskId === t.id);
+        const otherActive = workers.some(w => w.id !== myWorker.id && (w.currentState === 'Trabalhando' || w.currentState === 'Em Pausa') && w.currentTaskId == t.id);
         const timesheets = DB.timesheets.list() || [];
-        const hasTimesheets = timesheets.some(ts => ts.taskId === t.id);
+        const hasTimesheets = timesheets.some(ts => ts.taskId == t.id);
         if (!otherActive) {
           DB.tasks.update(t.id, { status: hasTimesheets ? 'Pausada' : 'Aberta', pauseReason: hasTimesheets ? 'Sem executantes ativos' : '' });
         }
