@@ -883,13 +883,13 @@ window.WorkerPanel = (() => {
     
     const allWorkers = window.DB.workforce.list();
     // Apenas o worker logado deve aparecer na área principal com botões de ação
-    const activeWorkers = (state === 'Trabalhando' || state === 'Em Pausa') && myWorker.currentTaskId && myTasks.find(t => t.id === myWorker.currentTaskId) ? [myWorker] : [];
+    const activeWorkers = (state === 'Trabalhando' || state === 'Em Pausa') && myWorker.currentTaskId && tasks.find(t => t.id === myWorker.currentTaskId) ? [myWorker] : [];
     
     // Todos os executantes ativos na fila para mostrar "EM EXECUÇÃO" (usado abaixo)
     const allActiveWorkers = allWorkers.filter(w => 
       (w.currentState === 'Trabalhando' || w.currentState === 'Em Pausa') && 
       w.currentTaskId && 
-      myTasks.find(t => t.id === w.currentTaskId)
+      tasks.find(t => t.id === w.currentTaskId)
     );
 
     // Auto-update timer display
@@ -1076,12 +1076,15 @@ window.WorkerPanel = (() => {
           t.status = 'Aberta';
           actionBtn = `<button class="btn-start-task" onclick="WorkerPanel.startPromptTask('${t.id}')">INICIAR AGORA</button>`;
         } else {
-          const names = executingWorkers.map(w => w.nome.split(' ')[0]).join(', ');
+          const namesHtml = executingWorkers.map(w => {
+            return `<span>${w.nome.split(' ')[0]} (<span class="live-timer-wp" data-worker-id="${w.id}">${formatTimeDiff(w.currentActionStartTime)}</span>)</span>`;
+          }).join(', ');
+          
           actionBtn = `
             <div style="width:100%; display:flex; align-items:center; justify-content:space-between;">
               <div style="font-size:12px;color:#10b981;font-weight:800;display:flex;align-items:center;gap:6px;">
                 <div style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></div>
-                EM EXECUÇÃO ${names ? '(' + names + ')' : ''}
+                EM EXECUÇÃO: <div style="display:flex;gap:4px;flex-wrap:wrap;">${namesHtml}</div>
               </div>
               <button class="btn btn-outline" style="height:32px;font-size:11px;font-weight:700;padding:0 12px;border-color:var(--brand-primary);color:var(--brand-primary);" onclick="WorkerPanel.startPromptTask('${t.id}')">
                 ENTRAR NA TAREFA
