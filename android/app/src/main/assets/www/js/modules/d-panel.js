@@ -136,8 +136,8 @@ window.DPanel = (() => {
     
     // Filtra tarefas concluídas no mês atual
     const concludedTasks = tasks.filter(t => {
-      // Se não tiver dataRealTermino preenchida, assume que a conclusão foi feita mas sem data (usa hoje como fallback)
-      const dataTermino = t.dataRealTermino || t.dataAtualizacao || today.toISOString();
+      // Se não tiver dataRealTermino preenchida, usa a data de atualização ou de criação do registro
+      const dataTermino = t.dataRealTermino || t.updatedAt || t.createdAt || today.toISOString();
       return t.status === 'Concluída' && dataTermino.startsWith(currentMonthPrefix);
     });
     
