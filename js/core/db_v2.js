@@ -167,7 +167,7 @@ window.DB = (() => {
           localStorage.setItem('diman_unsynced', 'true');
         } else {
           // If no other pending syncs exist, we can mark as fully synced
-          if (Object.values(syncTimeouts).length === 0 || localStorage.getItem('diman_unsynced') !== 'true') {
+          if (Object.values(syncTimeouts).length <= 1 || localStorage.getItem('diman_unsynced') !== 'true') {
              localStorage.setItem('diman_unsynced', 'false');
           }
         }
@@ -252,6 +252,13 @@ window.DB = (() => {
           if (payload.new && payload.new.key === 'all') {
             // Ignore photos in realtime to save local storage and memory
             if (payload.new.collection && payload.new.collection.startsWith('photo_')) return;
+
+            // CRITICAL: If we have pending local changes, DO NOT overwrite localStorage!
+            // This prevents the echo of our own previous pushes from overwriting subsequent rapid local edits.
+            if (localStorage.getItem('diman_unsynced') === 'true') {
+              console.log('[DIMAN] Ignorando atualização em tempo real (dados locais em sincronização pendente).');
+              return;
+            }
 
             localStorage.setItem(payload.new.collection, JSON.stringify(payload.new.data));
             if (window.Router) {
@@ -775,6 +782,11 @@ window.DB = (() => {
     const allTasks = get(KEYS.tasks).filter(t => t.equipmentId === equipmentId);
     const total = allTasks.length;
     let pct = 0;
+    
+    // Calculate max task end date for automatic prediction
+    const taskDates = allTasks.map(t => t.dataReplanejada || t.dataPlanejadaTermino).filter(Boolean).sort();
+    const maxTaskDate = taskDates.length > 0 ? taskDates[taskDates.length - 1] : null;
+
     if (total > 0) {
       const sum = allTasks.reduce((s, t) => s + (t.pctExecutado || 0), 0);
       pct = Math.round(sum / total);
@@ -783,8 +795,17 @@ window.DB = (() => {
     const items = get(KEYS.equipment);
     const idx = items.findIndex(e => e.id === equipmentId);
     if (idx !== -1) {
+      let changed = false;
       if (items[idx].pctAvanco !== pct) {
         items[idx].pctAvanco = pct;
+        changed = true;
+      }
+      if (maxTaskDate && items[idx].dataLiberacaoAtual !== maxTaskDate) {
+        items[idx].dataLiberacaoAtual = maxTaskDate;
+        changed = true;
+      }
+      
+      if (changed) {
         items[idx].updatedAt = now();
         set(KEYS.equipment, items);
         if (window.events && window.events.emit) {

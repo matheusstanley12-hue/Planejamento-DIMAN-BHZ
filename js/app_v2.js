@@ -568,7 +568,8 @@ function renderShell(session) {
   }
 
   window.filterSidebar = function(query) {
-    query = query.toLowerCase();
+    const normalize = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    query = normalize(query);
     const nav = document.querySelector('.sidebar-nav');
     if (!nav) return;
     
@@ -577,7 +578,7 @@ function renderShell(session) {
     
     items.forEach(item => {
       if (item.classList.contains('logout-btn')) return; // ignore if added to nav
-      const text = item.querySelector('.nav-label').textContent.toLowerCase();
+      const text = normalize(item.querySelector('.nav-label').textContent);
       if (text.includes(query)) {
         item.style.display = 'flex';
       } else {
