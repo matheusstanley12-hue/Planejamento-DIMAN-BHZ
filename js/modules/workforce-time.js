@@ -32,25 +32,27 @@ window.WorkforceTimeModule = (() => {
     const tasks = DB.tasks.getAll();
     const timesheets = DB.timesheets ? DB.timesheets.list() : [];
 
+    let filteredTasks = tasks;
+    if (currentSectorFilter) {
+      filteredTasks = filteredTasks.filter(t => t.disciplina === currentSectorFilter);
+    }
+
     // Calculate live metrics
     let trabalhandoCount = 0;
     let pausaCount = 0;
-    let faltaDePecaCount = 0;
     let ociosoCount = 0;
 
     workers.forEach(w => {
       if (w.currentState === 'Trabalhando') {
         trabalhandoCount++;
       } else if (w.currentState === 'Em Pausa') {
-        if (w.currentPauseReason && (w.currentPauseReason.startsWith('Falta de Peça') || w.currentPauseReason.startsWith('Falta de Peças'))) {
-          faltaDePecaCount++;
-        } else {
-          pausaCount++;
-        }
+        pausaCount++;
       } else {
         ociosoCount++;
       }
     });
+
+    let faltaDePecaCount = filteredTasks.filter(t => t.status === 'Aguardando Peça').length;
 
     const totalWorkers = workers.length;
 
