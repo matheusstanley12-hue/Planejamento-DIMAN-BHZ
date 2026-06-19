@@ -1,14 +1,17 @@
 window.openManualViewer = function(link, title) {
+  try {
     let finalLink = link;
     // Auto convert drive links to preview mode to bypass iframe restrictions
-    if (link.includes('drive.google.com/file/d/')) {
-        const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) {
-            finalLink = `https://drive.google.com/file/d/${match[1]}/preview`;
+    if (link && typeof link === 'string') {
+        if (link.includes('drive.google.com/file/d/')) {
+            const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                finalLink = `https://drive.google.com/file/d/${match[1]}/preview`;
+            }
+        } else if (link.startsWith('http') && link.toLowerCase().endsWith('.pdf')) {
+            // Hide native PDF viewer toolbar to prevent easy downloading/printing (only for http/https, not data:)
+            finalLink = link + (link.includes('#') ? '&' : '#') + 'toolbar=0&navpanes=0';
         }
-    } else if (link.startsWith('data:application/pdf') || link.toLowerCase().endsWith('.pdf')) {
-        // Hide native PDF viewer toolbar to prevent easy downloading/printing
-        finalLink = link + (link.includes('#') ? '&' : '#') + 'toolbar=0&navpanes=0';
     }
     
     const modalId = 'manual-viewer-modal';
@@ -30,6 +33,9 @@ window.openManualViewer = function(link, title) {
       </div>
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+  } catch (err) {
+    alert('Erro no visualizador: ' + err.message + '\n' + err.stack);
+  }
 };
 
 window.ManualsAdmin = (() => {
