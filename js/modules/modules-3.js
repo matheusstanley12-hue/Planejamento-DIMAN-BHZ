@@ -1795,8 +1795,7 @@ window.UsersModule = (() => {
     }
 
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let randomPassword = '';
-    for(let i=0; i<6; i++) randomPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    let randomPassword = '123456';
 
     const senhaHash = await Auth.hashPassword(randomPassword);
 

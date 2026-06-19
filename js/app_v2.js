@@ -343,7 +343,7 @@ function showLoginPage() {
     e.preventDefault();
     const btn = document.getElementById('login-btn');
     const matricula = document.getElementById('login-matricula').value.trim();
-    const senha = document.getElementById('login-senha').value;
+    const senha = document.getElementById('login-senha').value.trim();
     const errDiv = document.getElementById('login-error');
     const errMsg = document.getElementById('login-error-msg');
 
