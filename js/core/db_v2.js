@@ -964,16 +964,31 @@ window.DB = (() => {
   // Seed workforce if missing (for existing clients)
   setTimeout(() => {
     try {
-      let currentWf = workforce.list();
+      let currentWf = workforce.list() || [];
+      let updatedAny = false;
+      
+      // Ensure all existing workers have an ID to prevent Supabase sync crashes
+      currentWf.forEach(w => {
+         if (!w.id) {
+            w.id = window.DB.uid ? window.DB.uid('wf') : `wf-${Date.now()}-${Math.random()}`;
+            if (!w.currentState) {
+               w.currentState = 'Ocioso';
+               w.currentTaskId = null;
+            }
+            updatedAny = true;
+         }
+      });
+      
       let seeded = false;
       if (INITIAL_DATA[KEYS.workforce]) {
         INITIAL_DATA[KEYS.workforce].forEach(seed => {
           if (!currentWf.find(w => w.matricula === seed.matricula)) {
-            currentWf.push(seed);
-            seeded = true;
+             seed.id = seed.id || window.DB.uid('wf');
+             currentWf.push({ ...seed, currentState: 'Ocioso', currentTaskId: null, currentPauseReason: '', currentActionStartTime: null });
+             seeded = true;
           }
         });
-        if (seeded) {
+        if (seeded || updatedAny) {
           localStorage.setItem(KEYS.workforce, JSON.stringify(currentWf));
           if (window.DB && DB.syncToSupabase) DB.syncToSupabase(KEYS.workforce, currentWf);
         }
