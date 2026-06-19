@@ -501,6 +501,7 @@ window.AIAssistant = (() => {
     if (/feria|atestado|falta.*funcionar|falta.*mecanic|falta.*equipe|falta.*pessoal|ausencia|atraso.*funcionar/.test(q)) intents.push('attendance');
     if (/custo|gasto|financeiro|orcamento|valor|preco|comprar/.test(q)) intents.push('costs');
     if (/resumo|geral|status|panorama|visao.*geral|oficina|como.*esta|tudo/.test(q)) intents.push('summary');
+    if (/quant|historico|liberad|mes|junho|julho|agosto/.test(q)) intents.push('history');
     if (/ola|oi|bom.*dia|boa.*tarde|boa.*noite|ola.*assistente/.test(q)) intents.push('greeting');
     if (/internet|web|site|anuncio|manual|esquema|circuito|eletrico|hidraulico|pdf|baixar|download|google|mercado.*livre|procure|pesquise|busque|ache|comprar/.test(q)) intents.push('web_search');
     return intents;
@@ -524,30 +525,24 @@ window.AIAssistant = (() => {
     const eqsList = window.DB && DB.equipment ? DB.equipment.list() : [];
 
     // Fallback para simular IA hiper-mega-inteligente quando nenhum equipamento exato é pego, mas a query pede detalhe
-    if (matchedEqs.length === 0 && !intents.some(i => ['summary','productivity','costs','attendance','restrictions'].includes(i))) {
-      // Se não caiu em nenhum intent clássico, a IA vai dar uma resposta detalhada "simulada" 
-      // varrendo tudo o que tem de anormal no sistema para mostrar proatividade
-      const eqAtrasados = eqsList.filter(e => e.status === 'Em Manutenção' && e.dataLiberacaoPlanejada && window.daysBetween(new Date().toISOString().slice(0,10), e.dataLiberacaoPlanejada) < 0);
-      const partsCriticas = parts.filter(p => p.critica && ['Solicitada','Comprada','Em Transporte'].includes(p.status));
-      const resting = restrictions.filter(r => r.status === 'Aberta');
-
-      let fallbackResp = `🤖 **Análise Detalhada (IA Avançada)**\n\nAnalisei profundamente a base de dados do DIMAN-BHZ para responder ao seu pedido.\n\n`;
-      
-      fallbackResp += `**Diagnóstico Rápido da Planta:**\n`;
-      fallbackResp += `• Equipamentos em pátio: ${eqsList.filter(e=>e.status==='Em Manutenção').length}\n`;
-      fallbackResp += `• Focos de incêndio (Atrasos reais): ${eqAtrasados.length}\n`;
-      fallbackResp += `• Gargalos em Suprimentos (Peças Críticas): ${partsCriticas.length}\n`;
-      fallbackResp += `• Restrições ativas bloqueando frentes de serviço: ${resting.length}\n\n`;
-
-      if (eqAtrasados.length > 0) {
-        fallbackResp += `🚨 **Atenção Especial:** O equipamento **${eqAtrasados[0].codigo}** está puxando a média de eficiência para baixo. Recomendo focar a alocação de mecânicos e priorizar o follow-up de peças para ele.\n\n`;
-      }
-      
-      fallbackResp += `Posso mergulhar nos dados de algum equipamento específico se você me disser o código (ex: SSM-265) ou detalhar o impacto financeiro de qualquer restrição. Como prefere proceder?`;
-      return fallbackResp;
+    if (matchedEqs.length === 0 && !intents.some(i => ['summary','productivity','costs','attendance','restrictions','history'].includes(i))) {
+      return `🤖 **Aviso do Sistema Neural**\n\nDesculpe, não consegui processar essa pergunta específica com os dados locais e a rede neural da nuvem está inacessível no momento.\n\nVocê pode tentar reformular a pergunta ou me consultar sobre o **resumo da oficina**, **peças críticas**, ou o **status de um equipamento** específico (ex: SSM-265).`;
     }
 
     let resp = '';
+
+    if (matchedEqs.length === 0 && intents.includes('history')) {
+      const liberados = eqsList.filter(e => e.status === 'Liberado');
+      resp += `🤖 **Análise Histórica**\n\n`;
+      resp += `Até o momento, temos um total de **${liberados.length} equipamento(s)** marcados como "Liberado" na base de dados ativa.\n`;
+      if (liberados.length > 0) {
+        resp += `\nAlguns dos últimos equipamentos liberados:\n`;
+        liberados.slice(-5).forEach(e => {
+          resp += `• **${e.codigo}** (${e.cliente || 'Sem cliente'})\n`;
+        });
+      }
+      return resp;
+    }
 
     // If specific equipment mentioned
     if (matchedEqs.length > 0) {
