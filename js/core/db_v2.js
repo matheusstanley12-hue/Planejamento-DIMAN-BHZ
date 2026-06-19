@@ -421,7 +421,7 @@ window.DB = (() => {
   // ==================== EQUIPMENT ====================
   const equipment = {
     list: () => get(KEYS.equipment),
-    get: id => get(KEYS.equipment).find(e => e.id === id),
+    get: id => get(KEYS.equipment).find(e => String(e.id) === String(id)),
     create(data) {
       const items = get(KEYS.equipment);
       const item = { id: uid('eq'), ...data, createdAt: now(), updatedAt: now(), timeline: [], replanning: [] };
@@ -500,7 +500,7 @@ window.DB = (() => {
       const eqFilter = equipmentId || window.GlobalEqFilter;
       return get(KEYS.tasks).filter(t => !eqFilter || t.equipmentId === eqFilter);
     },
-    get: id => get(KEYS.tasks).find(t => t.id === id),
+    get: id => get(KEYS.tasks).find(t => String(t.id) === String(id)),
     create(data) {
       const items = get(KEYS.tasks);
       const item = { id: uid('tk'), ...data, status: data.status || 'Não Iniciada', pctExecutado: data.pctExecutado || 0, createdAt: now(), updatedAt: now() };
@@ -513,7 +513,7 @@ window.DB = (() => {
     },
     update(id, data) {
       const items = get(KEYS.tasks);
-      const idx = items.findIndex(t => t.id === id);
+      const idx = items.findIndex(t => String(t.id) === String(id));
       if (idx === -1) return null;
       const before = { ...items[idx] };
       items[idx] = { ...items[idx], ...data, updatedAt: now() };
@@ -528,7 +528,7 @@ window.DB = (() => {
     },
     delete(id) {
       const items = get(KEYS.tasks);
-      const t = items.find(x => x.id === id);
+      const t = items.find(x => String(x.id) === String(id));
       set(KEYS.tasks, items.filter(x => x.id !== id));
       if (t) { 
         Auth.addAuditLog('DELETE_TASK', `Tarefa ${t.descricao} removida`, null); 
@@ -549,7 +549,7 @@ window.DB = (() => {
       const eqFilter = equipmentId || window.GlobalEqFilter;
       return get(KEYS.parts).filter(p => !eqFilter || p.equipmentId === eqFilter);
     },
-    get: id => get(KEYS.parts).find(p => p.id === id),
+    get: id => get(KEYS.parts).find(p => String(p.id) === String(id)),
     create(data) {
       const items = get(KEYS.parts);
       const item = { id: uid('pt'), ...data, status: data.status || 'Solicitada', createdAt: now(), updatedAt: now() };
@@ -585,7 +585,7 @@ window.DB = (() => {
   // ==================== WORKFORCE ====================
   const workforce = {
     list: () => get(KEYS.workforce),
-    get: id => get(KEYS.workforce).find(w => w.id === id),
+    get: id => get(KEYS.workforce).find(w => String(w.id) === String(id)),
     create(data) {
       const items = get(KEYS.workforce);
       const item = { id: uid('wf'), ...data, createdAt: now() };
@@ -596,7 +596,7 @@ window.DB = (() => {
     },
     update(id, data) {
       const items = get(KEYS.workforce);
-      const idx = items.findIndex(w => w.id === id);
+      const idx = items.findIndex(w => String(w.id) === String(id));
       if (idx === -1) return null;
       const before = { ...items[idx] };
       items[idx] = { ...items[idx], ...data };
@@ -606,7 +606,7 @@ window.DB = (() => {
     },
     delete(id) {
       const items = get(KEYS.workforce);
-      const w = items.find(x => x.id === id);
+      const w = items.find(x => String(x.id) === String(id));
       set(KEYS.workforce, items.filter(x => x.id !== id));
       if (w) Auth.addAuditLog('DELETE_WORKER', `Trabalhador ${w.nome} removido`, null);
     }

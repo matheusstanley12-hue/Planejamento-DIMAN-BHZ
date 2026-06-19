@@ -1223,7 +1223,7 @@ window.WorkerPanel = (() => {
             `;
           }
         }
-      } else if (state === 'Ocioso' || (state === 'Trabalhando' && myWorker.currentTaskId !== t.id) || (state === 'Em Pausa' && myWorker.currentTaskId !== t.id)) {
+      } else if (state === 'Ocioso' || (state === 'Trabalhando' && String(myWorker.currentTaskId) !== String(t.id)) || (state === 'Em Pausa' && String(myWorker.currentTaskId) !== String(t.id))) {
         if (!canExecuteTask(session, t)) {
           actionBtn = `<div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" /></svg>Apenas ${t.disciplina}</div>`;
         } else if (isBlocked) {
