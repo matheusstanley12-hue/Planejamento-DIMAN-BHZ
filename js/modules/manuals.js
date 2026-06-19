@@ -1,15 +1,23 @@
 window.openManualViewer = function(link, title) {
   try {
-    const renderModal = (finalLink) => {
+    const renderModal = (finalLink, isBlob = false) => {
       const modalId = 'manual-viewer-modal';
       if(document.getElementById(modalId)) document.getElementById(modalId).remove();
+      
+      const isBase64 = typeof link === 'string' && link.startsWith('data:');
+      const downloadAttr = isBase64 ? `download="${title || 'documento'}.pdf"` : 'target="_blank"';
+      const rawLink = isBlob ? link : finalLink; // use the base64 or original link for downloading
       
       const modalHTML = `
         <div id="${modalId}" class="modal-overlay open" style="display:flex;animation:fadeIn 0.2s ease;z-index:9999;">
           <div class="modal" style="width:100%;height:95%;max-width:1200px;margin:20px;animation:slideUp 0.3s ease;display:flex;flex-direction:column;padding:0;">
             <div class="modal-header" style="border-bottom:1px solid var(--border-hover);padding:15px 20px;display:flex;justify-content:space-between;align-items:center;">
-              <h3 style="font-weight:700;color:var(--text-primary);margin:0;">${title || 'Visualizador de Arquivo'}</h3>
-              <div style="display:flex;gap:10px;align-items:center;">
+              <h3 style="font-weight:700;color:var(--text-primary);margin:0;font-size:16px;">${title || 'Visualizador de Arquivo'}</h3>
+              <div style="display:flex;gap:15px;align-items:center;">
+                 <a href="${rawLink}" ${downloadAttr} class="btn btn-primary" style="font-size:13px;padding:6px 12px;display:flex;align-items:center;gap:6px;text-decoration:none;">
+                   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                   Baixar Arquivo
+                 </a>
                  <button class="modal-close" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);" onclick="document.getElementById('${modalId}').remove()"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:24px;height:24px"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
               </div>
             </div>
@@ -36,12 +44,14 @@ window.openManualViewer = function(link, title) {
               .then(res => res.blob())
               .then(blob => {
                   const blobUrl = URL.createObjectURL(blob);
-                  renderModal(blobUrl + '#toolbar=0&navpanes=0');
+                  renderModal(blobUrl + '#toolbar=0&navpanes=0', true);
               })
               .catch(err => {
                   console.error(err);
-                  renderModal(link); // fallback
+                  renderModal(link, true); // fallback
               });
+        } else if (link.startsWith('data:')) {
+            renderModal(link, true);
         } else if (link.startsWith('http') && link.toLowerCase().endsWith('.pdf')) {
             renderModal(link + (link.includes('#') ? '&' : '#') + 'toolbar=0&navpanes=0');
         } else {

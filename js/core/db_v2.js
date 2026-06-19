@@ -1008,9 +1008,9 @@ window.DB = (() => {
 
   const solicitacoes = {
     list: () => get(KEYS.solicitacoes),
-    add: (data) => { const s = get(KEYS.solicitacoes); s.push(data); set(KEYS.solicitacoes, s); },
-    update: (id, updates) => { let s = get(KEYS.solicitacoes); const i = s.findIndex(r => r.id === id); if (i !== -1) { s[i] = { ...s[i], ...updates, updatedAt: now() }; set(KEYS.solicitacoes, s); } },
-    delete: (id) => { const s = get(KEYS.solicitacoes); set(KEYS.solicitacoes, s.filter(r => r.id !== id)); }
+    add: (data) => { const s = get(KEYS.solicitacoes); s.push({ ...data, createdAt: now() }); set(KEYS.solicitacoes, s); },
+    update: (id, updates) => { let s = get(KEYS.solicitacoes); const i = s.findIndex(r => r && r.id === id); if (i !== -1) { s[i] = { ...s[i], ...updates, updatedAt: now() }; set(KEYS.solicitacoes, s); } },
+    delete: (id) => { const s = get(KEYS.solicitacoes); set(KEYS.solicitacoes, s.filter(r => r && r.id !== id)); }
   };
 
   const manuals = {
@@ -1020,29 +1020,29 @@ window.DB = (() => {
       m.push({ ...data, createdAt: now() });
       return set(KEYS.manuals, m);
     },
-    update: (id, updates) => { let m = get(KEYS.manuals); const i = m.findIndex(r => r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.manuals, m); } },
-    delete: (id) => { const m = get(KEYS.manuals); set(KEYS.manuals, m.filter(r => r.id !== id)); }
+    update: (id, updates) => { let m = get(KEYS.manuals); const i = m.findIndex(r => r && r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.manuals, m); } },
+    delete: (id) => { const m = get(KEYS.manuals); set(KEYS.manuals, m.filter(r => r && r.id !== id)); }
   };
 
   const manualFolders = {
     list: () => get(KEYS.manualFolders),
     add: (data) => { const m = get(KEYS.manualFolders); m.push({ ...data, createdAt: now() }); set(KEYS.manualFolders, m); },
-    update: (id, updates) => { let m = get(KEYS.manualFolders); const i = m.findIndex(r => r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.manualFolders, m); } },
-    delete: (id) => { const m = get(KEYS.manualFolders); set(KEYS.manualFolders, m.filter(r => r.id !== id)); }
+    update: (id, updates) => { let m = get(KEYS.manualFolders); const i = m.findIndex(r => r && r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.manualFolders, m); } },
+    delete: (id) => { const m = get(KEYS.manualFolders); set(KEYS.manualFolders, m.filter(r => r && r.id !== id)); }
   };
 
   const meetingTasks = {
     list: () => get(KEYS.meetingTasks),
     add: (data) => { const m = get(KEYS.meetingTasks); m.push({ ...data, createdAt: now() }); set(KEYS.meetingTasks, m); },
-    update: (id, updates) => { let m = get(KEYS.meetingTasks); const i = m.findIndex(r => r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.meetingTasks, m); } },
-    delete: (id) => { const m = get(KEYS.meetingTasks); set(KEYS.meetingTasks, m.filter(r => r.id !== id)); }
+    update: (id, updates) => { let m = get(KEYS.meetingTasks); const i = m.findIndex(r => r && r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.meetingTasks, m); } },
+    delete: (id) => { const m = get(KEYS.meetingTasks); set(KEYS.meetingTasks, m.filter(r => r && r.id !== id)); }
   };
 
   const vacations = {
     list: () => get(KEYS.vacations),
     add: (data) => { const m = get(KEYS.vacations); m.push({ ...data, createdAt: now() }); set(KEYS.vacations, m); },
-    update: (id, updates) => { let m = get(KEYS.vacations); const i = m.findIndex(r => r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.vacations, m); } },
-    delete: (id) => { const m = get(KEYS.vacations); set(KEYS.vacations, m.filter(r => r.id !== id)); }
+    update: (id, updates) => { let m = get(KEYS.vacations); const i = m.findIndex(r => r && r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.vacations, m); } },
+    delete: (id) => { const m = get(KEYS.vacations); set(KEYS.vacations, m.filter(r => r && r.id !== id)); }
   };
 
   return {
