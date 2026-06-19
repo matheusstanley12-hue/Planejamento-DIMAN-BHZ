@@ -16,37 +16,50 @@ async function run() {
   // Since we migrated to row-based, data could be individual rows or 'all'
   for (const row of data) {
     if (row.key === 'all') {
-      const eq = row.data.find(e => e.nome === 'SSH 909' || e.tag === 'SSH 909');
+      const eq = row.data.find(e => e.nome === 'SSH 567' || e.tag === 'SSH 567');
       if (eq) equipment = eq;
     } else {
-      if (row.data.nome === 'SSH 909' || row.data.tag === 'SSH 909') equipment = row.data;
+      if (row.data.nome === 'SSH 567' || row.data.tag === 'SSH 567') equipment = row.data;
     }
   }
 
   if (!equipment) {
-    console.error('Equipment SSH 909 not found!');
+    console.error('Equipment SSH 567 not found!');
     process.exit(1);
   }
   
   console.log('Found equipment:', equipment.id, equipment.nome);
 
   const tasksList = [
-    "Instalar mangote de sucção da bomba auxiliar",
-    "Colocar óleo",
-    "Passar flowmeter nas bombas",
-    "Passar flowmeter no comando",
-    "Instalar motor do guincho wireline",
+    "Instalar guincho wireline",
+    "Instalar radiador hidráulico",
+    "Instalar motor diesel",
+    "Montar mangueiras do reservatório de água do motor diesel",
+    "Instalar tanque diesel",
+    "Instalar radiador hidráulico",
+    "Instalar estrutura dos comandos",
+    "Instalar comandos",
+    "Instalar estrutura dos manômetros",
+    "Instalar manômetros",
+    "Montar morsa",
+    "Intalar morsa",
+    "Furar torre para Instalar calha de inox",
+    "Instalar cilindro de avanço",
+    "Instalar mesa do mandril",
+    "Instalar mandril",
+    "Instalar motor de rotação",
+    "Instalar calha do cilindro de avanço",
+    "Instalar torre",
+    "Fabricar todas mangueiras",
+    "Instalar estrutura do tanque hidráulico",
+    "Instalar tanque hidráulico",
+    "Instalar bombas hidráulicas",
     "Montar bomba de lama",
     "Testar bomba de lama",
-    "Instalação das mangueiras hidráulicas da bomba de lama",
-    "Fabricar e instalar mangueiras do conjunto de rotação",
-    "Instalar motor hidráulico",
-    "Fabricar e instalar mangueiras do cilindro de avanço",
-    "Fabricar e instalar mangueira da morsa",
-    "Instalar manômetro da morsa",
-    "Parametrizar sonda",
-    "Instalar adaptador da patola",
-    "Instalar proteçõe"
+    "Instalar bomba de lama",
+    "Instalar bloco da esteira",
+    "Fabricar e instalar mangueiras da esteira",
+    "Instalar patolas"
   ];
 
   const upsertPayload = tasksList.map(desc => {

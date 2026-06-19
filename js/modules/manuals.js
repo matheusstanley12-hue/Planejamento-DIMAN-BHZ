@@ -225,25 +225,46 @@ window.ManualsAdmin = (() => {
     document.getElementById('btn-save-man').addEventListener('click', () => {
       const title = document.getElementById('man-title').value.trim();
       const desc = document.getElementById('man-desc').value.trim();
-      const link = document.getElementById('man-link').value.trim();
-
-      if (!title || !link) {
-        if (window.Toast) window.Toast.error('Erro', 'Preencha o nome e o link.');
+      const type = document.getElementById('man-type').value;
+      
+      if (!title) {
+        if (window.Toast) window.Toast.error('Erro', 'Preencha o nome do arquivo.');
         return;
       }
 
-      window.DB.manuals.add({
-        id: window.DB.uid('man'),
-        folderId: currentFolderId,
-        title: title,
-        description: desc,
-        link: link,
-        equipmentId: null // Clear equipmentId to avoid conflict since it belongs to a folder
-      });
+      const saveFile = (finalLink) => {
+          window.DB.manuals.add({
+            id: window.DB.uid('man'),
+            folderId: currentFolderId,
+            title: title,
+            description: desc,
+            link: finalLink,
+            equipmentId: null
+          });
+          if(window.Toast) window.Toast.success('Sucesso', 'Arquivo anexado com sucesso!');
+          document.getElementById(modalId).remove();
+          window.Router.navigate('manuals', { force: true });
+      };
 
-      if (window.Toast) window.Toast.success('Sucesso', 'Arquivo anexado.');
-      document.getElementById(modalId).remove();
-      window.Router.navigate('manuals', { force: true });
+      if (type === 'link') {
+         const link = document.getElementById('man-link').value.trim();
+         if(!link) return window.Toast && window.Toast.error('Erro', 'Preencha o link.');
+         saveFile(link);
+      } else {
+         const fileInput = document.getElementById('man-file');
+         if(!fileInput.files || fileInput.files.length === 0) return window.Toast && window.Toast.error('Erro', 'Selecione um arquivo.');
+         const file = fileInput.files[0];
+         
+         if (file.size > 1536000) {
+            return window.Toast && window.Toast.error('Erro', 'O arquivo excede o limite de 1.5MB. Use um link externo.');
+         }
+         
+         const reader = new FileReader();
+         reader.onload = function(e) {
+             saveFile(e.target.result);
+         };
+         reader.readAsDataURL(file);
+      }
     });
   }
 
@@ -287,7 +308,7 @@ window.WorkerManuals = (() => {
 
   function navToFolder(id) {
     currentFolderId = id;
-    window.Router.navigate('manuals', { force: true });
+    window.Router.navigate('worker-manuals', { force: true });
   }
 
   function render() {
