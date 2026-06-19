@@ -346,7 +346,7 @@ window.DB = (() => {
 
           if (window.Router) {
             const current = window.Router.getCurrent();
-            const liveViews = ['dashboard', 'manager-dashboard'];
+            const liveViews = ['dashboard', 'manager-dashboard', 'workforce-time', 'tasks-ongoing'];
             if (current && liveViews.includes(current)) {
               const hasOpenModal = document.querySelector('.modal-overlay.open, .modal.open');
               if (!hasOpenModal) {
