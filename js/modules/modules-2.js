@@ -946,12 +946,32 @@ window.WorkforceModule = (() => {
       justificativa
     };
     
+    const oldWorker = editingWorkerId ? DB.workforce.get(editingWorkerId) : null;
+    
     if (editingWorkerId) {
       DB.workforce.update(editingWorkerId, data);
       Toast.success('Funcionário atualizado!', nome);
     } else {
       DB.workforce.create(data);
       Toast.success('Funcionário cadastrado!', nome);
+    }
+    
+    // Sync with Equipment workforceMap so it shows up in the Equipment Card
+    if (oldWorker && oldWorker.equipmentId && oldWorker.equipmentId !== equipmentId) {
+      const oldEq = DB.equipment.get(oldWorker.equipmentId);
+      if (oldEq && oldEq.workforceMap && oldEq.workforceMap[oldWorker.disciplina] === oldWorker.nome) {
+        oldEq.workforceMap[oldWorker.disciplina] = '';
+        DB.equipment.update(oldEq.id, oldEq);
+      }
+    }
+    
+    if (equipmentId) {
+      const newEq = DB.equipment.get(equipmentId);
+      if (newEq) {
+        if (!newEq.workforceMap) newEq.workforceMap = {};
+        newEq.workforceMap[data.disciplina] = data.nome;
+        DB.equipment.update(newEq.id, newEq);
+      }
     }
     
     closeModal('modal-worker');
