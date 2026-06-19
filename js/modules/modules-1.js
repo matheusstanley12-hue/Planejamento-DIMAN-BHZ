@@ -1337,7 +1337,7 @@ window.TasksModule = (() => {
     }
 
     const discs = ['Mecânica','Caldeiraria','Elétrica','Usinagem','Pintor','Lavador','Montagem','Subconjunto','Teste','Retrabalho'];
-    const statuses = ['Não Iniciada','Em Andamento','Aguardando Peça','Aguardando Recurso','Aguardando Aprovação','Bloqueada','Concluída'];
+    const statuses = ['Não Iniciada','Em Andamento','Aguardando Peça','Aguardando Recurso','Aguardando Aprovação','Aguardando Setor','Bloqueada','Paralisada','Concluída'];
     const prios = ['Crítica','Alta','Média','Baixa'];
     let obsHistoryHtml = '';
     let obsTextValue = '';

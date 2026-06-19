@@ -1589,7 +1589,7 @@ window.WorkerPanel = (() => {
                 <div class="form-group">
                   <label>Status</label>
                   <select id="w-tk-status" onchange="const p=document.getElementById('w-tk-photo-group'); if(this.value==='Concluída'){p.style.display='block';}else{p.style.display='none';}">
-                    ${['Não Iniciada','Em Andamento','Aguardando Peça','Aguardando Recurso','Aguardando Aprovação','Bloqueada','Concluída'].map(s => 
+                    ${['Não Iniciada','Em Andamento','Aguardando Peça','Aguardando Recurso','Aguardando Aprovação','Aguardando Setor','Bloqueada','Paralisada','Concluída'].map(s => 
                       `<option ${t.status === s ? 'selected' : ''}>${s}</option>`
                     ).join('')}
                   </select>
