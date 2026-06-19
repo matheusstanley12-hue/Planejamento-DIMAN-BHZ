@@ -160,8 +160,15 @@ window.DB = (() => {
     
     syncTimeouts[collection] = setTimeout(async () => {
       try {
+        let upsertPayload = [];
+        if (Array.isArray(data) && data.length > 0 && data[0] && data[0].id) {
+           upsertPayload = data.map(item => ({ collection: collection, key: item.id, data: item, updated_at: new Date().toISOString() }));
+        } else {
+           upsertPayload = { collection: collection, key: 'all', data: data, updated_at: new Date().toISOString() };
+        }
+
         const { error } = await supabaseClient.from('diman_store')
-          .upsert({ collection: collection, key: 'all', data: data }, { onConflict: 'collection,key' });
+          .upsert(upsertPayload, { onConflict: 'collection,key' });
         
         if (error) {
           console.error('Supabase Sync Error:', error);
@@ -179,7 +186,27 @@ window.DB = (() => {
       delete syncTimeouts[collection];
     }, 1000);
   }
+
+  async function deleteFromSupabase(collection, key) {
+     if (!supabaseClient) return;
+     try {
+        await supabaseClient.from('diman_store').delete().match({ collection: collection, key: key });
+     } catch (err) {
+        console.error('Supabase Delete Error:', err);
+     }
+  }
   function set(key, data) { 
+    let oldData = [];
+    try { oldData = JSON.parse(localStorage.getItem(key)) || []; } catch(e){}
+    
+    if (Array.isArray(oldData) && Array.isArray(data)) {
+       const newIds = new Set(data.map(i => i.id).filter(Boolean));
+       const deletedItems = oldData.filter(i => i.id && !newIds.has(i.id));
+       deletedItems.forEach(item => {
+           deleteFromSupabase(key, item.id);
+       });
+    }
+
     localStorage.setItem(key, JSON.stringify(data)); 
     syncToSupabase(key, data);
   }
@@ -195,8 +222,14 @@ window.DB = (() => {
       const data = get(k);
       if (data && (Array.isArray(data) ? data.length > 0 : Object.keys(data).length > 0)) {
         try {
+          let upsertPayload = [];
+          if (Array.isArray(data) && data.length > 0 && data[0] && data[0].id) {
+             upsertPayload = data.map(item => ({ collection: k, key: item.id, data: item, updated_at: new Date().toISOString() }));
+          } else {
+             upsertPayload = { collection: k, key: 'all', data: data, updated_at: new Date().toISOString() };
+          }
           const { error } = await supabaseClient.from('diman_store')
-            .upsert({ collection: k, key: 'all', data: data }, { onConflict: 'collection,key' });
+            .upsert(upsertPayload, { onConflict: 'collection,key' });
           if (error) {
              console.error('Supabase Error:', error);
              if (window.Toast) window.Toast.error('Erro do Banco de Dados', error.message || JSON.stringify(error));
@@ -238,11 +271,19 @@ window.DB = (() => {
           console.log('[DIMAN] Existem alterações locais não sincronizadas. O pull inicial foi cancelado e faremos o push local agora.');
           await forceSyncAll();
         } else {
+          const groupedData = {};
           data.forEach(row => {
             if (row.key === 'all') {
               localStorage.setItem(row.collection, JSON.stringify(row.data));
+            } else {
+              if (!groupedData[row.collection]) groupedData[row.collection] = [];
+              groupedData[row.collection].push(row.data);
             }
           });
+          
+          for (const [collection, arr] of Object.entries(groupedData)) {
+            localStorage.setItem(collection, JSON.stringify(arr));
+          }
         }
       }
 
@@ -250,34 +291,49 @@ window.DB = (() => {
       supabaseClient
         .channel('diman-sync')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'diman_store' }, payload => {
-          if (payload.new && payload.new.key === 'all') {
-            // Ignore photos in realtime to save local storage and memory
-            if (payload.new.collection && payload.new.collection.startsWith('photo_')) return;
+          if (localStorage.getItem('diman_unsynced') === 'true') {
+            console.log('[DIMAN] Ignorando atualização em tempo real (dados locais em sincronização pendente).');
+            return;
+          }
 
-            // CRITICAL: If we have pending local changes, DO NOT overwrite localStorage!
-            // This prevents the echo of our own previous pushes from overwriting subsequent rapid local edits.
-            if (localStorage.getItem('diman_unsynced') === 'true') {
-              console.log('[DIMAN] Ignorando atualização em tempo real (dados locais em sincronização pendente).');
-              return;
+          if (payload.eventType === 'DELETE' && payload.old) {
+            const row = payload.old;
+            if (row.key === 'all') return;
+            let localArr = [];
+            try { localArr = JSON.parse(localStorage.getItem(row.collection)) || []; } catch(e){}
+            if (Array.isArray(localArr)) {
+               localArr = localArr.filter(i => i.id !== row.key);
+               localStorage.setItem(row.collection, JSON.stringify(localArr));
             }
-
-            localStorage.setItem(payload.new.collection, JSON.stringify(payload.new.data));
-            if (window.Router) {
-              const current = window.Router.getCurrent();
-              const liveViews = ['dashboard', 'manager-dashboard'];
+          } else if (payload.new) {
+            const row = payload.new;
+            if (row.collection && row.collection.startsWith('photo_')) return;
+            
+            if (row.key === 'all') {
+              localStorage.setItem(row.collection, JSON.stringify(row.data));
+            } else {
+              // Individual row updated
+              let localArr = [];
+              try { localArr = JSON.parse(localStorage.getItem(row.collection)) || []; } catch(e){}
+              if (!Array.isArray(localArr)) localArr = [];
               
-              if (current && liveViews.includes(current)) {
-                // Auto-refresh ONLY on dashboard views (TV screens, charts)
-                const hasOpenModal = document.querySelector('.modal-overlay.open, .modal.open');
-                if (!hasOpenModal) {
-                  window.Router.navigate(current, { force: true });
-                }
+              const idx = localArr.findIndex(i => i.id === row.key);
+              if (idx !== -1) {
+                 localArr[idx] = row.data;
               } else {
-                // On interactive views (tasks, equipments, worker-panel), do not disrupt the user with forced reloads.
-                if (window.Toast) {
-                  // Use a distinct ID or simple message so it doesn't spam
-                  // window.Toast.info('Sincronização', 'Dados atualizados. Recarregue a página para ver as mudanças.', 3000);
-                }
+                 localArr.push(row.data);
+              }
+              localStorage.setItem(row.collection, JSON.stringify(localArr));
+            }
+          }
+
+          if (window.Router) {
+            const current = window.Router.getCurrent();
+            const liveViews = ['dashboard', 'manager-dashboard'];
+            if (current && liveViews.includes(current)) {
+              const hasOpenModal = document.querySelector('.modal-overlay.open, .modal.open');
+              if (!hasOpenModal) {
+                window.Router.navigate(current, { force: true });
               }
             }
           }
