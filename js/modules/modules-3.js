@@ -1560,7 +1560,7 @@ window.ReportsModule = (() => {
 
       const totalWorkers = workers.length;
       const activeWorkers = workers.filter(w => w.status === 'Ativo').length;
-      const totalHours = filteredTimesheets.reduce((s, t) => s + (t.horasTrabalhadas || 0), 0);
+      const totalHours = filteredTimesheets.filter(t => !t.tipo || t.tipo === 'Trabalho').reduce((s, t) => s + (parseFloat(t.horasTrabalhadas) || 0), 0);
 
       addHeader("Relatório de Mão de Obra e Apontamentos");
 
@@ -1589,7 +1589,7 @@ window.ReportsModule = (() => {
 
       const columnsW = ['Matrícula', 'Colaborador', 'Função', 'Disciplina', 'Status', 'Horas Apontadas'];
       const rowsW = workers.map(w => {
-        const wHours = timesheets.filter(t => t.workerId === w.id).reduce((s, t) => s + (t.horasTrabalhadas || 0), 0);
+        const wHours = timesheets.filter(t => t.workerId === w.id && (!t.tipo || t.tipo === 'Trabalho')).reduce((s, t) => s + (parseFloat(t.horasTrabalhadas) || 0), 0);
         return [
           w.matricula || '—',
           w.nome,

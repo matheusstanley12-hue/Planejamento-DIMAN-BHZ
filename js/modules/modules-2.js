@@ -647,8 +647,8 @@ window.WorkforceModule = (() => {
     const timesheets = DB.timesheets.list();
     const today = new Date().toISOString().slice(0,10);
 
-    const monthTs = timesheets.filter(t => t.data && t.data.slice(0,7) === today.slice(0,7));
-    const totalHours = monthTs.reduce((s,t)=>s+(t.horasTrabalhadas||0),0);
+    const monthTs = timesheets.filter(t => t.data && t.data.slice(0,7) === today.slice(0,7) && (!t.tipo || t.tipo === 'Trabalho'));
+    const totalHours = monthTs.reduce((s,t)=>s+(parseFloat(t.horasTrabalhadas)||0),0);
 
     return `<div class="page-container">
       <div class="section-header">
@@ -693,7 +693,7 @@ window.WorkforceModule = (() => {
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--space-4);margin-bottom:var(--space-6);">
                   ${sectorWorkers.map(w => {
                     if (!w) return '';
-                    const wHours = monthTs.filter(t=>t.workerId===w.id).reduce((s,t)=>s+(t.horasTrabalhadas||0),0);
+                    const wHours = monthTs.filter(t=>t.workerId===w.id).reduce((s,t)=>s+(parseFloat(t.horasTrabalhadas)||0),0);
                     
                     const eq = w.equipmentId ? DB.equipment.get(w.equipmentId) : null;
                     const isAllocated = eq && eq.status !== 'Liberado';
@@ -774,7 +774,7 @@ window.WorkforceModule = (() => {
             <tbody>
               ${workers.map(w => {
                 const wTs = monthTs.filter(t=>t.workerId===w.id);
-                const wHours = wTs.reduce((s,t)=>s+(t.horasTrabalhadas||0),0);
+                const wHours = wTs.reduce((s,t)=>s+(parseFloat(t.horasTrabalhadas)||0),0);
                 return `<tr>
                   <td><div style="display:flex;align-items:center;gap:var(--space-2)"><div class="avatar avatar-sm">${avatarInitials(w.nome)}</div><span>${w.nome}</span></div></td>
                   <td>${w.disciplina}</td>
