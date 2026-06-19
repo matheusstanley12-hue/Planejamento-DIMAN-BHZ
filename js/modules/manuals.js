@@ -241,27 +241,28 @@ window.ManualsAdmin = (() => {
           </div>
           <div class="modal-body" style="display:flex;flex-direction:column;gap:var(--space-4);">
             <div class="form-group">
-              <label>Nome do Arquivo *</label>
-              <input type="text" id="man-title" class="form-control" placeholder="Ex: Catálogo de Peças SSM" required />
-            </div>
-            <div class="form-group">
               <label>Tipo de Anexo</label>
               <select id="man-type" class="form-control" onchange="
                 document.getElementById('man-link-wrap').style.display = this.value === 'link' ? 'block' : 'none';
+                document.getElementById('man-title-wrap').style.display = this.value === 'link' ? 'block' : 'none';
                 document.getElementById('man-file-wrap').style.display = this.value === 'file' ? 'block' : 'none';
               ">
-                  <option value="link">Link da Web (Google Drive, etc)</option>
                   <option value="file">Arquivo do Computador</option>
+                  <option value="link">Link da Web (Google Drive, etc)</option>
               </select>
             </div>
-            <div class="form-group" id="man-link-wrap">
+            <div class="form-group" id="man-title-wrap" style="display:none;">
+              <label>Nome do Arquivo *</label>
+              <input type="text" id="man-title" class="form-control" placeholder="Ex: Catálogo de Peças SSM" />
+            </div>
+            <div class="form-group" id="man-link-wrap" style="display:none;">
               <label>Endereço do Link *</label>
               <input type="url" id="man-link" class="form-control" placeholder="Ex: https://drive.google.com/..." />
             </div>
-            <div class="form-group" id="man-file-wrap" style="display:none;">
+            <div class="form-group" id="man-file-wrap">
               <label>Selecione o Arquivo *</label>
-              <input type="file" id="man-file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" />
-              <small style="color:#d9534f;display:block;margin-top:4px;">Aviso: Sem um servidor em nuvem (Bucket), os arquivos ficam no cachê. Limite máximo: 1MB.</small>
+              <input type="file" id="man-file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" multiple />
+              <small style="color:#d9534f;display:block;margin-top:4px;">Aviso: Sem um servidor em nuvem (Bucket), os arquivos ficam no cachê. Limite máximo: 1MB por arquivo.</small>
             </div>
             <div class="form-group">
               <label>Descrição (Opcional)</label>
@@ -282,43 +283,55 @@ window.ManualsAdmin = (() => {
       const desc = document.getElementById('man-desc').value.trim();
       const type = document.getElementById('man-type').value;
       
-      if (!title) {
-        if (window.Toast) window.Toast.error('Erro', 'Preencha o nome do arquivo.');
-        return;
-      }
-
-      const saveFile = (finalLink) => {
-          window.DB.manuals.add({
-            id: window.DB.uid('man'),
-            folderId: currentFolderId,
-            title: title,
-            description: desc,
-            link: finalLink,
-            equipmentId: null
-          });
-          if(window.Toast) window.Toast.success('Sucesso', 'Arquivo anexado com sucesso!');
-          document.getElementById(modalId).remove();
-          window.Router.navigate('manuals', { force: true });
-      };
-
       if (type === 'link') {
+         if (!title) return window.Toast && window.Toast.error('Erro', 'Preencha o nome do arquivo.');
          const link = document.getElementById('man-link').value.trim();
          if(!link) return window.Toast && window.Toast.error('Erro', 'Preencha o link.');
-         saveFile(link);
+         
+         window.DB.manuals.add({
+           id: window.DB.uid('man'),
+           folderId: currentFolderId,
+           title: title,
+           description: desc,
+           link: link,
+           equipmentId: null
+         });
+         if(window.Toast) window.Toast.success('Sucesso', 'Link anexado com sucesso!');
+         document.getElementById(modalId).remove();
+         window.Router.navigate('manuals', { force: true });
+         
       } else {
          const fileInput = document.getElementById('man-file');
          if(!fileInput.files || fileInput.files.length === 0) return window.Toast && window.Toast.error('Erro', 'Selecione um arquivo.');
-         const file = fileInput.files[0];
          
-         if (file.size > 1536000) {
-            return window.Toast && window.Toast.error('Erro', 'O arquivo excede o limite de 1.5MB. Use um link externo.');
+         let validFiles = Array.from(fileInput.files);
+         for (let f of validFiles) {
+            if (f.size > 1536000) {
+               return window.Toast && window.Toast.error('Erro', `O arquivo ${f.name} excede o limite de 1.5MB.`);
+            }
          }
          
-         const reader = new FileReader();
-         reader.onload = function(e) {
-             saveFile(e.target.result);
-         };
-         reader.readAsDataURL(file);
+         let processed = 0;
+         validFiles.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                window.DB.manuals.add({
+                  id: window.DB.uid('man'),
+                  folderId: currentFolderId,
+                  title: file.name,
+                  description: desc,
+                  link: e.target.result,
+                  equipmentId: null
+                });
+                processed++;
+                if (processed === validFiles.length) {
+                   if(window.Toast) window.Toast.success('Sucesso', 'Arquivo(s) anexado(s) com sucesso!');
+                   document.getElementById(modalId).remove();
+                   window.Router.navigate('manuals', { force: true });
+                }
+            };
+            reader.readAsDataURL(file);
+         });
       }
     });
   }
