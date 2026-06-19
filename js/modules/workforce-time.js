@@ -33,9 +33,6 @@ window.WorkforceTimeModule = (() => {
     const timesheets = DB.timesheets ? DB.timesheets.list() : [];
 
     let filteredTasks = tasks;
-    if (currentSectorFilter) {
-      filteredTasks = filteredTasks.filter(t => t.disciplina === currentSectorFilter);
-    }
 
     // Calculate live metrics
     let trabalhandoCount = 0;
