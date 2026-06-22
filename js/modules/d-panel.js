@@ -695,9 +695,6 @@ window.DPanel = (() => {
 
         <!-- AI Alerts -->
         ${isPresentation ? '' : renderAIAlerts()}
-
-        <!-- Top Performers Ticker -->
-        ${isPresentation ? '' : renderTopPerformersTicker()}
       </div>
 
       <!-- Meeting mode overlay (rendered separately by MeetingMode module) -->
