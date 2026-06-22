@@ -49,7 +49,7 @@ window.LaborAnalysisModule = (() => {
           ]
         }, options: chartDefaults() });
 
-        const ts = DB.timesheets.list().filter(t => t.data && t.data.startsWith(currentMonthPrefix));
+        const ts = DB.timesheets.list().filter(t => t.data && t.data.startsWith(currentMonthPrefix) && (!t.tipo || t.tipo === 'Trabalho'));
         const moByDisc = {};
         ts.forEach(t => {
           const w = DB.workforce.get(t.workerId);

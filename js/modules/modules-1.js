@@ -156,7 +156,7 @@ window.Dashboard = (() => {
           const eqNamesT2 = eqs.slice(0, 8).map(e => e.codigo);
           
           const tP2 = eqs.slice(0, 8).map(e => Math.round(tasks.filter(t => t.equipmentId === e.id && workers2nd.some(w => w.nome === t.responsavel || t.responsavel === w.id)).reduce((s,t) => s+(t.horasPlanejadas||0),0)));
-          const tR2 = eqs.slice(0, 8).map(e => Math.round(timesheets.filter(ts => ts.equipmentId === e.id && workers2ndIds.includes(ts.workerId)).reduce((s,ts) => s+(ts.horasTrabalhadas||0),0)));
+          const tR2 = eqs.slice(0, 8).map(e => Math.round(timesheets.filter(ts => ts.equipmentId === e.id && workers2ndIds.includes(ts.workerId) && (!ts.tipo || ts.tipo === 'Trabalho')).reduce((s,ts) => s+(ts.horasTrabalhadas||0),0)));
           
           charts.turnoChart = new Chart(ctxTurno, {
             type: 'bar',
@@ -932,6 +932,7 @@ window.EquipmentModule = (() => {
           if (!laborMap[key].workers[wName]) {
             laborMap[key].workers[wName] = { hours: 0, eqs: new Set() };
           }
+          if (ts.tipo && ts.tipo !== 'Trabalho') return;
           laborMap[key].workers[wName].hours += (ts.horasTrabalhadas || 0);
           
           const eq = DB.equipment.get(t.equipmentId);
@@ -1375,6 +1376,7 @@ window.TasksModule = (() => {
     const summary = {};
     allTimesheets.filter(ts => ts.tipo === 'Trabalho').forEach(ts => {
       if(!summary[ts.workerNome]) summary[ts.workerNome] = 0;
+      if (ts.tipo && ts.tipo !== 'Trabalho') return;
       summary[ts.workerNome] += Number(ts.horasTrabalhadas) || 0;
     });
 
@@ -1386,6 +1388,7 @@ window.TasksModule = (() => {
       const dataStr = ts.data ? ts.data.split('-').reverse().join('/') : '';
       const hStart = ts.horaInicio ? new Date(ts.horaInicio).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : '--:--';
       const hEnd = ts.horaFim ? new Date(ts.horaFim).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+      if (ts.tipo && ts.tipo !== 'Trabalho') return;
       const dur = Number(ts.horasTrabalhadas).toFixed(2);
       
       return `

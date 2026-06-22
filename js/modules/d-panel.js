@@ -431,7 +431,7 @@ window.DPanel = (() => {
 
     const openRestr = DB.restrictions.getAll().filter(r => r.status === 'Aberta').length;
     const allTs = DB.timesheets.list();
-    const todayTs = allTs.filter(t => t.data === today());
+    const todayTs = allTs.filter(t => t.data === today() && (!t.tipo || t.tipo === 'Trabalho'));
     const hProd = todayTs.reduce((s,t) => s + (parseFloat(t.horasTrabalhadas) || 0), 0);
 
     return `

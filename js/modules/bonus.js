@@ -127,7 +127,7 @@ window.BonusModule = (() => {
 
     timesheets.filter(t => new Date(t.data) >= startDate && new Date(t.data) <= endDate).forEach(t => {
       let w = wfList.find(x => x.id === t.workerId || x.nome === t.workerName);
-      if (w && workerStats[w.nome] && t.tipo !== 'Falta' && t.tipo !== 'Atestado') {
+      if (w && workerStats[w.nome] && (!t.tipo || t.tipo === 'Trabalho')) {
         if (!workerStats[w.nome].horasPorDia[t.data]) workerStats[w.nome].horasPorDia[t.data] = 0;
         workerStats[w.nome].horasPorDia[t.data] += parseFloat(t.horasTrabalhadas || 0);
       }
