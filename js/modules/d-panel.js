@@ -688,16 +688,16 @@ window.DPanel = (() => {
         </div>
 
         <!-- Indicators -->
-        ${renderIndicators()}
+        ${isPresentation ? '' : renderIndicators()}
 
         <!-- Top 5 Performers -->
-        ${renderTop5Card()}
+        ${isPresentation ? '' : renderTop5Card()}
 
         <!-- AI Alerts -->
-        ${renderAIAlerts()}
+        ${isPresentation ? '' : renderAIAlerts()}
 
         <!-- Top Performers Ticker -->
-        ${renderTopPerformersTicker()}
+        ${isPresentation ? '' : renderTopPerformersTicker()}
       </div>
 
       <!-- Meeting mode overlay (rendered separately by MeetingMode module) -->
