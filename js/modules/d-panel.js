@@ -181,8 +181,6 @@ window.DPanel = (() => {
           <span style="font-weight: 800; color: var(--brand-primary-light); margin-right: 40px; text-transform: uppercase; vertical-align: middle;">🚀 TOP EXECUTANTES DO MÊS:</span>
           <span style="vertical-align: middle;">${items}</span>
           <span style="font-weight: 800; color: var(--brand-primary-light); margin-left: 40px; margin-right: 15px; text-transform: uppercase; vertical-align: middle;">🚀 PARABÉNS PELO EMPENHO!</span>
-          <span style="font-weight: 700; color: var(--text-secondary); margin-right: 15px; font-style: italic; vertical-align: middle;">Geopar Lapidando talentos</span>
-          <img src="logo.png" style="height:24px; vertical-align: middle; margin-right: 40px; border-radius: 4px; display: inline-block;">
         </marquee>
       </div>
     `;
