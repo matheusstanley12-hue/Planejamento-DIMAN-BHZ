@@ -415,103 +415,118 @@ window.DPanel = (() => {
     `;
   }
 
-  function renderDSection_Equipments() {
-    const todayStr = today();
-    const currentMonth = todayStr.slice(0,7);
-    
-    const allEqs = DB.equipment.list();
+  function renderTVPresentation() {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const currentMonth = todayStr.slice(0, 7);
+    const allEqs = window.DB.equipment.list();
+
     const eqMonth = allEqs.filter(e => {
-      const isLiberado = e.status === 'Liberado';
-      if (isLiberado) return false;
+      if (e.status === 'Liberado') return false;
       const dataPrazo = e.dataLiberacaoAtual || e.dataLiberacaoPlanejada || '';
       return dataPrazo.startsWith(currentMonth);
     });
 
+    const eqReleased = allEqs.filter(e => {
+      if (e.status !== 'Liberado') return false;
+      const dataPrazo = e.dataLiberacaoAtual || e.dataLiberacaoPlanejada || '';
+      return dataPrazo.startsWith(currentMonth);
+    });
+
+    const topPerformers = getTopPerformers();
+
     return `
-      <div class="card" style="border-top:3px solid var(--brand-primary-light);height:100%;overflow:hidden;display:flex;flex-direction:column;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4);flex-shrink:0;">
-          <div>
-            <div style="font-size:var(--text-xs);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-primary-light)">Em Manutenção</div>
-            <div style="font-size:var(--text-lg);font-weight:700;color:var(--text-primary)">Mês Atual</div>
+      <div style="position:fixed;inset:0;background:#050D1A;z-index:10000;display:flex;flex-direction:column;overflow:hidden;font-family:var(--font-primary);">
+        
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#0A1929;border-bottom:1px solid rgba(30,136,229,.3);">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="width:40px;height:40px;background:rgba(21,101,192,.8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">📺</div>
+            <div>
+              <div style="font-size:1.3rem;font-weight:900;color:white;letter-spacing:-.02em">APRESENTAÇÃO TV</div>
+              <div style="font-size:.7rem;color:#8EACC8;text-transform:uppercase;letter-spacing:.1em">Acompanhamento Mensal de Equipamentos e Produtividade</div>
+            </div>
           </div>
-          <div id="live-clock" style="font-size:var(--text-xl);font-weight:800;color:var(--brand-primary-light);font-family:var(--font-mono)"></div>
+          <div id="live-clock" style="font-size:1.8rem;font-weight:800;color:#1E88E5;font-family:monospace;"></div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(1,1fr);gap:var(--space-2);margin-bottom:var(--space-4);flex-shrink:0;">
-          <div style="background:var(--bg-base);border-radius:var(--radius-md);padding:var(--space-3);text-align:center;">
-            <div style="font-size:var(--text-xl);font-weight:800;color:var(--text-primary)">${eqMonth.length}</div>
-            <div style="font-size:10px;color:var(--text-muted)">Programados para o Mês</div>
+        <!-- 3 Columns -->
+        <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:24px;overflow:hidden;background:#050D1A;">
+          
+          <!-- Column 1: Em Manutenção -->
+          <div style="background:#0A1929;border:1px solid rgba(30,136,229,.3);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
+            <div style="padding:20px;background:rgba(30,136,229,.1);border-bottom:1px solid rgba(30,136,229,.2);">
+              <h2 style="margin:0;color:#64B5F6;font-size:1.3rem;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:8px;">
+                ⚙️ Aguardando / Em Manutenção
+              </h2>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+              ${eqMonth.length > 0 ? eqMonth.sort((a,b) => (a.dataLiberacaoAtual||a.dataLiberacaoPlanejada||'').localeCompare(b.dataLiberacaoAtual||b.dataLiberacaoPlanejada||'')).map(e => {
+                const dataStr = (e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) ? formatDate(e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) : '—';
+                return `
+                  <div style="background:rgba(255,255,255,0.03);border-left:4px solid #1E88E5;padding:16px;border-radius:8px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                      <span style="font-weight:800;color:white;font-size:1.3rem;">${e.codigo}</span>
+                      <span style="font-weight:700;color:#64B5F6;font-size:1.1rem;">Prazo: ${dataStr}</span>
+                    </div>
+                    <div style="color:#8EACC8;font-size:1rem;">Cliente: <strong style="color:#BBDEFB">${e.cliente || 'Não Informado'}</strong></div>
+                  </div>
+                `;
+              }).join('') : '<div style="color:#8EACC8;text-align:center;margin-top:20px;font-size:1.2rem;">Nenhum equipamento programado</div>'}
+            </div>
           </div>
-        </div>
 
-        <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:var(--space-2);padding-right:4px;">
-          ${eqMonth.length > 0 ? eqMonth.sort((a,b) => (a.dataLiberacaoAtual||a.dataLiberacaoPlanejada||'').localeCompare(b.dataLiberacaoAtual||b.dataLiberacaoPlanejada||'')).map(e => {
-            const dataStr = (e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) ? formatDate(e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) : '—';
-            return `
-              <div style="padding:var(--space-2) var(--space-3);background:var(--bg-base);border-radius:var(--radius-sm);border-left:4px solid var(--brand-primary-light);">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-                  <span style="font-weight:800;color:var(--text-primary);font-size:1.1rem;">${e.codigo}</span>
-                  <span style="font-size:0.9rem;font-weight:700;color:var(--text-muted)">Prazo: <span style="color:var(--brand-primary-light)">${dataStr}</span></span>
-                </div>
-                <div style="font-size:0.9rem;color:var(--text-muted);">
-                  Cliente: <strong style="color:var(--text-secondary);font-weight:800;">${e.cliente || 'Não Informado'}</strong>
-                </div>
-              </div>
-            `;
-          }).join('') : `<div style="text-align:center;color:var(--text-muted);font-size:1rem;margin-top:20px;">Nenhum equipamento programado</div>`}
+          <!-- Column 2: Liberados -->
+          <div style="background:#0A1929;border:1px solid rgba(76,175,80,.3);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
+            <div style="padding:20px;background:rgba(76,175,80,.1);border-bottom:1px solid rgba(76,175,80,.2);">
+              <h2 style="margin:0;color:#81C784;font-size:1.3rem;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:8px;">
+                ✅ Liberados no Mês
+              </h2>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+              ${eqReleased.length > 0 ? eqReleased.sort((a,b) => (b.dataLiberacaoAtual||b.dataLiberacaoPlanejada||'').localeCompare(a.dataLiberacaoAtual||a.dataLiberacaoPlanejada||'')).map(e => {
+                const dataStr = (e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) ? formatDate(e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) : '—';
+                return `
+                  <div style="background:rgba(255,255,255,0.03);border-left:4px solid #4CAF50;padding:16px;border-radius:8px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                      <span style="font-weight:800;color:white;font-size:1.3rem;">${e.codigo}</span>
+                      <span style="font-weight:700;color:#81C784;font-size:1.1rem;">Data: ${dataStr}</span>
+                    </div>
+                    <div style="color:#8EACC8;font-size:1rem;">Cliente: <strong style="color:#C8E6C9">${e.cliente || 'Não Informado'}</strong></div>
+                  </div>
+                `;
+              }).join('') : '<div style="color:#8EACC8;text-align:center;margin-top:20px;font-size:1.2rem;">Nenhum equipamento liberado</div>'}
+            </div>
+          </div>
+
+          <!-- Column 3: Top Executantes -->
+          <div style="background:#0A1929;border:1px solid rgba(156,39,176,.3);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
+            <div style="padding:20px;background:rgba(156,39,176,.1);border-bottom:1px solid rgba(156,39,176,.2);">
+              <h2 style="margin:0;color:#BA68C8;font-size:1.3rem;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:8px;">
+                🚀 Top Executantes
+              </h2>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+              ${topPerformers.length > 0 ? topPerformers.map((t, idx) => {
+                const emojis = ['🏆 1º', '🥈 2º', '🥉 3º', '🏅 4º', '🏅 5º'];
+                return `
+                  <div style="background:rgba(255,255,255,0.03);border-left:4px solid #AB47BC;padding:20px;border-radius:8px;display:flex;align-items:center;gap:24px;">
+                    <div style="font-size:2.5rem;">${emojis[idx] || '🏅'}</div>
+                    <div style="flex:1;">
+                      <div style="font-weight:800;color:white;font-size:1.6rem;margin-bottom:4px;">${t.nome}</div>
+                      <div style="color:#CE93D8;font-weight:700;font-size:1.1rem;">${t.count} tarefas executadas</div>
+                    </div>
+                  </div>
+                `;
+              }).join('') : '<div style="color:#8EACC8;text-align:center;margin-top:20px;font-size:1.2rem;">Nenhum dado de execução</div>'}
+            </div>
+          </div>
+
         </div>
       </div>
     `;
   }
 
-  function renderD1Section_Released() {
-    const todayStr = today();
-    const currentMonth = todayStr.slice(0,7);
-    
-    const allEqs = DB.equipment.list();
-    const eqReleased = allEqs.filter(e => {
-      const isLiberado = e.status === 'Liberado';
-      if (!isLiberado) return false;
-      const dataPrazo = e.dataLiberacaoAtual || e.dataLiberacaoPlanejada || '';
-      return dataPrazo.startsWith(currentMonth);
-    });
 
-    return `
-      <div class="card" style="border-top:3px solid var(--color-success);height:100%;overflow:hidden;display:flex;flex-direction:column;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4);flex-shrink:0;">
-          <div>
-            <div style="font-size:var(--text-xs);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-success)">Equip. Liberados</div>
-            <div style="font-size:var(--text-lg);font-weight:700;color:var(--text-primary)">Mês Atual</div>
-          </div>
-          <div style="font-size:2rem;">✅</div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(1,1fr);gap:var(--space-2);margin-bottom:var(--space-4);flex-shrink:0;">
-          <div style="background:var(--color-success-bg);border-radius:var(--radius-md);padding:var(--space-3);text-align:center;">
-            <div style="font-size:var(--text-xl);font-weight:800;color:var(--color-success)">${eqReleased.length}</div>
-            <div style="font-size:10px;color:var(--color-success)">Liberados no Mês</div>
-          </div>
-        </div>
-
-        <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:var(--space-2);padding-right:4px;">
-          ${eqReleased.length > 0 ? eqReleased.sort((a,b) => (b.dataLiberacaoAtual||b.dataLiberacaoPlanejada||'').localeCompare(a.dataLiberacaoAtual||a.dataLiberacaoPlanejada||'')).map(e => {
-            const dataStr = (e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) ? formatDate(e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) : '—';
-            return `
-              <div style="padding:var(--space-2) var(--space-3);background:var(--color-success-bg);border-radius:var(--radius-sm);border-left:4px solid var(--color-success);">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-                  <span style="font-weight:800;color:var(--text-primary);font-size:1.1rem;">${e.codigo}</span>
-                  <span style="font-size:0.9rem;font-weight:700;color:var(--color-success)">Data: ${dataStr}</span>
-                </div>
-                <div style="font-size:0.9rem;color:var(--text-muted);">
-                  Cliente: <strong style="color:var(--text-secondary);font-weight:800;">${e.cliente || 'Não Informado'}</strong>
-                </div>
-              </div>
-            `;
-          }).join('') : `<div style="text-align:center;color:var(--text-muted);font-size:1rem;margin-top:20px;">Nenhum equipamento liberado</div>`}
-        </div>
-      </div>
-    `;
-  }  
 
   function renderIndicators() {
     const allTasks = DB.tasks.getAll();
@@ -646,10 +661,26 @@ window.DPanel = (() => {
   }
 
   function render() {
+    const isPresentation = (window.Router && window.Router.currentRoute === 'presentation') || window.location.hash === '#presentation';
+    if (isPresentation) {
+      const html = renderTVPresentation();
+      
+      // Clock logic for TV mode
+      setTimeout(() => {
+        const clockEl = document.getElementById('live-clock');
+        if (clockEl) {
+          const tick = () => { clockEl.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
+          tick();
+          if (!window._dpClockInterval) window._dpClockInterval = setInterval(tick, 1000);
+        }
+      }, 50);
+      
+      return html;
+    }
+
     const d1Tasks = getTasksForDate(dateOf(-1));
     const dTasks  = getTasksForDate(today());
     const d1pTasks = getTasksForDate(dateOf(1));
-    const isPresentation = (window.Router && window.Router.currentRoute === 'presentation') || window.location.hash === '#presentation';
 
     const html = `
       <div style="padding:var(--space-5);max-width:1600px;margin:0 auto;">
@@ -683,21 +714,18 @@ window.DPanel = (() => {
         <!-- Three columns -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-5);align-items:start;">
           ${renderD1Section(d1Tasks)}
-          ${isPresentation ? renderDSection_Equipments() : renderDSection(dTasks)}
-          ${isPresentation ? renderD1Section_Released() : renderD1Section_Tomorrow(d1pTasks)}
+          ${renderDSection(dTasks)}
+          ${renderD1Section_Tomorrow(d1pTasks)}
         </div>
 
         <!-- Indicators -->
-        ${isPresentation ? '' : renderIndicators()}
+        ${renderIndicators()}
 
         <!-- Top 5 Performers -->
-        ${isPresentation ? '' : renderTop5Card()}
+        ${renderTop5Card()}
 
         <!-- AI Alerts -->
-        ${isPresentation ? '' : renderAIAlerts()}
-
-        <!-- Top Performers Ticker (Somente na TV) -->
-        ${isPresentation ? renderTopPerformersTicker() : ''}
+        ${renderAIAlerts()}
       </div>
 
       <!-- Meeting mode overlay (rendered separately by MeetingMode module) -->
