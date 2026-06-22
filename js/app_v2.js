@@ -39,7 +39,7 @@ window.Router = (() => {
     
     const sidebar = document.getElementById('sidebar');
     const header = document.querySelector('header');
-    if (name === 'qrview') {
+    if (name === 'qrview' || name === 'presentation') {
       if (sidebar) sidebar.style.display = 'none';
       if (header) header.style.display = 'none';
       document.body.style.background = '#0f172a'; // match dark premium theme
