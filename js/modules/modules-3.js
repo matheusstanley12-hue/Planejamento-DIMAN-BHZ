@@ -922,18 +922,35 @@ window.MeetingMode = (() => {
     overlay.style.cssText = 'position:fixed;inset:0;background:#050D1A;z-index:10000;display:flex;flex-direction:column;overflow:hidden;font-family:var(--font-primary);';
 
     const eqs = DB.equipment.list();
-    const parts = DB.parts.getAll();
-    const restrictions = DB.restrictions.getAll().filter(r=>r.status==='Aberta');
     const tasks = DB.tasks.getAll();
-    const today = new Date().toISOString().slice(0,10);
-    const nextReleases = eqs.filter(e=>e.status==='Em Manutenção'&&(e.dataLiberacaoAtual || e.dataLiberacaoPlanejada)).sort((a,b)=>{
-      const dateA = a.dataLiberacaoAtual || a.dataLiberacaoPlanejada;
-      const dateB = b.dataLiberacaoAtual || b.dataLiberacaoPlanejada;
-      return dateA.localeCompare(dateB);
+    const todayStr = new Date().toISOString().slice(0,10);
+    const currentMonth = todayStr.slice(0,7);
+    
+    const eqMonth = eqs.filter(e => {
+      if (e.status === 'Liberado') return false;
+      const dataPrazo = e.dataLiberacaoAtual || e.dataLiberacaoPlanejada || '';
+      return dataPrazo.startsWith(currentMonth);
     });
-    const delayed = eqs.filter(e=>e.status==='Em Manutenção'&&(e.dataLiberacaoAtual || e.dataLiberacaoPlanejada)&&(e.dataLiberacaoAtual || e.dataLiberacaoPlanejada)<today);
-    const critTasks = tasks.filter(t=>t.critico&&t.status!=='Concluída').slice(0,8);
-    const pendParts = parts.filter(p=>['Solicitada','Comprada','Em Transporte'].includes(p.status)).slice(0,6);
+
+    const eqReleased = eqs.filter(e => {
+      if (e.status !== 'Liberado') return false;
+      const dataPrazo = e.dataLiberacaoAtual || e.dataLiberacaoPlanejada || '';
+      return dataPrazo.startsWith(currentMonth);
+    });
+
+    // Helper para Top Executantes
+    const perfMap = {};
+    tasks.filter(t => t.status === 'Concluída').forEach(t => {
+      if (!t.executantes || t.executantes.length === 0) return;
+      t.executantes.forEach(exec => {
+        if (!perfMap[exec]) perfMap[exec] = 0;
+        perfMap[exec]++;
+      });
+    });
+    const topPerformers = Object.entries(perfMap)
+      .map(([nome, count]) => ({nome, count}))
+      .sort((a,b) => b.count - a.count)
+      .slice(0, 5);
 
     overlay.innerHTML = `
       <!-- Header bar -->
@@ -946,61 +963,76 @@ window.MeetingMode = (() => {
         <button onclick="MeetingMode.deactivate()" style="background:rgba(244,67,54,.2);border:1px solid rgba(244,67,54,.4);color:#F44336;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;">✕ Sair</button>
       </div>
 
-      <!-- 6-panel grid -->
-      <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:12px;padding:12px;overflow:hidden;">
-
-        <!-- Panel 1: Delayed -->
-        <div style="background:#0A1929;border:1px solid rgba(244,67,54,.3);border-radius:12px;padding:16px;overflow:hidden;">
-          <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#F44336;margin-bottom:12px;">🔴 Equipamentos Atrasados</div>
-          ${delayed.length === 0 ? '<div style="color:#546E7A;font-size:.8rem;">Nenhum atraso registrado ✅</div>' :
-          delayed.map(e=>{const datePrev = e.dataLiberacaoAtual || e.dataLiberacaoPlanejada; const d=daysBetween(datePrev,today);return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(244,67,54,.1);border-radius:8px;margin-bottom:8px;border-left:3px solid #F44336;"><div><div style="font-weight:800;color:white;font-size:1rem">${e.codigo}</div><div style="font-size:.7rem;color:#8EACC8">${e.cliente}</div></div><div style="font-size:1.8rem;font-weight:900;color:#F44336">${d}d</div></div>`;}).join('')}
+      <!-- 3-panel grid -->
+      <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:24px;overflow:hidden;">
+        
+        <!-- Column 1: Em Manutenção -->
+        <div style="background:#0A1929;border:1px solid rgba(30,136,229,.3);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
+          <div style="padding:20px;background:rgba(30,136,229,.1);border-bottom:1px solid rgba(30,136,229,.2);">
+            <h2 style="margin:0;color:#64B5F6;font-size:1.3rem;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:8px;">
+              ⚙️ Aguardando / Em Manutenção
+            </h2>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+            ${eqMonth.length > 0 ? eqMonth.sort((a,b) => (a.dataLiberacaoAtual||a.dataLiberacaoPlanejada||'').localeCompare(b.dataLiberacaoAtual||b.dataLiberacaoPlanejada||'')).map(e => {
+              const dataStr = (e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) ? formatDate(e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) : '—';
+              return `
+                <div style="background:rgba(255,255,255,0.03);border-left:4px solid #1E88E5;padding:16px;border-radius:8px;">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-weight:800;color:white;font-size:1.3rem;">${e.codigo}</span>
+                    <span style="font-weight:700;color:#64B5F6;font-size:1.1rem;">Prazo: ${dataStr}</span>
+                  </div>
+                  <div style="color:#8EACC8;font-size:1rem;">Cliente: <strong style="color:#BBDEFB">${e.cliente || 'Não Informado'}</strong></div>
+                </div>
+              `;
+            }).join('') : '<div style="color:#8EACC8;text-align:center;margin-top:20px;font-size:1.2rem;">Nenhum equipamento programado</div>'}
+          </div>
         </div>
 
-        <!-- Panel 2: Critical Path -->
-        <div style="background:#0A1929;border:1px solid rgba(255,152,0,.3);border-radius:12px;padding:16px;overflow:hidden;">
-          <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#FF9800;margin-bottom:12px;">⚡ Caminho Crítico</div>
-          ${critTasks.map(t=>{const eq2=DB.equipment.get(t.equipmentId);const isBlocked=t.status==='Bloqueada';return`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;margin-bottom:6px;background:rgba(255,152,0,.07);">
-            <span style="font-size:.9rem">${isBlocked?'🔴':'🟡'}</span>
-            <div style="flex:1;min-width:0;"><div style="font-size:.75rem;font-weight:600;color:${isBlocked?'#F44336':'white'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.descricao}</div><div style="font-size:.65rem;color:#8EACC8">${eq2?.codigo||'—'} · ${t.disciplina}</div></div>
-            <span style="font-size:.75rem;font-weight:700;color:#FF9800;font-family:monospace">${t.pctExecutado}%</span>
-          </div>`;}).join('')}
+        <!-- Column 2: Liberados -->
+        <div style="background:#0A1929;border:1px solid rgba(76,175,80,.3);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
+          <div style="padding:20px;background:rgba(76,175,80,.1);border-bottom:1px solid rgba(76,175,80,.2);">
+            <h2 style="margin:0;color:#81C784;font-size:1.3rem;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:8px;">
+              ✅ Liberados no Mês
+            </h2>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+            ${eqReleased.length > 0 ? eqReleased.sort((a,b) => (b.dataLiberacaoAtual||b.dataLiberacaoPlanejada||'').localeCompare(a.dataLiberacaoAtual||a.dataLiberacaoPlanejada||'')).map(e => {
+              const dataStr = (e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) ? formatDate(e.dataLiberacaoAtual || e.dataLiberacaoPlanejada) : '—';
+              return `
+                <div style="background:rgba(255,255,255,0.03);border-left:4px solid #4CAF50;padding:16px;border-radius:8px;">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-weight:800;color:white;font-size:1.3rem;">${e.codigo}</span>
+                    <span style="font-weight:700;color:#81C784;font-size:1.1rem;">Data: ${dataStr}</span>
+                  </div>
+                  <div style="color:#8EACC8;font-size:1rem;">Cliente: <strong style="color:#C8E6C9">${e.cliente || 'Não Informado'}</strong></div>
+                </div>
+              `;
+            }).join('') : '<div style="color:#8EACC8;text-align:center;margin-top:20px;font-size:1.2rem;">Nenhum equipamento liberado</div>'}
+          </div>
         </div>
 
-        <!-- Panel 3: Pending Parts -->
-        <div style="background:#0A1929;border:1px solid rgba(255,179,0,.3);border-radius:12px;padding:16px;overflow:hidden;">
-          <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#FFB300;margin-bottom:12px;">📦 Peças Pendentes</div>
-          ${pendParts.map(p=>{const eq2=DB.equipment.get(p.equipmentId);return`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;margin-bottom:6px;background:rgba(255,179,0,.07);">
-            <span style="font-size:.8rem">${p.critica?'🔴':'📦'}</span>
-            <div style="flex:1;min-width:0;"><div style="font-size:.75rem;font-weight:600;color:${p.critica?'#F44336':'white'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.descricao}</div><div style="font-size:.65rem;color:#8EACC8">${eq2?.codigo||'—'} · ${p.status}</div></div>
-          </div>`;}).join('')}
-        </div>
-
-        <!-- Panel 4: Next Releases -->
-        <div style="background:#0A1929;border:1px solid rgba(0,200,83,.3);border-radius:12px;padding:16px;overflow:hidden;">
-          <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#00C853;margin-bottom:12px;">🚀 Próximas Liberações</div>
-          ${nextReleases.slice(0,5).map(e=>{const datePrev = e.dataLiberacaoAtual || e.dataLiberacaoPlanejada; const d=daysBetween(today,datePrev);const cls=d<0?'#F44336':d<=3?'#FF9800':'#00C853';return`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:rgba(0,200,83,.07);border-radius:8px;margin-bottom:8px;">
-            <div><div style="font-weight:800;color:white;font-size:.95rem">${e.codigo} <span style="font-size:.7rem;color:#8EACC8">${e.cliente}</span></div>
-            <div style="margin-top:4px;background:rgba(255,255,255,.1);border-radius:4px;height:6px;width:100%;overflow:hidden;"><div style="height:100%;width:${e.pctAvanco||0}%;background:#00C853;border-radius:4px;"></div></div></div>
-            <div style="text-align:right;"><div style="font-size:.85rem;font-weight:700;color:${cls}">${formatDate(datePrev)}</div><div style="font-size:.65rem;color:${cls}">${d<0?Math.abs(d)+'d atraso':d+'d'}</div></div>
-          </div>`;}).join('')}
-        </div>
-
-        <!-- Panel 5: Restrictions -->
-        <div style="background:#0A1929;border:1px solid rgba(156,39,176,.3);border-radius:12px;padding:16px;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#CE93D8;">🚫 Restrições</div><div style="font-size:2rem;font-weight:900;color:#CE93D8">${restrictions.length}</div></div>
-          ${restrictions.slice(0,5).map(r=>{const eq2=DB.equipment.get(r.equipmentId);return`<div style="padding:8px;border-radius:6px;margin-bottom:6px;background:rgba(156,39,176,.1);border-left:2px solid #9C27B0;">
-            <div style="font-size:.7rem;color:#CE93D8;font-weight:700">${r.tipo}</div>
-            <div style="font-size:.7rem;color:#8EACC8">${eq2?.codigo||'—'} · ${r.descricao.slice(0,50)}...</div>
-          </div>`;}).join('')}
-        </div>
-
-        <!-- Panel 6: System Alerts -->
-        <div style="background:#0A1929;border:1px solid rgba(30,136,229,.3);border-radius:12px;padding:16px;overflow:hidden;">
-          <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#1E88E5;margin-bottom:12px;">🔔 Alertas do Sistema</div>
-          ${DB.notifications.list().slice(0,5).map(n=>`<div style="padding:8px;border-radius:6px;margin-bottom:6px;background:rgba(30,136,229,.08);">
-            <div style="font-size:.75rem;font-weight:600;color:white">${n.title}</div>
-            <div style="font-size:.65rem;color:#8EACC8;margin-top:2px">${formatDateTime(n.createdAt)}</div>
-          </div>`).join('')}
+        <!-- Column 3: Top Executantes -->
+        <div style="background:#0A1929;border:1px solid rgba(156,39,176,.3);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
+          <div style="padding:20px;background:rgba(156,39,176,.1);border-bottom:1px solid rgba(156,39,176,.2);">
+            <h2 style="margin:0;color:#BA68C8;font-size:1.3rem;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:8px;">
+              🚀 Top Executantes
+            </h2>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+            ${topPerformers.length > 0 ? topPerformers.map((t, idx) => {
+              const emojis = ['🏆 1º', '🥈 2º', '🥉 3º', '🏅 4º', '🏅 5º'];
+              return `
+                <div style="background:rgba(255,255,255,0.03);border-left:4px solid #AB47BC;padding:20px;border-radius:8px;display:flex;align-items:center;gap:24px;">
+                  <div style="font-size:2.5rem;">${emojis[idx] || '🏅'}</div>
+                  <div style="flex:1;">
+                    <div style="font-weight:800;color:white;font-size:1.6rem;margin-bottom:4px;">${t.nome}</div>
+                    <div style="color:#CE93D8;font-weight:700;font-size:1.1rem;">${t.count} tarefas executadas</div>
+                  </div>
+                </div>
+              `;
+            }).join('') : '<div style="color:#8EACC8;text-align:center;margin-top:20px;font-size:1.2rem;">Nenhum dado de execução</div>'}
+          </div>
         </div>
       </div>
 
