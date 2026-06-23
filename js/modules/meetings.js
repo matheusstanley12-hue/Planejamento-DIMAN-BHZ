@@ -90,18 +90,18 @@ window.MeetingsModule = (() => {
             </div>
             <div style="display:flex; gap:15px;">
               <div class="form-group" style="flex:1;">
-                <label>Responsável *</label>
-                <input type="text" id="mt-resp" class="form-control" placeholder="Ex: Engenharia" required />
+                <label>Responsável</label>
+                <input type="text" id="mt-resp" class="form-control" placeholder="Ex: Engenharia" />
               </div>
               <div class="form-group" style="flex:1;">
-                <label>Data para Concluir *</label>
-                <input type="date" id="mt-due" class="form-control" required />
+                <label>Data para Concluir</label>
+                <input type="date" id="mt-due" class="form-control" />
               </div>
             </div>
             <div style="display:flex; gap:15px;">
               <div class="form-group" style="flex:1;">
-                <label>Prioridade *</label>
-                <select id="mt-prio" class="form-control" required>
+                <label>Prioridade</label>
+                <select id="mt-prio" class="form-control">
                   <option value="Urgente">Urgente</option>
                   <option value="Alta">Alta</option>
                   <option value="Média" selected>Média</option>
@@ -230,8 +230,9 @@ window.MeetingsModule = (() => {
     const prio = document.getElementById('mt-prio').value;
     const comments = document.getElementById('mt-comments').value.trim();
 
-    if (!desc || !resp || !due || !prio) {
-      alert('Preencha os campos obrigatórios (Descrição, Responsável, Prazo, Prioridade).');
+    if (!desc) {
+      if (window.Toast) window.Toast.error('Atenção', 'A Descrição da tarefa é obrigatória.');
+      else alert('A Descrição da tarefa é obrigatória.');
       return;
     }
 
