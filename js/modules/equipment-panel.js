@@ -7,31 +7,36 @@ window.EquipmentPanel = (() => {
   };
 
   function renderSvRequests(eqId) {
-    if (!window.DB || !DB.svRequests) return '<div class="alert alert-info">Módulo de Solicitações não disponível.</div>';
-    const reqs = DB.svRequests.list().filter(r => r.equipmentId === eqId);
+    if (!window.DB || !DB.solicitacoes) return '<div class="alert alert-info">Módulo de Solicitações não disponível.</div>';
+    const reqs = DB.solicitacoes.list().filter(r => r.equipmentId === eqId);
     if (reqs.length === 0) {
       return `<div style="text-align:center;padding:var(--space-6);color:var(--text-muted);background:var(--bg-card);border-radius:var(--radius-lg);border:1px dashed var(--border-hover);">
         Nenhuma solicitação de serviço registrada para este equipamento.
       </div>`;
     }
     
+    const session = Auth.getSession();
+    const isDeleteAllowed = session && ['Planejador', 'Administrador', 'Gerente'].includes(session.perfil);
+
     let html = `<div style="display:flex;flex-direction:column;gap:var(--space-3);">`;
     reqs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(r => {
-      const isConcluido = r.status === 'Concluído';
-      const statusColor = isConcluido ? 'success' : (r.status === 'Aprovado' ? 'primary' : 'warning');
+      const isConcluida = r.status === 'Concluída';
+      const statusColor = isConcluida ? 'success' : (r.status.includes('Aprovado') || r.status.includes('Execução') ? 'primary' : 'warning');
       html += `
         <div style="background:var(--bg-base); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:var(--space-4);">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-3);">
             <div>
-              <div style="font-weight:700; color:var(--text-primary); margin-bottom:4px;">${r.titulo || 'Solicitação'}</div>
+              <div style="font-weight:700; color:var(--text-primary); margin-bottom:4px;">${r.descricao || 'Solicitação'}</div>
               <div style="font-size:12px; color:var(--text-muted);">
-                Solicitante: <strong style="color:var(--text-secondary);">${r.solicitante}</strong> &bull; 
+                Solicitante: <strong style="color:var(--text-secondary);">${r.origem || r.solicitanteNome || '—'}</strong> &bull; 
                 Data: ${new Date(r.createdAt).toLocaleDateString('pt-BR')}
               </div>
             </div>
-            <span class="badge badge-${statusColor}">${r.status}</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span class="badge badge-${statusColor}">${r.status}</span>
+              ${isDeleteAllowed ? `<button class="btn btn-ghost btn-xs" style="color:var(--color-danger);padding:0 4px;" onclick="window.EquipmentPanel.deleteRequest('${r.id}')" title="Excluir"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>` : ''}
+            </div>
           </div>
-          ${r.descricao ? `<div style="font-size:13px; color:var(--text-primary); margin-bottom:var(--space-3); line-height:1.4;">${r.descricao}</div>` : ''}
           ${r.fotoPeca ? `
             <div style="margin-top:var(--space-2);">
               <div style="font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:4px;">Foto Anexada:</div>

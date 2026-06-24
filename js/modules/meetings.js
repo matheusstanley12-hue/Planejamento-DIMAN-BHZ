@@ -65,7 +65,7 @@ window.MeetingsModule = (() => {
               </svg>
               Baixar PDF
             </button>
-            <button class="btn btn-primary" onclick="MeetingsModule.openNewTaskModal()">+ Nova Tarefa</button>
+            ${(Auth.getSession() && ['Planejador', 'Administrador'].includes(Auth.getSession().perfil)) ? `<button class="btn btn-primary" onclick="MeetingsModule.openNewTaskModal()">+ Nova Tarefa</button>` : ''}
           </div>
         </header>
 
@@ -154,6 +154,9 @@ window.MeetingsModule = (() => {
       return;
     }
 
+    const session = Auth.getSession();
+    const isManager = session && ['Planejador', 'Administrador'].includes(session.perfil);
+
     tbody.innerHTML = `
       <div class="table-responsive" style="background:var(--bg-card);border:1px solid var(--border-card);border-radius:var(--radius-lg);overflow-x:auto;">
         <table class="table" style="width:100%; border-collapse:collapse; text-align:left; min-width:800px;">
@@ -172,11 +175,24 @@ window.MeetingsModule = (() => {
               const completedStr = t.completedAt ? formatDisplayDate(t.completedAt.split('T')[0]) : '';
               const overdue = !isDone && window.daysBetween(new Date().toISOString().slice(0,10), t.dueDate) < 0;
               
+              let actionsHtml = '';
+              if (isManager) {
+                actionsHtml += `<button class="btn btn-ghost" style="padding:4px 8px;" onclick="MeetingsModule.openNewTaskModal('${t.id}')" title="Editar">Editar</button>`;
+                actionsHtml += `<button class="btn btn-ghost" style="color:var(--color-danger); padding:4px 8px;" onclick="MeetingsModule.deleteTask('${t.id}')" title="Excluir">Excluir</button>`;
+              }
+              if (!isDone) {
+                if (t.status === 'Pendente') {
+                  actionsHtml += `<button class="btn btn-info" style="padding:4px 8px; font-size:12px;" onclick="MeetingsModule.acceptTask('${t.id}')">Aceitar</button>`;
+                }
+                actionsHtml += `<button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="MeetingsModule.changeDateTask('${t.id}')">Data</button>`;
+                actionsHtml += `<button class="btn btn-success" style="padding:4px 8px; font-size:12px;" onclick="MeetingsModule.completeTask('${t.id}')">Concluir</button>`;
+              }
+
               return `
                 <tr style="border-bottom:1px solid var(--border-card); ${isDone ? 'opacity:0.7; background:rgba(0,0,0,0.02);' : ''}">
                   <td style="padding:var(--space-3); vertical-align:top;">
                     <div style="display:flex; flex-direction:column; gap:var(--space-2); align-items:flex-start;">
-                      <span class="badge ${isDone ? 'badge-success' : 'badge-warning'}">${t.status}</span>
+                      <span class="badge ${isDone ? 'badge-success' : (t.status === 'Aceita' ? 'badge-primary' : 'badge-warning')}">${t.status}</span>
                       <span class="badge" style="background:transparent;border:1px solid ${getPriorityColor(t.priority)};color:${getPriorityColor(t.priority)};">${t.priority}</span>
                     </div>
                   </td>
@@ -196,9 +212,8 @@ window.MeetingsModule = (() => {
                     ${isDone ? `<div style="color:var(--success); font-weight:600; margin-top:4px;">Concluída: ${completedStr}</div>` : ''}
                   </td>
                   <td style="padding:var(--space-3); vertical-align:top; text-align:center;">
-                    <div style="display:flex; justify-content:center; gap:var(--space-2);">
-                      ${!isDone ? `<button class="btn btn-primary" style="padding:4px 8px; font-size:12px; display:flex; gap:4px; align-items:center;" onclick="MeetingsModule.completeTask('${t.id}')">Concluir</button>` : ''}
-                      <button class="btn btn-ghost" style="color:var(--color-danger); padding:4px 8px;" onclick="MeetingsModule.deleteTask('${t.id}')" title="Excluir">Excluir</button>
+                    <div style="display:flex; justify-content:center; gap:var(--space-2); flex-wrap:wrap;">
+                      ${actionsHtml}
                     </div>
                   </td>
                 </tr>
@@ -219,17 +234,35 @@ window.MeetingsModule = (() => {
     renderTable();
   }
 
-  function openNewTaskModal() {
-    document.getElementById('mt-desc').value = '';
-    document.getElementById('mt-resp').value = '';
-    document.getElementById('mt-due').value = '';
-    document.getElementById('mt-prio').value = 'Média';
-    document.getElementById('mt-comments').value = '';
+  let editingTaskId = null;
+
+  function openNewTaskModal(id = null) {
+    if (typeof id === 'string') {
+      editingTaskId = id;
+      const t = DB.meetingTasks.list().find(x => x.id === id);
+      if (t) {
+        document.getElementById('mt-desc').value = t.description || '';
+        document.getElementById('mt-resp').value = t.responsible || '';
+        document.getElementById('mt-due').value = t.dueDate || '';
+        document.getElementById('mt-prio').value = t.priority || 'Média';
+        document.getElementById('mt-comments').value = t.comments || '';
+        document.querySelector('#meeting-task-modal .modal-title').innerText = 'Editar Tarefa de Reunião';
+      }
+    } else {
+      editingTaskId = null;
+      document.getElementById('mt-desc').value = '';
+      document.getElementById('mt-resp').value = '';
+      document.getElementById('mt-due').value = '';
+      document.getElementById('mt-prio').value = 'Média';
+      document.getElementById('mt-comments').value = '';
+      document.querySelector('#meeting-task-modal .modal-title').innerText = 'Nova Tarefa de Reunião';
+    }
     document.getElementById('meeting-task-modal').classList.add('open');
   }
 
   function closeModal() {
     document.getElementById('meeting-task-modal').classList.remove('open');
+    editingTaskId = null;
   }
 
   function saveTask() {
@@ -246,20 +279,46 @@ window.MeetingsModule = (() => {
     }
 
     const session = Auth.getSession();
-    DB.meetingTasks.add({
-      id: 'mt-' + Date.now(),
-      meetingDate: selectedMeetingDate,
-      description: desc,
-      responsible: resp,
-      dueDate: due,
-      priority: prio,
-      comments: comments,
-      status: 'Pendente',
-      createdBy: session ? session.nome : 'Desconhecido',
-      createdAt: DB.now()
-    });
+    if (editingTaskId) {
+      DB.meetingTasks.update(editingTaskId, {
+        description: desc,
+        responsible: resp,
+        dueDate: due,
+        priority: prio,
+        comments: comments
+      });
+      if (window.Toast) window.Toast.success('Salvo', 'Tarefa editada com sucesso.');
+    } else {
+      DB.meetingTasks.add({
+        id: 'mt-' + Date.now(),
+        meetingDate: selectedMeetingDate,
+        description: desc,
+        responsible: resp,
+        dueDate: due,
+        priority: prio,
+        comments: comments,
+        status: 'Pendente',
+        createdBy: session ? session.nome : 'Desconhecido',
+        createdAt: DB.now()
+      });
+      if (window.Toast) window.Toast.success('Criado', 'Tarefa criada com sucesso.');
+    }
 
     closeModal();
+    renderTable();
+  }
+
+  function acceptTask(id) {
+    DB.meetingTasks.update(id, { status: 'Aceita' });
+    if (window.Toast) window.Toast.success('Aceita', 'Tarefa aceita com sucesso.');
+    renderTable();
+  }
+
+  function changeDateTask(id) {
+    const newDate = prompt('Digite a nova data para conclusão (AAAA-MM-DD):');
+    if (!newDate) return;
+    DB.meetingTasks.update(id, { dueDate: newDate });
+    if (window.Toast) window.Toast.success('Data Alterada', 'Nova data salva com sucesso.');
     renderTable();
   }
 
@@ -340,5 +399,15 @@ window.MeetingsModule = (() => {
     return html;
   }
 
-  return { render: renderWithInit, onDateChange, openNewTaskModal, closeModal, saveTask, completeTask, deleteTask, downloadPDF };
+  return { render: renderWithInit,
+    onDateChange,
+    openNewTaskModal,
+    closeModal,
+    saveTask,
+    completeTask,
+    deleteTask,
+    acceptTask,
+    changeDateTask,
+    downloadPDF
+  };
 })();

@@ -16,15 +16,8 @@ window.ServicesModule = (() => {
 
     const solicitacoes = window.DB.solicitacoes ? window.DB.solicitacoes.list() : [];
     
-    // Filter logic
-    let mySols = [];
-    if (isPCM) {
-      // PCM sees Usinagem needing approval, plus everything else for oversight
-      mySols = solicitacoes.filter(s => (s.destino || s.setorDestino) === 'Usinagem');
-    } else if (isEncarregado) {
-      // Encarregado sees their sector
-      mySols = solicitacoes.filter(s => (s.destino || s.setorDestino) === session.disciplina);
-    }
+    // All PCM and Encarregados see all requests now, but actions are restricted
+    let mySols = solicitacoes;
 
     const pendentes = mySols.filter(s => s.status === 'Aguardando Aprovação PCM' || s.status === 'Aguardando Encarregado');
     const andamento = mySols.filter(s => s.status === 'Em Execução' || s.status === 'Em Andamento');
@@ -85,26 +78,31 @@ window.ServicesModule = (() => {
                 const eq = DB.equipment.get(s.equipmentId);
                 
                 let actions = '';
+                const isMySector = isEncarregado && (s.destino || s.setorDestino) === session.disciplina;
+                const isDeleteAllowed = ['Planejador', 'Administrador', 'Gerente'].includes(session.perfil);
+
+                actions += `<button class="btn btn-ghost btn-xs" onclick="window.ServicesModule.viewDetails('${s.id}')" title="Ver Detalhes e OS">🔍 Detalhes</button>`;
+
                 if (s.status === 'Aguardando Aprovação PCM' && isPCM) {
-                  actions = `
+                  actions += `
                     <button class="btn btn-success btn-xs" onclick="window.ServicesModule.approvePCM('${s.id}')">Aprovar OS</button>
                     <button class="btn btn-danger btn-xs" onclick="window.ServicesModule.reject('${s.id}')">Rejeitar</button>
                   `;
-                } else if (s.status === 'Aguardando Encarregado' && isEncarregado) {
-                  if ((s.destino || s.setorDestino) === 'Usinagem') {
-                    actions = `<button class="btn btn-primary btn-xs" onclick="window.ServicesModule.assignWorker('${s.id}')">Destinar Mão de Obra</button>`;
-                  } else {
-                    actions = `<button class="btn btn-primary btn-xs" onclick="window.ServicesModule.acceptService('${s.id}')">Aceitar Serviço</button>`;
-                  }
-                } else if ((s.status === 'Em Execução' || s.status === 'Em Andamento') && isEncarregado) {
+                } else if (s.status === 'Aguardando Encarregado' && isMySector) {
+                  actions += `<button class="btn btn-primary btn-xs" onclick="window.ServicesModule.acceptService('${s.id}')">Aceitar Serviço</button>`;
+                } else if ((s.status === 'Em Execução' || s.status === 'Em Andamento') && isMySector) {
                    if ((s.destino || s.setorDestino) === 'Usinagem') {
-                     actions = `<button class="btn btn-outline btn-xs" onclick="window.ServicesModule.assignWorker('${s.id}')">Alterar Recurso</button>`;
+                     actions += `<button class="btn btn-outline btn-xs" onclick="window.ServicesModule.assignWorker('${s.id}')">Destinar / Alterar Recurso</button>`;
                    } else {
-                     actions = `
+                     actions += `
                        <button class="btn btn-info btn-xs" onclick="window.ServicesModule.updateProgress('${s.id}')">Atualizar Avanço</button>
                        <button class="btn btn-success btn-xs" onclick="window.ServicesModule.finishService('${s.id}')">Finalizar</button>
                      `;
                    }
+                }
+                
+                if (isDeleteAllowed) {
+                  actions += `<button class="btn btn-ghost btn-xs" style="color:var(--color-danger);" onclick="window.ServicesModule.deleteRequest('${s.id}')" title="Excluir">Excluir</button>`;
                 }
 
                 return `
@@ -403,8 +401,53 @@ window.ServicesModule = (() => {
     const avanco = document.getElementById('sv-prog-avanco').value;
     window.DB.solicitacoes.update(id, { pctAvanço: avanco });
     closeModal('modal-progress');
-    Toast.success('Atualizado', 'Avanço atualizado com sucesso.');
+    Toast.success('Sucesso', 'Avanço atualizado.');
     Router.navigate('services', { force: true });
+  }
+
+  function viewDetails(id) {
+    const s = window.DB.solicitacoes.list().find(x => x.id === id);
+    if (!s) return;
+    const task = s.osId ? window.DB.tasks.get(s.osId) : null;
+    const osNumber = task ? task.codigo : (s.osNumber || 'Não informada (ou via PCM)');
+    
+    const modalHtml = `
+      <div class="modal-overlay" id="modal-details">
+        <div class="modal" style="max-width:500px;">
+          <div class="modal-header">
+            <div class="modal-title">Detalhes da Solicitação</div>
+            <button class="modal-close" onclick="closeModal('modal-details')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="padding-top:10px;">
+            ${s.fotoPeca ? `
+              <div style="margin-bottom:15px;text-align:center;">
+                <img src="${s.fotoPeca}" style="max-width:100%;max-height:250px;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--border-card);" />
+              </div>
+            ` : `<p style="font-size:12px;color:#ef4444;margin-bottom:15px;">⚠️ Sem foto anexada.</p>`}
+            <p style="margin-bottom:8px;font-size:13px;"><strong>Descrição:</strong> ${s.descricao}</p>
+            <p style="margin-bottom:8px;font-size:13px;"><strong>Status:</strong> ${s.status}</p>
+            <p style="margin-bottom:8px;font-size:13px;"><strong>Ordem de Serviço (OS):</strong> ${osNumber}</p>
+            <p style="margin-bottom:8px;font-size:13px;"><strong>Avanço:</strong> ${s.pctAvanço || 0}%</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modal-details')">Fechar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('services-modals').innerHTML = modalHtml;
+    openModal('modal-details');
+  }
+
+  function deleteRequest(id) {
+    window.uiConfirm('Tem certeza que deseja EXCLUIR esta solicitação de serviço permanentemente?', (res) => {
+      if (!res) return;
+      window.DB.solicitacoes.delete(id);
+      Toast.success('Excluída', 'Solicitação foi excluída com sucesso.');
+      Router.navigate('services', { force: true });
+    });
   }
 
   function finishService(id) {
@@ -458,6 +501,8 @@ window.ServicesModule = (() => {
     reject,
     assignWorker,
     saveAssign,
+    viewDetails,
+    deleteRequest,
     acceptService,
     saveAccept,
     updateProgress,
