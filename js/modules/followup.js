@@ -6,16 +6,20 @@ window.FollowupModule = (() => {
   let selectedMeetingDate = '';
 
   function getMeetingDates() {
-    const startDate = new Date(2026, 5, 9); // 09/06/2026
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + 30); // Up to ~4 weeks ahead
     const dates = [];
-    let curr = new Date(startDate);
+    let curr = new Date(2026, 5, 9); // 09/06/2026
+    const cutoff = new Date(2026, 5, 24); // 24/06/2026
+    
     while (curr <= endDate) {
-      dates.push(new Date(curr));
-      curr.setDate(curr.getDate() + 7);
+      if (curr < cutoff) {
+        if (curr.getDay() === 2) dates.push(new Date(curr)); // Terças antes de 24/06
+      } else {
+        if (curr.getDay() === 1 || curr.getDay() === 3) dates.push(new Date(curr)); // Seg e Qua a partir de 24/06
+      }
+      curr.setDate(curr.getDate() + 1);
     }
-    // ensure we add the current week's tuesday if not present? The loop should cover it.
     return dates.sort((a, b) => b - a); // descending
   }
 
@@ -32,7 +36,7 @@ window.FollowupModule = (() => {
   function getInitialMeetingDate() {
     const dates = getMeetingDates();
     const todayStr = formatDate(new Date());
-    // Find the closest tuesday that is <= today
+    // Find the closest meeting date that is <= today
     const pastDates = dates.filter(d => formatDate(d) <= todayStr);
     if (pastDates.length > 0) return formatDate(pastDates[0]);
     return formatDate(dates[dates.length - 1]); // fallback to the oldest if all are in future
