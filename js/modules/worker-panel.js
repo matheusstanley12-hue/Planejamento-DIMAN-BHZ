@@ -2382,10 +2382,6 @@ window.WorkerServices = (() => {
           window.Toast.error('Erro', 'Setor de destino é obrigatório.');
           return;
         }
-        if (!window._tempSvPhoto) {
-          window.Toast.error('Erro', 'É obrigatório anexar a foto da peça.');
-          return;
-        }
 
         const eqId = document.getElementById('w-sv-eq').value;
         const statusReq = (dest === 'Usinagem') ? 'Aguardando Aprovação PCM' : 'Aguardando Encarregado';
@@ -2404,6 +2400,17 @@ window.WorkerServices = (() => {
 
         window.DB.solicitacoes.add(payload);
         const msg = (dest === 'Usinagem') ? `Solicitação para Usinagem enviada ao PCM para aprovação.` : `Solicitação enviada direto para o encarregado de ${dest}.`;
+        
+        if (window.DB.notifications) {
+          window.DB.notifications.add({
+            type: 'warning',
+            title: 'Nova Solicitação de Serviço',
+            message: `Solicitação de ${session.nome} para ${dest}: ${desc.slice(0, 50)}...`,
+            read: false,
+            createdAt: window.DB.now()
+          });
+        }
+        
         window.Toast.success('Enviado!', msg);
         window._tempSvPhoto = null; // Clear temp photo
         window.Router.navigate('worker-services', { force: true });
@@ -2442,8 +2449,8 @@ window.WorkerServices = (() => {
             </div>
             
             <div class="form-group">
-              <label>Foto da Peça / Serviço *</label>
-              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Obrigatório tirar foto para a aprovação e visualização do Torneiro/Encarregado.</p>
+              <label>Foto da Peça / Serviço (Opcional)</label>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Tire uma foto para ajudar a aprovação e visualização do Torneiro/Encarregado.</p>
               <div class="file-upload-wrapper" style="position:relative;display:inline-block;width:100%;">
                 <button type="button" class="btn btn-outline" style="width:100%;border-style:dashed;color:var(--text-secondary);" onclick="document.getElementById('w-sv-photo').click()">
                   📸 Tirar Foto ou Anexar

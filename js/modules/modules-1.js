@@ -1384,8 +1384,7 @@ window.TasksModule = (() => {
       const dataStr = ts.data ? ts.data.split('-').reverse().join('/') : '';
       const hStart = ts.horaInicio ? new Date(ts.horaInicio).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : '--:--';
       const hEnd = ts.horaFim ? new Date(ts.horaFim).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : '--:--';
-      if (ts.tipo && ts.tipo !== 'Trabalho') return;
-      const dur = Number(ts.horasTrabalhadas).toFixed(2);
+      const dur = (Number(ts.horasTrabalhadas) || 0).toFixed(2);
       
       return `
         <div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.05);">

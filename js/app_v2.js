@@ -172,6 +172,12 @@ function showFirstAccessPasswordChange(matricula, session, loginPage) {
 }
 
 async function initApp() {
+  if (!localStorage.getItem('manuals_cleared_v1')) {
+    localStorage.setItem('diman_manuals', '[]');
+    localStorage.setItem('diman_manual_folders', '[]');
+    localStorage.setItem('manuals_cleared_v1', 'true');
+  }
+
   if (window.DB && DB.initSupabase) {
     await DB.initSupabase();
   }

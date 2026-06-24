@@ -972,28 +972,33 @@ window.MeetingMode = (() => {
         }
       }
       return false;
-    }
+    const timesheets = window.DB.timesheets ? window.DB.timesheets.list() : [];
+    const completedTasks = tasks.filter(t => t.status === 'Concluída' && t.disciplina !== 'Subconjunto');
 
-    // Pega todas as tarefas (sem filtrar por mês para o Top Executantes)
-    tasks.filter(t => {
-      if (t.status !== 'Concluída') return false;
-      if (t.disciplina === 'Subconjunto') return false; // RETIRA SUBCONJUNTO
-      return true; // Não varre por data, pega todas as execuções
-    }).forEach(t => {
-      if (!t.executantes || t.executantes.length === 0) return;
-      t.executantes.forEach(exec => {
-        if (!perfMap[exec]) perfMap[exec] = 0;
-        perfMap[exec]++;
+    completedTasks.forEach(t => {
+      const taskWorkers = new Set();
+      if (t.responsavel && t.responsavel !== 'Não atribuído' && t.responsavel !== 'Sistema') {
+        taskWorkers.add(t.responsavel);
+      }
+      timesheets.forEach(ts => {
+        if (ts.taskId === t.id && (!ts.tipo || ts.tipo === 'Trabalho') && ts.workerNome) {
+          taskWorkers.add(ts.workerNome);
+        }
+      });
+      taskWorkers.forEach(wName => {
+        if (!perfMap[wName]) perfMap[wName] = new Set();
+        perfMap[wName].add(t.id);
       });
     });
+
     const topPerformers = Object.entries(perfMap)
-      .map(([nome, count]) => ({nome, count}))
+      .map(([nome, taskSet]) => ({nome, count: taskSet.size}))
       .sort((a,b) => b.count - a.count)
       .slice(0, 5);
       
     // Todos executantes para o Ticker
     const allPerformers = Object.entries(perfMap)
-      .map(([nome, count]) => ({nome, count}))
+      .map(([nome, taskSet]) => ({nome, count: taskSet.size}))
       .sort((a,b) => b.count - a.count);
 
     overlay.innerHTML = `
@@ -1010,7 +1015,13 @@ window.MeetingMode = (() => {
           </div>
         </div>
         <div id="meeting-datetime" style="font-size:1.4rem;font-weight:800;color:#1E88E5;font-family:monospace;"></div>
-        <button onclick="MeetingMode.deactivate()" style="background:rgba(244,67,54,.2);border:1px solid rgba(244,67,54,.4);color:#F44336;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;">✕ Sair</button>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <button onclick="MeetingMode.toggleFullscreen()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+            Tela Cheia
+          </button>
+          <button onclick="MeetingMode.deactivate()" style="background:rgba(244,67,54,.2);border:1px solid rgba(244,67,54,.4);color:#F44336;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;">✕ Sair</button>
+        </div>
       </div>
 
       <!-- 4-panel grid -->
@@ -1166,9 +1177,30 @@ window.MeetingMode = (() => {
   function deactivate() {
     if (interval) { clearInterval(interval); interval = null; }
     document.getElementById('meeting-overlay')?.remove();
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(()=>{});
+    }
+    if (window.Router) {
+      const session = window.Auth ? window.Auth.getSession() : null;
+      window.Router.navigate(session && session.perfil === 'Executante' ? 'worker-panel' : 'home', { force: true });
+    } else {
+      window.location.hash = '#home';
+    }
   }
 
-  return { activate, deactivate };
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
+
+  return { activate, deactivate, toggleFullscreen };
 })();
 
 // ================================================================

@@ -361,6 +361,14 @@ window.DB = (() => {
                 const existing = mergedMap.get(item.id);
                 const existTime = existing && existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
                 const newTime = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
+                
+                // Enforce: once finalized, never reverts
+                if (existing && existing.status === 'Concluída' && item.status !== 'Concluída') {
+                   item.status = 'Concluída';
+                   item.pctExecutado = 100;
+                   if (existing.dataRealTermino && !item.dataRealTermino) item.dataRealTermino = existing.dataRealTermino;
+                }
+
                 // If it's from individual row, we prefer it unless base is strictly newer
                 if (!existing || newTime >= existTime) {
                   mergedMap.set(item.id, item);
@@ -410,6 +418,14 @@ window.DB = (() => {
                        const existing = mergedMap.get(item.id);
                        const existTime = existing && existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
                        const newTime = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
+                       
+                       // Enforce: once finalized, never reverts
+                       if (existing && existing.status === 'Concluída' && item.status !== 'Concluída') {
+                          item.status = 'Concluída';
+                          item.pctExecutado = 100;
+                          if (existing.dataRealTermino && !item.dataRealTermino) item.dataRealTermino = existing.dataRealTermino;
+                       }
+
                        if (!existing || newTime > existTime) {
                           mergedMap.set(item.id, item);
                        }
@@ -449,7 +465,15 @@ window.DB = (() => {
 
               if (idx !== -1) {
                  const existTime = localArr[idx].updatedAt ? new Date(localArr[idx].updatedAt).getTime() : 0;
-                 const newTime = row.data.updatedAt ? new Date(row.data.updatedAt).getTime() : 0;
+                 const newTime = itemToSave.updatedAt ? new Date(itemToSave.updatedAt).getTime() : 0;
+                 
+                 // Enforce: once finalized, never reverts
+                 if (localArr[idx].status === 'Concluída' && itemToSave.status !== 'Concluída') {
+                    itemToSave.status = 'Concluída';
+                    itemToSave.pctExecutado = 100;
+                    if (localArr[idx].dataRealTermino && !itemToSave.dataRealTermino) itemToSave.dataRealTermino = localArr[idx].dataRealTermino;
+                 }
+
                  if (newTime >= existTime) {
                     localArr[idx] = itemToSave;
                  }
@@ -462,11 +486,14 @@ window.DB = (() => {
 
           if (window.Router) {
             const current = window.Router.getCurrent();
-            const liveViews = ['dashboard', 'manager-dashboard', 'workforce-time', 'tasks-ongoing'];
+            const liveViews = ['dashboard', 'manager-dashboard', 'workforce-time', 'tasks-ongoing', 'home'];
             if (current && liveViews.includes(current)) {
               const hasOpenModal = document.querySelector('.modal-overlay.open, .modal.open');
               if (!hasOpenModal) {
-                window.Router.navigate(current, { force: true });
+                if (window._syncRenderTimeout) clearTimeout(window._syncRenderTimeout);
+                window._syncRenderTimeout = setTimeout(() => {
+                  window.Router.navigate(current, { force: true });
+                }, 800);
               }
             }
           }
@@ -622,6 +649,13 @@ window.DB = (() => {
       const idx = items.findIndex(t => String(t.id) === String(id));
       if (idx === -1) return null;
       const before = { ...items[idx] };
+      
+      // Enforce: once finalized, never reverts
+      if (before.status === 'Concluída' && data.status && data.status !== 'Concluída') {
+          data.status = 'Concluída';
+          data.pctExecutado = 100;
+      }
+      
       items[idx] = { ...items[idx], ...data, updatedAt: now() };
       set(KEYS.tasks, items);
       Auth.addAuditLog('UPDATE_TASK', `Tarefa ${items[idx].descricao} atualizada`, { before, after: items[idx] });

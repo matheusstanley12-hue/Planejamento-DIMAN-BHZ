@@ -142,25 +142,34 @@ window.DPanel = (() => {
     });
     
     const workerCounts = {};
+    const timesheets = window.DB.timesheets ? window.DB.timesheets.list() : [];
+
     concludedTasks.forEach(t => {
+      const taskWorkers = new Set();
       if (t.responsavel && t.responsavel !== 'Não atribuído' && t.responsavel !== 'Sistema') {
         const wfList = window.DB.workforce ? window.DB.workforce.list() : [];
         const w = wfList.find(wf => wf.nome === t.responsavel);
-        if (w) {
-          workerCounts[w.id] = (workerCounts[w.id] || 0) + 1;
-        } else {
-          workerCounts[`name:${t.responsavel}`] = (workerCounts[`name:${t.responsavel}`] || 0) + 1;
-        }
+        taskWorkers.add(w ? w.id : `name:${t.responsavel}`);
       }
+      timesheets.forEach(ts => {
+        if (ts.taskId === t.id && (!ts.tipo || ts.tipo === 'Trabalho')) {
+          taskWorkers.add(ts.workerId || `name:${ts.workerNome}`);
+        }
+      });
+      taskWorkers.forEach(wId => {
+        if (!workerCounts[wId]) workerCounts[wId] = new Set();
+        workerCounts[wId].add(t.id);
+      });
     });
 
     const ranking = [];
     Object.keys(workerCounts).forEach(wId => {
+      const count = workerCounts[wId].size;
       if (wId.startsWith('name:')) {
-        ranking.push({ id: wId, nome: wId.replace('name:', ''), count: workerCounts[wId] });
+        ranking.push({ id: wId, nome: wId.replace('name:', ''), count });
       } else {
         const w = window.DB.workforce.get(wId);
-        if (w) ranking.push({ id: wId, nome: w.nome, count: workerCounts[wId] });
+        if (w) ranking.push({ id: wId, nome: w.nome, count });
       }
     });
 
