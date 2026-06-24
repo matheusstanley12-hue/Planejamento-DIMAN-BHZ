@@ -1362,7 +1362,10 @@ window.WorkerPanel = (() => {
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;margin-top:24px;">
           <h3 style="font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:0;">Fila de Tarefas Pendentes</h3>
-          <button class="btn btn-primary btn-sm" onclick="WorkerPanel.openCreateTask()" style="font-weight:700;">+ Nova Tarefa</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="Router.navigate('worker-services', { force: true })" style="font-weight:700;">Solicitações / Histórico</button>
+            <button class="btn btn-primary btn-sm" onclick="WorkerPanel.openCreateTask()" style="font-weight:700;">+ Nova Tarefa</button>
+          </div>
         </div>
         
         ${listTasks.length > 0 ? tasksHtml : `
@@ -2024,7 +2027,7 @@ window.WorkerPanel = (() => {
       setorDestino: setor,
       prazo: prazo,
       critico: critica,
-      status: setor === 'Usinagem' ? 'Aguardando Aprovação PCM' : 'Aguardando Encarregado',
+      status: setor === 'Usinagem' ? 'Aguardando Aprovação PCM' : 'Aguardando Execução',
       createdAt: DB.now()
     };
 
@@ -2388,7 +2391,7 @@ window.WorkerServices = (() => {
         }
 
         const eqId = document.getElementById('w-sv-eq').value;
-        const statusReq = (dest === 'Usinagem') ? 'Aguardando Aprovação PCM' : 'Aguardando Encarregado';
+        const statusReq = (dest === 'Usinagem') ? 'Aguardando Aprovação PCM' : 'Aguardando Execução';
         
         const payload = {
           id: window.DB.uid('sol'),
@@ -2403,7 +2406,7 @@ window.WorkerServices = (() => {
         };
 
         window.DB.solicitacoes.add(payload);
-        const msg = (dest === 'Usinagem') ? `Solicitação para Usinagem enviada ao PCM para aprovação.` : `Solicitação enviada direto para o encarregado de ${dest}.`;
+        const msg = (dest === 'Usinagem') ? `Solicitação para Usinagem enviada ao PCM para aprovação.` : `Solicitação enviada direto para o executante/setor de ${dest}.`;
         
         if (window.DB.notifications) {
           window.DB.notifications.add({

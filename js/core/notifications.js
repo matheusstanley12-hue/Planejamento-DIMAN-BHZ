@@ -312,3 +312,69 @@ function priorityBadge(priority) {
   const map = { 'Alta': 'badge-danger', 'Média': 'badge-warning', 'Baixa': 'badge-ghost', 'Crítica': 'badge-danger' };
   return `<span class="badge ${map[priority] || 'badge-ghost'}">${priority}</span>`;
 }
+
+// ---- Audio Notifications ----
+window.AudioNotification = (() => {
+  function playBeep(type) {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      if (type === 'new_service') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.setValueAtTime(660, ctx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.5);
+      } else if (type === 'done') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15); // E5
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.3); // G5
+        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.45); // C6
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.0);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 1.0);
+      }
+    } catch(e) { console.error('Audio api error', e); }
+  }
+
+  function showModal(title, msg, type) {
+    playBeep(type);
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);z-index:9999999;display:flex;justify-content:center;align-items:center;animation:fadeIn 0.3s ease;';
+    
+    const icon = type === 'new_service' 
+      ? '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:64px;height:64px;color:var(--brand-primary);margin-bottom:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>'
+      : '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:64px;height:64px;color:var(--color-success);margin-bottom:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--bg-card, #fff);padding:40px;border-radius:16px;width:90%;max-width:500px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);text-align:center;border:1px solid var(--border-default, #ccc);transform:scale(0.9);animation:popIn 0.3s ease forwards;';
+    
+    box.innerHTML = `
+      ${icon}
+      <h2 style="margin-top:0;margin-bottom:16px;font-size:24px;font-weight:800;color:var(--text-primary, #111);">${title}</h2>
+      <p style="margin-bottom:32px;font-size:16px;color:var(--text-secondary, #555);line-height:1.5;">${msg}</p>
+      <button class="btn btn-primary" id="audio-modal-close" style="width:100%;height:48px;font-size:16px;font-weight:700;">Fechar Aviso</button>
+    `;
+    d.appendChild(box);
+    document.body.appendChild(d);
+
+    box.querySelector('#audio-modal-close').onclick = () => d.remove();
+  }
+
+  return {
+    notifyNewService: (title, msg) => showModal(title, msg, 'new_service'),
+    notifyDone: (title, msg) => showModal(title, msg, 'done')
+  };
+})();

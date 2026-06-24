@@ -49,8 +49,8 @@ window.FollowupModule = (() => {
       <div class="page-container">
         <header class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div class="page-title">
-            <h2>Ata de Reunião</h2>
-            <p>Gerenciamento de Tarefas e Deliberações</p>
+            <h2>Ata de Follow-up</h2>
+            <p>Gerenciamento de Tarefas e Deliberações de Follow-up</p>
           </div>
           <div style="display:flex; gap:10px; align-items:center;">
             <select id="followup-date-select" class="form-control" style="width:auto; font-weight:bold;" onchange="FollowupModule.onDateChange()">
@@ -172,6 +172,18 @@ window.FollowupModule = (() => {
               const completedStr = t.completedAt ? formatDisplayDate(t.completedAt.split('T')[0]) : '';
               const overdue = !isDone && window.daysBetween(new Date().toISOString().slice(0,10), t.dueDate) < 0;
               
+              const session = Auth.getSession();
+              const isManager = session && ['Planejador', 'Administrador'].includes(session.perfil);
+
+              let actionsHtml = '';
+              if (!isDone) {
+                actionsHtml += `<button class="btn btn-primary" style="padding:4px 8px; font-size:12px; display:flex; gap:4px; align-items:center;" onclick="FollowupModule.completeTask('${t.id}')">Concluir</button>`;
+              }
+              if (isManager) {
+                actionsHtml += `<button class="btn btn-ghost" style="padding:4px 8px;" onclick="FollowupModule.openNewTaskModal('${t.id}')" title="Editar">Editar</button>`;
+              }
+              actionsHtml += `<button class="btn btn-ghost" style="color:var(--color-danger); padding:4px 8px;" onclick="FollowupModule.deleteTask('${t.id}')" title="Excluir">Excluir</button>`;
+              
               return `
                 <tr style="border-bottom:1px solid var(--border-card); ${isDone ? 'opacity:0.7; background:rgba(0,0,0,0.02);' : ''}">
                   <td style="padding:var(--space-3); vertical-align:top;">
@@ -197,8 +209,7 @@ window.FollowupModule = (() => {
                   </td>
                   <td style="padding:var(--space-3); vertical-align:top; text-align:center;">
                     <div style="display:flex; justify-content:center; gap:var(--space-2);">
-                      ${!isDone ? `<button class="btn btn-primary" style="padding:4px 8px; font-size:12px; display:flex; gap:4px; align-items:center;" onclick="FollowupModule.completeTask('${t.id}')">Concluir</button>` : ''}
-                      <button class="btn btn-ghost" style="color:var(--color-danger); padding:4px 8px;" onclick="FollowupModule.deleteTask('${t.id}')" title="Excluir">Excluir</button>
+                      ${actionsHtml}
                     </div>
                   </td>
                 </tr>
@@ -219,17 +230,35 @@ window.FollowupModule = (() => {
     renderTable();
   }
 
-  function openNewTaskModal() {
-    document.getElementById('ft-desc').value = '';
-    document.getElementById('ft-resp').value = '';
-    document.getElementById('ft-due').value = '';
-    document.getElementById('mt-prio').value = 'Média';
-    document.getElementById('mt-comments').value = '';
+  let editingTaskId = null;
+
+  function openNewTaskModal(id = null) {
+    if (typeof id === 'string') {
+      editingTaskId = id;
+      const t = DB.followupTasks.list().find(x => x.id === id);
+      if (t) {
+        document.getElementById('ft-desc').value = t.description || '';
+        document.getElementById('ft-resp').value = t.responsible || '';
+        document.getElementById('ft-due').value = t.dueDate || '';
+        document.getElementById('mt-prio').value = t.priority || 'Média';
+        document.getElementById('mt-comments').value = t.comments || '';
+        document.querySelector('#followup-task-modal .modal-title').innerText = 'Editar Tarefa de Follow-up';
+      }
+    } else {
+      editingTaskId = null;
+      document.getElementById('ft-desc').value = '';
+      document.getElementById('ft-resp').value = '';
+      document.getElementById('ft-due').value = '';
+      document.getElementById('mt-prio').value = 'Média';
+      document.getElementById('mt-comments').value = '';
+      document.querySelector('#followup-task-modal .modal-title').innerText = 'Nova Tarefa de Follow-up';
+    }
     document.getElementById('followup-task-modal').classList.add('open');
   }
 
   function closeModal() {
     document.getElementById('followup-task-modal').classList.remove('open');
+    editingTaskId = null;
   }
 
   function saveTask() {
@@ -246,18 +275,30 @@ window.FollowupModule = (() => {
     }
 
     const session = Auth.getSession();
-    DB.followupTasks.add({
-      id: 'mt-' + Date.now(),
-      meetingDate: selectedMeetingDate,
-      description: desc,
-      responsible: resp,
-      dueDate: due,
-      priority: prio,
-      comments: comments,
-      status: 'Pendente',
-      createdBy: session ? session.nome : 'Desconhecido',
-      createdAt: DB.now()
-    });
+    if (editingTaskId) {
+      DB.followupTasks.update(editingTaskId, {
+        description: desc,
+        responsible: resp,
+        dueDate: due,
+        priority: prio,
+        comments: comments
+      });
+      if (window.Toast) window.Toast.success('Salvo', 'Tarefa editada com sucesso.');
+    } else {
+      DB.followupTasks.add({
+        id: 'mt-' + Date.now(),
+        meetingDate: selectedMeetingDate,
+        description: desc,
+        responsible: resp,
+        dueDate: due,
+        priority: prio,
+        comments: comments,
+        status: 'Pendente',
+        createdBy: session ? session.nome : 'Desconhecido',
+        createdAt: DB.now()
+      });
+      if (window.Toast) window.Toast.success('Salvo', 'Tarefa adicionada com sucesso.');
+    }
 
     closeModal();
     renderTable();

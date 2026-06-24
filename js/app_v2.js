@@ -268,6 +268,67 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch(e) {}
     
+    // Setup Audio Notifications Listener for Cross-Tablet Sync
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'diman_solicitacoes' && e.newValue) {
+        try {
+          const oldList = e.oldValue ? JSON.parse(e.oldValue) : [];
+          const newList = JSON.parse(e.newValue);
+          
+          if (!window.Auth || !window.Auth.isLoggedIn()) return;
+          const currentSession = window.Auth.getSession();
+          if (!currentSession) return;
+
+          const oldMap = {};
+          oldList.forEach(s => { oldMap[s.id] = s; });
+
+          const myEqs = (window.WorkerPanel && window.WorkerPanel.getMyEquipments) ? window.WorkerPanel.getMyEquipments(currentSession) : [];
+          const myEqIds = myEqs.map(eq => eq.id);
+
+          newList.forEach(sol => {
+            const oldSol = oldMap[sol.id];
+            
+            // Check if new or status changed to pending execution
+            const isNewActive = (!oldSol && (sol.status === 'Aguardando Execução' || sol.status === 'Em Andamento' || sol.status === 'Em Execução')) || 
+                                (oldSol && oldSol.status !== sol.status && (sol.status === 'Aguardando Execução' || sol.status === 'Em Andamento' || sol.status === 'Em Execução'));
+            
+            if (isNewActive && currentSession.perfil === 'Executante') {
+              if (myEqIds.includes(sol.equipmentId)) {
+                 const sDisc = (currentSession.disciplina || '').toLowerCase();
+                 const sCargo = (currentSession.cargo || '').toLowerCase();
+                 const dest = (sol.destino || sol.setorDestino || '').toLowerCase();
+                 
+                 let isMySector = false;
+                 if (dest === 'usinagem' && (sDisc.includes('usinagem') || sCargo.includes('torneiro'))) isMySector = true;
+                 else if (dest === 'elétrica' && (sDisc.includes('elétric') || sCargo.includes('eletric'))) isMySector = true;
+                 else if (dest === 'caldeiraria' && (sDisc.includes('caldeir') || sCargo.includes('solda'))) isMySector = true;
+                 else if (dest === 'mecânica' && (sDisc.includes('mecânic') || sCargo.includes('mecanic'))) isMySector = true;
+                 else if (dest === 'lubrificação' && (sDisc.includes('lubrific'))) isMySector = true;
+                 else if (dest === 'teste' && (sDisc.includes('teste') || sCargo.includes('teste'))) isMySector = true;
+                 else if (dest === 'retrabalho' && (sDisc.includes('retrabalho') || sCargo.includes('retrabalho'))) isMySector = true;
+                 
+                 if (isMySector && window.AudioNotification) {
+                   window.AudioNotification.notifyNewService('Novo Serviço: ' + (sol.destino||''), sol.descricao);
+                 }
+              }
+            }
+
+            // Check if completed
+            const isJustCompleted = oldSol && oldSol.status !== sol.status && sol.status === 'Concluída';
+            if (isJustCompleted) {
+              if (sol.solicitanteNome === currentSession.nome || (sol.origem && sol.origem.includes(currentSession.nome))) {
+                if (myEqIds.includes(sol.equipmentId) && window.AudioNotification) {
+                  window.AudioNotification.notifyDone('Serviço Concluído!', 'A peça/serviço "' + sol.descricao + '" está pronta!');
+                }
+              }
+            }
+          });
+        } catch(err) {
+          console.error('Audio Notification parse error', err);
+        }
+      }
+    });
+
     Router.navigate(defaultRoute, defaultParams);
   } catch (e) {
     console.error('Fatal App Error:', e);
