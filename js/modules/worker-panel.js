@@ -1130,7 +1130,7 @@ window.WorkerPanel = (() => {
     `;
 
     // Tasks List
-    let listTasks = myTasks.filter(t => t.status !== 'Concluída' && t.id !== myWorker.currentTaskId);
+    let listTasks = myTasks.filter(t => t.status !== 'Concluída' && t.id !== myWorker.currentTaskId && canExecuteTask(session, t));
     
     listTasks.sort((a, b) => {
       const aCanExec = canExecuteTask(session, a) ? 1 : 0;
