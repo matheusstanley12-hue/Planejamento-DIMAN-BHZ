@@ -720,7 +720,7 @@ window.WorkerPanel = (() => {
         const timesheets = DB.timesheets.list() || [];
         const hasTimesheets = timesheets.some(ts => ts.taskId == t.id);
         if (!otherActive) {
-          DB.tasks.update(t.id, { status: hasTimesheets ? 'Pausada' : 'Aberta', pauseReason: hasTimesheets ? 'Sem executantes ativos' : '' });
+          DB.tasks.update(t.id, { status: hasTimesheets ? 'Pausada' : 'Não Iniciada', pauseReason: hasTimesheets ? 'Sem executantes ativos' : '' });
         }
       }
 
@@ -1183,8 +1183,8 @@ window.WorkerPanel = (() => {
         
         // Auto-fix: if status is Em Andamento but nobody is working on it
         if (executingWorkers.length === 0) {
-          DB.tasks.update(t.id, { status: 'Aberta' });
-          t.status = 'Aberta';
+          DB.tasks.update(t.id, { status: 'Não Iniciada' });
+          t.status = 'Não Iniciada';
           if (!canExecuteTask(session, t)) {
              actionBtn = `<div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" /></svg>Apenas ${t.disciplina}</div>`;
           } else {
