@@ -22,7 +22,6 @@ window.DB = (() => {
     costs: 'diman_costs',
     lessons: 'diman_lessons',
     notifications: 'diman_notifications',
-    meetingTasks: 'diman_meeting_tasks',
     kpiCache: 'diman_kpi_cache',
     settings: 'diman_settings',
     solicitacoes: 'diman_solicitacoes',
@@ -30,6 +29,8 @@ window.DB = (() => {
     audit: 'diman_audit',
     manuals: 'diman_manuals',
     manualFolders: 'diman_manual_folders',
+    meetingTasks: 'diman_meeting_tasks',
+    followupTasks: 'diman_followup_tasks',
     vacations: 'diman_vacations'
   };
 
@@ -1179,6 +1180,13 @@ window.DB = (() => {
     delete: (id) => { const m = get(KEYS.meetingTasks); set(KEYS.meetingTasks, m.filter(r => r && r.id !== id)); }
   };
 
+  const followupTasks = {
+    list: () => get(KEYS.followupTasks),
+    add: (data) => { const m = get(KEYS.followupTasks); m.push({ ...data, createdAt: now() }); set(KEYS.followupTasks, m); },
+    update: (id, updates) => { let m = get(KEYS.followupTasks); const i = m.findIndex(r => r && r.id === id); if (i !== -1) { m[i] = { ...m[i], ...updates, updatedAt: now() }; set(KEYS.followupTasks, m); } },
+    delete: (id) => { const m = get(KEYS.followupTasks); set(KEYS.followupTasks, m.filter(r => r && r.id !== id)); }
+  };
+
   const vacations = {
     list: () => get(KEYS.vacations),
     add: (data) => { const m = get(KEYS.vacations); m.push({ ...data, createdAt: now() }); set(KEYS.vacations, m); },
@@ -1187,7 +1195,7 @@ window.DB = (() => {
   };
 
   return {
-    equipment, tasks, parts, workforce, timesheets, replannings, restrictions, costs, lessons, notifications, settings, kpi, solicitacoes, manuals, manualFolders, meetingTasks, vacations, uid, now,
+    equipment, tasks, parts, workforce, timesheets, replannings, restrictions, costs, lessons, notifications, settings, kpi, solicitacoes, manuals, manualFolders, meetingTasks, followupTasks, vacations, uid, now,
     initSupabase, forceSyncAll, setGlobalEqFilter, syncToSupabase };
   } catch(err) {
     alert('Erro crítico ao inicializar o banco de dados (db.js): ' + err.message + '\n\n' + err.stack);

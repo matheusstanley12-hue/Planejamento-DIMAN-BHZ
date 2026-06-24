@@ -493,6 +493,7 @@ function renderShell(session) {
     { route:'planning',   label:'Planejamento',          icon:'calendar',       perm:'planning',    section:'' },
     { route:'parts',      label:'Falta de Peças',   icon:'cube',           perm:'parts',       section:'' },
     { route:'meetings',   label:'Ata de Reunião',   icon:'clipboard-list', perm:'planning',    section:'' },
+    { route:'followup',   label:'Ata de Follow-up', icon:'clipboard-document-check', perm:'planning', section:'' },
     { route:'checklists', label:'Check-lists (Anexos)',  icon:'document-report',perm:'dashboard',   section:'DOCUMENTAÇÃO' },
 
     { route:'workforce',  label:'Mão de Obra',           icon:'users',          perm:'workforce',   section:'' },
@@ -757,6 +758,7 @@ function renderShell(session) {
   Router.register('equipment-panel', (p) => EquipmentPanel.render(p));
   if (typeof ChecklistsModule !== 'undefined') Router.register('checklists', () => ChecklistsModule.render());
   if (typeof MeetingsModule !== 'undefined') Router.register('meetings', () => MeetingsModule.render());
+  if (typeof FollowupModule !== 'undefined') Router.register('followup', () => FollowupModule.render());
   
   if (typeof DPanel !== 'undefined') {
     Router.register('d-panel', () => DPanel.render());
