@@ -1965,13 +1965,15 @@ window.WorkerPanel = (() => {
               </div>
               <div class="form-group">
                 <label>Setor Destino *</label>
-                <select id="w-sv-setor">
                   <option value="Usinagem">Usinagem</option>
                   <option value="Mecânica">Mecânica</option>
                   <option value="Teste">Teste</option>
                   <option value="Retrabalho">Retrabalho</option>
                   <option value="Caldeiraria">Caldeiraria</option>
                   <option value="Elétrica">Elétrica</option>
+                  <option value="Subconjunto">Subconjunto</option>
+                  <option value="Pintura">Pintura</option>
+                  <option value="Lavador">Lavador</option>
                 </select>
               </div>
               <div class="form-group">
@@ -2448,6 +2450,9 @@ window.WorkerServices = (() => {
                 <option value="Retrabalho">Retrabalho</option>
                 <option value="Elétrica">Elétrica</option>
                 <option value="Lubrificação">Lubrificação</option>
+                <option value="Subconjunto">Subconjunto</option>
+                <option value="Pintura">Pintura</option>
+                <option value="Lavador">Lavador</option>
               </select>
             </div>
             <div class="form-group">
