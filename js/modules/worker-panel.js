@@ -264,7 +264,6 @@ window.WorkerPanel = (() => {
     let divergingWorkers = targetWorkers.filter(w => w.equipmentId && w.equipmentId !== t.equipmentId);
     if (divergingWorkers.length > 0) {
       const names = divergingWorkers.map(w => w.nome).join(', ');
-      const matriculasStr = matriculas.join(',');
       const jModalHtml = `
         <div class="modal-overlay" id="modal-worker-justification" style="z-index:9999;">
           <div class="modal" style="box-shadow:var(--shadow-lg);">
