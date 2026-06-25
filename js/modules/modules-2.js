@@ -907,10 +907,15 @@ window.WorkforceModule = (() => {
         </div>
       </div>
       <div class="form-group">
-        <label>Equipamentos Alocados (Segure CTRL p/ múltiplos)</label>
-        <select id="wk-eq" multiple size="4" style="height:auto;" ${isLocked ? 'disabled style="background:var(--bg-base);cursor:not-allowed;"' : ''}>
-          ${eqs.map(e => `<option value="${e.id}" ${currentEqIds.includes(e.id) ? 'selected' : ''}>${e.codigo} - ${e.nome}</option>`).join('')}
-        </select>
+        <label>Equipamentos Alocados</label>
+        <div class="multi-select-container" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border-card); border-radius: 6px; padding: 8px; background: var(--bg-base); ${isLocked ? 'opacity: 0.7; pointer-events: none;' : ''}">
+          ${eqs.map(e => `
+            <label style="display:flex; align-items:center; gap:8px; padding:6px; cursor:${isLocked ? 'not-allowed' : 'pointer'}; border-radius:4px; transition:0.2s;" onmouseover="this.style.backgroundColor='var(--bg-elevated)'" onmouseout="this.style.backgroundColor='transparent'">
+              <input type="checkbox" name="wk-eq-checkbox" value="${e.id}" ${currentEqIds.includes(e.id) ? 'checked' : ''} ${isLocked ? 'disabled' : ''} style="width:16px; height:16px; accent-color:var(--brand-primary); cursor:inherit;" />
+              <span style="font-size:13px; font-weight:600; color:var(--text-primary);">${e.codigo} - ${e.nome}</span>
+            </label>
+          `).join('')}
+        </div>
         ${isLocked ? `
           <div style="font-size:var(--text-xs);color:var(--color-warning);margin-top:4px;display:flex;align-items:center;gap:4px;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:12px;height:12px;"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd" /></svg>
@@ -932,8 +937,8 @@ window.WorkforceModule = (() => {
     const nome = document.getElementById('wk-nome').value.trim();
     if (!nome) { Toast.error('Erro', 'Nome é obrigatório'); return; }
     
-    const eqEl = document.getElementById('wk-eq');
-    const equipmentIds = eqEl ? Array.from(eqEl.selectedOptions).map(opt => opt.value) : [];
+    const checkboxes = document.querySelectorAll('input[name="wk-eq-checkbox"]:checked');
+    const equipmentIds = Array.from(checkboxes).map(cb => cb.value);
     const justificativa = document.getElementById('wk-just').value.trim();
     
     const data = {
