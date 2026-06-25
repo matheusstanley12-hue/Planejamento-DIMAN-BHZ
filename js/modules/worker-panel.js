@@ -46,7 +46,7 @@ window.WorkerPanel = (() => {
       if (Object.values(map).includes(myWorkerName) || Object.values(map).includes(session.nome) || e.id === myDirectEqId) return true;
       
       const eqTasks = allTasks.filter(t => t.equipmentId === e.id && t.status !== 'Concluída');
-      return eqTasks.some(t => t.responsavel && (t.responsavel === myWorkerName || t.responsavel === session.nome));
+      return eqTasks.some(t => t.responsavel && (t.responsavel.includes(myWorkerName) || t.responsavel.includes(session.nome)));
     });
   }
 
@@ -69,6 +69,7 @@ window.WorkerPanel = (() => {
     if (sDisc && sDisc === disc) return true;
 
     if (sCargo) {
+      if (sCargo.includes('ajudante')) return true;
       if (disc.includes('mecânic') || disc.includes('mecanic')) {
         if ((sCargo.includes('mecânic') || sCargo.includes('mecanic')) && !sCargo.includes('torneiro')) return true;
       } else if (disc.includes('usinagem')) {
