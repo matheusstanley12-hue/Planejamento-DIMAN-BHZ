@@ -684,7 +684,7 @@ window.WorkforceModule = (() => {
                 const wSector = w.disciplina || 'Sem Setor';
                 if (activeSector === '2º Turno') return wSector === sector && w.turno === '2º Turno';
                 return wSector === sector;
-              });
+              }).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
               if (sectorWorkers.length === 0) return '';
               return `
                 <h3 style="margin-top:var(--space-2);margin-bottom:var(--space-3);color:var(--text-primary);border-bottom:1px solid var(--border-color);padding-bottom:var(--space-2);font-size:16px;display:flex;align-items:center;gap:8px;">
