@@ -1031,14 +1031,10 @@ window.WorkerPanel = (() => {
     
     window.workerTimerInterval = setInterval(() => {
       try {
-        const workers = window.DB.workforce.list();
-        
         document.querySelectorAll('.live-timer-wp').forEach(el => {
-          const wId = el.getAttribute('data-worker-id');
-          if (!wId) return;
-          const w = workers.find(wk => String(wk.id) === String(wId));
-          if (w && w.currentActionStartTime) {
-            el.innerText = formatTimeDiff(w.currentActionStartTime);
+          const startTime = el.getAttribute('data-start-time');
+          if (startTime) {
+             el.textContent = formatTimeDiff(startTime);
           }
         });
 
@@ -1064,7 +1060,7 @@ window.WorkerPanel = (() => {
             <div class="active-task-card working" style="margin-bottom: 15px;">
               <div class="pulse-indicator"></div>
               <div class="task-state">EM EXECUÇÃO - ${w.nome}</div>
-              <div class="task-timer live-timer-wp" data-worker-id="${w.id}">${formatTimeDiff(w.currentActionStartTime)}</div>
+              <div class="task-timer live-timer-wp" data-worker-id="${w.id}" data-start-time="${w.currentActionStartTime}">${formatTimeDiff(w.currentActionStartTime)}</div>
               <div class="task-desc">${currentT ? currentT.descricao : 'Tarefa desconhecida'}</div>
               <div class="task-meta">${eq ? eq.codigo : ''} &bull; ${currentT ? currentT.disciplina : ''}</div>
               ${currentT && currentT.fotoPeca ? `
@@ -1102,7 +1098,7 @@ window.WorkerPanel = (() => {
           return `
             <div class="active-task-card paused" style="margin-bottom: 15px;">
               <div class="task-state">EM PAUSA: ${w.currentPauseReason} - ${w.nome}</div>
-              <div class="task-timer live-timer-wp" data-worker-id="${w.id}">${formatTimeDiff(w.currentActionStartTime)}</div>
+              <div class="task-timer live-timer-wp" data-worker-id="${w.id}" data-start-time="${w.currentActionStartTime}">${formatTimeDiff(w.currentActionStartTime)}</div>
               <div class="task-desc">${currentT ? currentT.descricao : ''}</div>
               <div class="task-meta">${eq ? eq.codigo : ''} &bull; Aguardando retomada</div>
               ${currentT && currentT.fotoPeca ? `
