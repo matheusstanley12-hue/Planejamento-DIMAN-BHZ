@@ -379,63 +379,86 @@ window.EquipmentModule = (() => {
           </button>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:var(--space-4);" class="stagger">
-        ${eqs.map(e => {
-          const pct = e.pctAvanco || 0;
-          const refDate = (e.status === 'Liberado' && e.dataLiberacaoAtual) ? e.dataLiberacaoAtual : today;
-          const days = e.dataLiberacaoPlanejada ? daysBetween(refDate, e.dataLiberacaoPlanejada) : null;
-          const isLiberated = e.status === 'Liberado';
-          const daysClass = isLiberated ? 'success' : (days === null ? 'ghost' : days < 0 ? 'danger' : days <= 3 ? 'warning' : 'success');
-          const pendParts = parts.filter(p=>p.equipmentId===e.id&&['Solicitada','Comprada','Em Transporte'].includes(p.status)).length;
-          const openRestr = restrictions.filter(r=>r.equipmentId===e.id&&r.status==='Aberta').length;
-          const repls = e.replanning || [];
-          const prioridade = e.prioridade || 'Normal';
-          let prioBadge = '';
-          if (prioridade === 'Urgente') {
-            prioBadge = `<span class="badge badge-danger">Urgente</span>`;
-          } else if (prioridade === 'Alta') {
-            prioBadge = `<span class="badge badge-orange">Alta</span>`;
-          }
+      <div class="card" style="padding:0; overflow-x:auto;">
+        <table style="width:100%; text-align:left; border-collapse:collapse; min-width:800px;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border-card); background:var(--bg-card);">
+              <th style="padding:var(--space-3); font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Equipamento</th>
+              <th style="padding:var(--space-3); font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Cliente</th>
+              <th style="padding:var(--space-3); font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Avanço</th>
+              <th style="padding:var(--space-3); font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Liberação</th>
+              <th style="padding:var(--space-3); font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Status</th>
+              <th style="padding:var(--space-3); font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Alertas</th>
+              <th style="padding:var(--space-3); font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; text-align:right;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${eqs.length === 0 ? `<tr><td colspan="7" style="padding:var(--space-5); text-align:center;"><div class="empty-state" style="margin:0;"><div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877"/></svg></div><h3>Nenhum equipamento cadastrado</h3><p>Clique em "Novo Equipamento" para começar</p></div></td></tr>` : ''}
+            ${eqs.map(e => {
+              const pct = e.pctAvanco || 0;
+              const refDate = (e.status === 'Liberado' && e.dataLiberacaoAtual) ? e.dataLiberacaoAtual : today;
+              const days = e.dataLiberacaoPlanejada ? daysBetween(refDate, e.dataLiberacaoPlanejada) : null;
+              const isLiberated = e.status === 'Liberado';
+              const daysClass = isLiberated ? 'success' : (days === null ? 'ghost' : days < 0 ? 'danger' : days <= 3 ? 'warning' : 'success');
+              const pendParts = parts.filter(p=>p.equipmentId===e.id&&['Solicitada','Comprada','Em Transporte'].includes(p.status)).length;
+              const openRestr = restrictions.filter(r=>r.equipmentId===e.id&&r.status==='Aberta').length;
+              const repls = e.replanning || [];
+              const prioridade = e.prioridade || 'Normal';
+              let prioBadge = '';
+              if (prioridade === 'Urgente') {
+                prioBadge = `<span class="badge badge-danger">Urgente</span>`;
+              } else if (prioridade === 'Alta') {
+                prioBadge = `<span class="badge badge-orange">Alta</span>`;
+              }
 
-          return `<div class="card card-clickable hover-lift" onclick="EquipmentModule.openDetail('${e.id}')">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-3);">
-              <div>
-                <div style="font-size:var(--text-xl);font-weight:800;color:var(--text-primary);letter-spacing:-.02em">${e.codigo}</div>
-                <div style="font-size:var(--text-xs);color:var(--text-muted)">${e.nome}</div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:var(--space-1);align-items:flex-end;">
-                ${statusBadge(e.status)}
-                ${prioBadge}
-                <span class="badge badge-ghost">${e.cliente}</span>
-              </div>
-            </div>
-            <div class="progress-bar-wrap" style="margin-bottom:var(--space-3);">
-              <div class="progress-bar-header">
-                <span class="progress-bar-label">Avanço Físico</span>
-                <span class="progress-bar-value">${pct}%</span>
-              </div>
-              <div class="progress-track lg"><div class="progress-fill ${pct>=80?'success':pct>=50?'':'warning'}" style="width:${pct}%"></div></div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2);">
-              <div>
-                ${e.dataLiberacaoPlanejada ? `<div style="font-size:var(--text-xs);color:var(--text-muted)">Liberação prevista</div>
-                <div style="font-size:var(--text-sm);font-weight:700;color:var(--color-${daysClass})">${formatDate(e.dataLiberacaoPlanejada)} ${isLiberated ? '<span style="color:var(--color-success)">(Concluído)</span>' : (days!==null?`(${days<0?Math.abs(days)+' atrasado':days===0?'Hoje':days+'d'})`:'')}</div>` : ''}
-              </div>
-              <div style="display:flex;gap:var(--space-2);">
-                ${pendParts > 0 ? `<span class="badge badge-warning">${pendParts} peça${pendParts>1?'s':''}</span>` : ''}
-                ${openRestr > 0 ? `<span class="badge badge-danger">${openRestr} restr.</span>` : ''}
-                ${repls.length > 0 ? `<span class="badge badge-orange">R${repls.length}</span>` : ''}
-              </div>
-            </div>
-            <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3);border-top:1px solid var(--border-card);padding-top:var(--space-3);">
-              <button class="btn btn-secondary btn-sm" style="flex:1" onclick="event.stopPropagation();EquipmentModule.openEdit('${e.id}')">Editar</button>
-              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();EquipmentModule.confirmDelete('${e.id}','${e.nome}')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
-              </button>
-            </div>
-          </div>`;
-        }).join('')}
-        ${eqs.length === 0 ? `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877"/></svg></div><h3>Nenhum equipamento cadastrado</h3><p>Clique em "Novo Equipamento" para começar</p></div>` : ''}
+              return `
+                <tr class="hover-bg card-clickable" style="border-bottom:1px solid var(--border-card); transition:background 0.2s;" onclick="EquipmentModule.openDetail('${e.id}')">
+                  <td style="padding:var(--space-3);">
+                    <div style="font-weight:700; color:var(--text-primary); font-size:14px;">${e.codigo}</div>
+                    <div style="font-size:12px; color:var(--text-muted);">${e.nome}</div>
+                  </td>
+                  <td style="padding:var(--space-3);"><span class="badge badge-ghost">${e.cliente || '—'}</span></td>
+                  <td style="padding:var(--space-3);">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <div style="width:100px; height:6px; background:var(--bg-base); border-radius:3px; overflow:hidden;">
+                        <div style="height:100%; width:${pct}%; background:var(--color-${pct>=80?'success':pct>=50?'primary':'warning'});"></div>
+                      </div>
+                      <span style="font-size:12px; font-weight:700;">${pct}%</span>
+                    </div>
+                  </td>
+                  <td style="padding:var(--space-3);">
+                    ${e.dataLiberacaoPlanejada ? `
+                      <div style="font-size:13px; font-weight:600; color:var(--color-${daysClass})">${formatDate(e.dataLiberacaoPlanejada)}</div>
+                      <div style="font-size:11px; color:var(--text-muted);">${isLiberated ? '<span style="color:var(--color-success)">Concluído</span>' : (days!==null?`${days<0?Math.abs(days)+' atrasado':days===0?'Hoje':days+'d'}`:'')}</div>
+                    ` : '<span style="color:var(--text-muted); font-size:12px;">Não definida</span>'}
+                  </td>
+                  <td style="padding:var(--space-3);">
+                    <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                      ${statusBadge(e.status)}
+                      ${prioBadge}
+                    </div>
+                  </td>
+                  <td style="padding:var(--space-3);">
+                    <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                      ${pendParts > 0 ? `<span class="badge badge-warning" title="${pendParts} peça(s) pendente(s)">${pendParts} peças</span>` : ''}
+                      ${openRestr > 0 ? `<span class="badge badge-danger" title="${openRestr} restrição(ões) aberta(s)">${openRestr} restr.</span>` : ''}
+                      ${repls.length > 0 ? `<span class="badge badge-orange" title="Reprogramado ${repls.length} vez(es)">R${repls.length}</span>` : ''}
+                      ${pendParts === 0 && openRestr === 0 && repls.length === 0 ? '<span style="color:var(--text-muted); font-size:12px;">Nenhum</span>' : ''}
+                    </div>
+                  </td>
+                  <td style="padding:var(--space-3); text-align:right;">
+                    <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();EquipmentModule.openEdit('${e.id}')" title="Editar">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                    </button>
+                    <button class="btn btn-ghost btn-sm" style="color:var(--color-danger);" onclick="event.stopPropagation();EquipmentModule.confirmDelete('${e.id}','${e.nome}')" title="Excluir">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397" /></svg>
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     </div>
     <!-- Modal create/edit -->
