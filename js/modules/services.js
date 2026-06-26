@@ -411,6 +411,16 @@ window.ServicesModule = (() => {
     const task = s.osId ? window.DB.tasks.get(s.osId) : null;
     const osNumber = task ? task.codigo : (s.osNumber || 'Não informada (ou via PCM)');
     
+    let qtd = "Não informada";
+    let descFinal = s.descricao || '';
+    if (descFinal.startsWith('(Qtd: ')) {
+      const match = descFinal.match(/^\(Qtd:\s*(\d+)\)\s*-\s*(.*)/s);
+      if (match) {
+        qtd = match[1];
+        descFinal = match[2];
+      }
+    }
+
     const modalHtml = `
       <div class="modal-overlay" id="modal-details">
         <div class="modal" style="max-width:500px;">
@@ -426,7 +436,9 @@ window.ServicesModule = (() => {
                 <img src="${s.fotoPeca}" style="max-width:100%;max-height:250px;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--border-card);" />
               </div>
             ` : `<p style="font-size:12px;color:#ef4444;margin-bottom:15px;">⚠️ Sem foto anexada.</p>`}
-            <p style="margin-bottom:8px;font-size:13px;"><strong>Descrição:</strong> ${s.descricao}</p>
+            <p style="margin-bottom:8px;font-size:13px;"><strong>Solicitante:</strong> ${s.origem || 'Não informado'}</p>
+            <p style="margin-bottom:8px;font-size:13px;"><strong>Quantidade:</strong> <span style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-weight:bold;">${qtd}</span></p>
+            <p style="margin-bottom:8px;font-size:13px;"><strong>Descrição:</strong> ${descFinal}</p>
             <p style="margin-bottom:8px;font-size:13px;"><strong>Status:</strong> ${s.status}</p>
             <p style="margin-bottom:8px;font-size:13px;"><strong>Ordem de Serviço (OS):</strong> ${osNumber}</p>
             <p style="margin-bottom:8px;font-size:13px;"><strong>Avanço:</strong> ${s.pctAvanço || 0}%</p>
