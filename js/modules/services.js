@@ -129,6 +129,7 @@ window.ServicesModule = (() => {
                       ${s.descricao}
                       ${s.pctAvanço !== undefined ? `<div style="margin-top:4px;font-size:10px;color:var(--text-secondary);">Avanço: <strong>${s.pctAvanço}%</strong></div>` : ''}
                       ${s.prazoExecucao ? `<div style="font-size:10px;color:var(--text-secondary);">Prazo: <strong>${s.prazoExecucao}</strong></div>` : ''}
+                      ${s.status === 'Rejeitada (Retorno PCM)' && s.observacoes ? `<div style="margin-top:4px;font-size:11px;color:var(--color-danger);background:rgba(239,68,68,0.1);padding:4px 8px;border-radius:4px;border:1px solid rgba(239,68,68,0.2);"><strong>Motivo da Rejeição:</strong> ${s.observacoes}</div>` : ''}
                     </td>
                     <td>
                       <span class="badge ${s.status.includes('Rejeit') ? 'badge-danger' : s.status.includes('PCM') ? 'badge-warning' : s.status.includes('Aguardando') ? 'badge-primary' : s.status.includes('Execução') || s.status.includes('Andamento') ? 'badge-info' : s.status === 'Concluída' ? 'badge-success' : 'badge-danger'}">
@@ -579,6 +580,7 @@ window.ServicesModule = (() => {
             <p style="margin-bottom:8px;font-size:13px;"><strong>Quantidade:</strong> <span style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-weight:bold;">${qtd}</span></p>
             <p style="margin-bottom:8px;font-size:13px;"><strong>Descrição:</strong> ${descFinal}</p>
             <p style="margin-bottom:8px;font-size:13px;"><strong>Status:</strong> ${s.status}</p>
+            ${s.status === 'Rejeitada (Retorno PCM)' && s.observacoes ? `<p style="margin-bottom:8px;font-size:13px;color:var(--color-danger);background:rgba(239,68,68,0.1);padding:4px 8px;border-radius:4px;border:1px solid rgba(239,68,68,0.2);"><strong>Motivo da Rejeição:</strong> ${s.observacoes}</p>` : ''}
             <p style="margin-bottom:8px;font-size:13px;"><strong>Ordem de Serviço (OS):</strong> ${osNumber}</p>
             <p style="margin-bottom:8px;font-size:13px;"><strong>Avanço:</strong> ${s.pctAvanço || 0}%</p>
           </div>
