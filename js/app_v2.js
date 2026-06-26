@@ -179,19 +179,38 @@ async function initApp() {
   }
 
   if (typeof DB !== 'undefined' && DB.timesheets) {
-    let ts = DB.timesheets.list();
-    let originalLen = ts.length;
-    let badCount = 0;
-    ts = ts.filter(t => {
-      if (t.horasTrabalhadas > 12 && (t.observacao || '').includes('Timer')) { badCount++; return false; }
-      if (t.workerNome === 'SISTEMA' && t.horasTrabalhadas > 12) { badCount++; return false; }
-      if (t.horasTrabalhadas === 40 && (t.observacao || '').includes('Trabalho normal na semana') && t.data && t.data.includes('T')) { badCount++; return false; } // Bogus manual duplications
-      return true;
-    });
-    if (badCount > 0) {
-      console.log(`[Auto-Clean] Removed ${badCount} bad timesheets.`);
-      localStorage.setItem('diman_timesheets', JSON.stringify(ts));
-      if (window.DB && DB.syncToSupabase) DB.syncToSupabase('diman_timesheets', ts);
+    if (!localStorage.getItem('diman_reset_hours_v2')) {
+      // 1. Clear timesheets
+      localStorage.setItem('diman_timesheets', '[]');
+      if (window.DB && DB.syncToSupabase) DB.syncToSupabase('diman_timesheets', []);
+
+      // 2. Reset horasRealizadas for all tasks
+      let tasks = [];
+      try { tasks = JSON.parse(localStorage.getItem('diman_tasks') || '[]'); } catch(e){}
+      tasks = tasks.map(t => {
+        t.horasRealizadas = 0;
+        t.dataUltimaPausa = null;
+        t.dataInicioExecucao = null;
+        t.tempoTotalPausas = 0;
+        return t;
+      });
+      localStorage.setItem('diman_tasks', JSON.stringify(tasks));
+      if (window.DB && DB.syncToSupabase) DB.syncToSupabase('diman_tasks', tasks);
+
+      // 3. Reset workforce states
+      let workers = [];
+      try { workers = JSON.parse(localStorage.getItem('diman_workforce') || '[]'); } catch(e){}
+      workers = workers.map(w => {
+        w.currentState = 'Ocioso';
+        w.currentTaskId = null;
+        w.lastActionTime = null;
+        return w;
+      });
+      localStorage.setItem('diman_workforce', JSON.stringify(workers));
+      if (window.DB && DB.syncToSupabase) DB.syncToSupabase('diman_workforce', workers);
+
+      localStorage.setItem('diman_reset_hours_v2', 'true');
+      console.log('[Auto-Clean] Reset timesheets and task hours completed.');
     }
   }
 
