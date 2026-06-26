@@ -1126,7 +1126,7 @@ window.WorkerPanel = (() => {
               <div class="task-state">EM PAUSA: ${w.currentPauseReason} - ${w.nome}</div>
               ${currentT && !canExecuteTask(session, currentT) && w.id !== (myWorker ? myWorker.id : null) ? 
                 `<div class="task-timer" style="color:var(--text-muted); font-size:12px; font-weight:600; padding:4px 8px; background:var(--bg-elevated); border-radius:4px; display:inline-block;">Tempo Restrito (Outro Setor)</div>` : 
-                `<div class="task-timer live-timer-wp" data-worker-id="${w.id}" data-start-time="${w.currentActionStartTime}">${formatTimeDiff(w.currentActionStartTime)}</div>`
+                `<div class="task-timer" style="color:var(--text-muted); font-size:12px; font-weight:600; padding:4px 8px; background:var(--bg-elevated); border-radius:4px; display:inline-block;">Tarefa Pausada</div>`
               }
               <div class="task-desc">${currentT ? currentT.descricao : ''}</div>
               <div class="task-meta">${eq ? eq.codigo : ''} &bull; Aguardando retomada</div>
@@ -1221,17 +1221,13 @@ window.WorkerPanel = (() => {
         `;
       } else if (t.status === 'Aguardando Peça' || t.status === 'Aguardando Setor' || t.status === 'Pausada') {
         const pauseReason = t.pauseReason || t.status;
-        let timeStr = '';
-        if (t.pauseStartTime) {
-          timeStr = `<span class="live-pause-timer" data-start="${t.pauseStartTime}"> - ${formatTimeDiff(t.pauseStartTime)}</span>`;
-        }
         
         if (!canExecuteTask(session, t)) {
           actionBtn = `
             <div style="width:100%; display:flex; flex-direction:column; gap:8px;">
               <div style="font-size:12px;color:#ef4444;font-weight:600;display:flex;align-items:center;gap:4px;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                ${pauseReason}${timeStr}
+                ${pauseReason}
               </div>
               <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" /></svg>Apenas ${t.disciplina}</div>
             </div>
@@ -1246,7 +1242,7 @@ window.WorkerPanel = (() => {
             <div style="width:100%; display:flex; flex-direction:column; gap:8px;">
               <div style="font-size:12px;color:#ef4444;font-weight:600;display:flex;align-items:center;gap:4px;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                ${pauseReason}${timeStr}
+                ${pauseReason}
               </div>
               <button class="btn btn-outline" style="width:100%;height:32px;border-color:var(--brand-primary);color:var(--brand-primary);" onclick="WorkerPanel.promptResumeTask('${t.id}')">${btnText}</button>
             </div>
