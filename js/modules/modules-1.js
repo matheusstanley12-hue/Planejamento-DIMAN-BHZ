@@ -1024,12 +1024,6 @@ window.EquipmentModule = (() => {
       } catch (e) {
         console.error('Error rendering labor comparison:', e);
       }
-      
-      try {
-        if (window.EquipmentModule && window.EquipmentModule.renderLaborComparison) {
-          window.EquipmentModule.renderLaborComparison();
-        }
-      } catch(e) { console.error(e); }
     }, 100);
   }
 
