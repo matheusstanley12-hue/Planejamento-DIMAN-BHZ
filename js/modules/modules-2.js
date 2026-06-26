@@ -653,8 +653,12 @@ window.WorkforceModule = (() => {
     return `<div class="page-container">
       <div class="section-header">
         <div class="section-title"><div class="section-title-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-4.5 0 2.625 2.625 0 014.5 0z"/></svg></div>Mão de Obra</div>
-        ${activeTab === 'team' ? '<button class="btn btn-primary" onclick="WorkforceModule.openCreateWorker()">+ Novo Funcionário</button>' :
-          activeTab === 'timesheets' ? '<button class="btn btn-primary" onclick="WorkforceModule.openCreateTimesheet()">+ Apontamento</button>' : ''}
+        <div style="display:flex;gap:var(--space-2);">
+          ${(window.Auth && window.Auth.getSession() && window.Auth.getSession().perfil === 'Administrador') ? 
+            '<button class="btn btn-sm" style="background:var(--color-danger);color:white;" onclick="WorkforceModule.resetAllHours()">⚠️ Zerar Banco de Horas</button>' : ''}
+          ${activeTab === 'team' ? '<button class="btn btn-primary" onclick="WorkforceModule.openCreateWorker()">+ Novo Funcionário</button>' :
+            activeTab === 'timesheets' ? '<button class="btn btn-primary" onclick="WorkforceModule.openCreateTimesheet()">+ Apontamento</button>' : ''}
+        </div>
       </div>
       <div class="tabs"><div class="tabs-nav">
         <button class="tab-btn ${activeTab==='team'?'active':''}" onclick="WorkforceModule.setTab('team')">Equipe (${workers.length})</button>
@@ -1073,7 +1077,45 @@ window.WorkforceModule = (() => {
     Toast.success('Férias agendadas com sucesso!');
   }
 
-  return { render, setTab, setSector, openCreateWorker, openEditWorker, saveWorker, deleteWorker, openCreateTimesheet, saveTimesheet, openVacationModal, saveVacation };
+  function resetAllHours() {
+    window.uiConfirm('ATENÇÃO: Você está prestes a ZERAR o banco de horas. Todos os apontamentos serão excluídos e as horas das tarefas voltarão para 0. Os funcionários voltarão para Ocioso. As tarefas Concluídas permanecerão Concluídas. Deseja continuar?', (res) => {
+      if (!res) return;
+      
+      // 1. Clear timesheets
+      localStorage.setItem('diman_timesheets', '[]');
+      if (window.DB && DB.syncToSupabase) DB.syncToSupabase('diman_timesheets', []);
+
+      // 2. Reset horasRealizadas for all tasks
+      let tasks = [];
+      try { tasks = JSON.parse(localStorage.getItem('diman_tasks') || '[]'); } catch(e){}
+      tasks = tasks.map(t => {
+        t.horasRealizadas = 0;
+        t.dataUltimaPausa = null;
+        t.dataInicioExecucao = null;
+        t.tempoTotalPausas = 0;
+        return t;
+      });
+      localStorage.setItem('diman_tasks', JSON.stringify(tasks));
+      if (window.DB && DB.syncToSupabase) DB.syncToSupabase('diman_tasks', tasks);
+
+      // 3. Reset workforce states
+      let workers = [];
+      try { workers = JSON.parse(localStorage.getItem('diman_workforce') || '[]'); } catch(e){}
+      workers = workers.map(w => {
+        w.currentState = 'Ocioso';
+        w.currentTaskId = null;
+        w.lastActionTime = null;
+        return w;
+      });
+      localStorage.setItem('diman_workforce', JSON.stringify(workers));
+      if (window.DB && DB.syncToSupabase) DB.syncToSupabase('diman_workforce', workers);
+
+      window.Toast.success('Horas Zeradas', 'Todos os apontamentos e tempos foram resetados com sucesso.');
+      setTimeout(() => { window.location.reload(); }, 1500);
+    });
+  }
+
+  return { render, setTab, setSector, openCreateWorker, openEditWorker, saveWorker, deleteWorker, openCreateTimesheet, saveTimesheet, openVacationModal, saveVacation, resetAllHours };
 })();
 
 // ================================================================
