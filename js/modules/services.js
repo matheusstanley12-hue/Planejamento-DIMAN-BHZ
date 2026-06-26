@@ -251,9 +251,37 @@ window.ServicesModule = (() => {
   }
 
   function rejectByEncarregado(id) {
-    const motivo = prompt('Motivo da rejeição (será enviado ao PCM):');
-    if (motivo === null) return;
-    if (motivo.trim() === '') {
+    const s = window.DB.solicitacoes.list().find(x => x.id === id);
+    if (!s) return;
+    const modalHtml = `
+      <div class="modal-overlay" id="modal-reject-encarregado">
+        <div class="modal" style="max-width:400px;">
+          <div class="modal-header">
+            <div class="modal-title">Rejeitar Serviço</div>
+            <button class="modal-close" onclick="closeModal('modal-reject-encarregado')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="padding-top:10px;">
+            <div class="form-group">
+              <label>Motivo da Rejeição (Será enviado ao PCM) *</label>
+              <textarea id="rej-motivo" class="form-control" rows="3" placeholder="Descreva por que o serviço não pode ser aceito"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modal-reject-encarregado')">Cancelar</button>
+            <button class="btn btn-danger" onclick="window.ServicesModule.saveRejectByEncarregado('${s.id}')">Confirmar Rejeição</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('services-modals').innerHTML = modalHtml;
+    openModal('modal-reject-encarregado');
+  }
+
+  function saveRejectByEncarregado(id) {
+    const motivo = document.getElementById('rej-motivo').value;
+    if (!motivo || motivo.trim() === '') {
       Toast.error('Erro', 'O motivo é obrigatório.');
       return;
     }
@@ -269,6 +297,7 @@ window.ServicesModule = (() => {
       });
     }
     
+    closeModal('modal-reject-encarregado');
     Toast.info('Rejeitada', 'Solicitação devolvida ao PCM.');
     Router.navigate('services', { force: true });
   }
@@ -634,6 +663,7 @@ window.ServicesModule = (() => {
     saveApprovePCM,
     reject,
     rejectByEncarregado,
+    saveRejectByEncarregado,
     assignWorker,
     saveAssign,
     viewDetails,
