@@ -154,10 +154,10 @@ window.Auth = (() => {
     switch(p) {
       case 'desenvolvedor': return getAllPermissions();
       case 'administrador': return getAllPermissions();
-      case 'gerente': return { ...getAllPermissions(), users: false };
-      case 'planejador': return getAllPermissions();
+      case 'gerente': return getAllPermissions();
+      case 'planejador': return { ...getAllPermissions(), users: false };
       case 'coordenador': return { dashboard: true, equipment: true, tasks: true, gantt: true, parts: true, workforce: true, workshop: true, restrictions: true, timeline: true, kpi: false, ai: true, reports: false, audit: false, users: false, planning: false, impacts: false, costs: false, lessons: true, criticalPath: true, meetingMode: false, history: true, managerDashboard: false, simulator: false, workerPanel: false };
-      case 'encarregado': return getAllPermissions();
+      case 'encarregado': return { ...getAllPermissions(), users: false };
       case 'supervisor': return { dashboard: true, equipment: true, tasks: true, gantt: true, parts: true, workforce: true, workshop: true, restrictions: true, timeline: true, kpi: false, ai: true, reports: false, audit: false, users: false, planning: false, impacts: false, costs: false, lessons: true, criticalPath: true, meetingMode: false, history: true, managerDashboard: false, simulator: false, workerPanel: false };
       case 'executante': return { dashboard: false, equipment: false, tasks: false, gantt: false, parts: false, workforce: false, workshop: false, restrictions: false, timeline: false, kpi: false, ai: false, reports: false, audit: false, users: false, planning: false, impacts: false, costs: false, lessons: false, criticalPath: false, meetingMode: false, history: false, managerDashboard: false, simulator: false, workerPanel: true };
       case 'cliente': return { dashboard: true, equipment: true, tasks: false, gantt: true, parts: false, workforce: false, workshop: true, restrictions: false, timeline: true, kpi: true, ai: false, reports: true, audit: false, users: false, planning: false, impacts: true, costs: false, lessons: false, criticalPath: false, meetingMode: false, history: true, managerDashboard: false, simulator: false, workerPanel: false };

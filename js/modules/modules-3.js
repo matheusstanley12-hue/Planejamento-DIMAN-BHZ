@@ -1950,8 +1950,8 @@ window.UsersModule = (() => {
   
   async function saveUser() {
     const session = window.Auth ? window.Auth.getSession() : null;
-    if (!session || (session.perfil !== 'Administrador' && session.perfil !== 'Desenvolvedor')) {
-      Toast && Toast.error('Acesso Negado', 'Apenas administradores podem criar usuários.');
+    if (!session || !['Administrador', 'Desenvolvedor', 'Gerente'].includes(session.perfil)) {
+      Toast && Toast.error('Acesso Negado', 'Apenas administradores e gerentes podem criar usuários.');
       return;
     }
 
@@ -2064,8 +2064,8 @@ window.UsersModule = (() => {
 
   function deleteUser(id) {
     const session = window.Auth ? window.Auth.getSession() : null;
-    if (!session || (session.perfil !== 'Administrador' && session.perfil !== 'Desenvolvedor')) {
-      Toast && Toast.error('Acesso Negado', 'Apenas administradores podem excluir usuários.');
+    if (!session || !['Administrador', 'Desenvolvedor', 'Gerente'].includes(session.perfil)) {
+      Toast && Toast.error('Acesso Negado', 'Apenas administradores e gerentes podem excluir usuários.');
       return;
     }
     window.uiConfirm('Tem certeza que deseja excluir este usuário?', (res) => {
@@ -2087,8 +2087,8 @@ window.UsersModule = (() => {
 
   function openEditUser(id) {
     const session = window.Auth ? window.Auth.getSession() : null;
-    if (!session || (session.perfil !== 'Administrador' && session.perfil !== 'Desenvolvedor')) {
-      Toast && Toast.error('Acesso Negado', 'Apenas administradores podem editar usuários.');
+    if (!session || !['Administrador', 'Desenvolvedor', 'Gerente'].includes(session.perfil)) {
+      Toast && Toast.error('Acesso Negado', 'Apenas administradores e gerentes podem editar usuários.');
       return;
     }
     
@@ -2131,8 +2131,8 @@ window.UsersModule = (() => {
 
   function resetPassword(id) {
     const session = window.Auth ? window.Auth.getSession() : null;
-    if (!session || (session.perfil !== 'Administrador' && session.perfil !== 'Desenvolvedor')) {
-      Toast && Toast.error('Acesso Negado', 'Apenas administradores podem resetar senhas.');
+    if (!session || !['Administrador', 'Desenvolvedor', 'Gerente'].includes(session.perfil)) {
+      Toast && Toast.error('Acesso Negado', 'Apenas administradores e gerentes podem resetar senhas.');
       return;
     }
     window.uiConfirm('Tem certeza que deseja resetar a senha deste usuário para 123456?', (res) => {
