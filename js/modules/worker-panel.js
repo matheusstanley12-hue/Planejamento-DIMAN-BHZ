@@ -761,9 +761,8 @@ window.WorkerPanel = (() => {
       const myWorker = workerId ? DB.workforce.get(workerId) : getMyWorker(session);
       if (!myWorker || (myWorker.currentState !== 'Trabalhando' && myWorker.currentState !== 'Em Pausa')) return;
 
-      const t = DB.tasks.get(myWorker.currentTaskId);
-
-      const targetWorkers = DB.workforce.list().filter(w => w.currentTaskId === t.id && (w.currentState === 'Trabalhando' || w.currentState === 'Em Pausa'));
+      const tId = myWorker.currentTaskId;
+      const targetWorkers = DB.workforce.list().filter(w => String(w.currentTaskId) === String(tId) && (w.currentState === 'Trabalhando' || w.currentState === 'Em Pausa'));
 
       targetWorkers.forEach(w => {
         DB.workforce.update(w.id, {
@@ -774,10 +773,16 @@ window.WorkerPanel = (() => {
         });
       });
 
-      if (t) {
-        // Because targetWorkers covers all active workers for this task, there are no others
+      if (tId) {
+        // Delete any open timesheets for this task
         const timesheets = DB.timesheets.list() || [];
-        DB.tasks.update(t.id, { status: 'Não Iniciada', pauseReason: '' });
+        const openTs = timesheets.filter(ts => String(ts.taskId) === String(tId) && !ts.horaFim);
+        openTs.forEach(ts => DB.timesheets.delete(ts.id));
+
+        const t = DB.tasks.get(tId);
+        if (t) {
+            DB.tasks.update(t.id, { status: 'Não Iniciada', pauseReason: '', pauseStartTime: null });
+        }
       }
 
       Toast.success('Cancelado', 'Andamento cancelado com sucesso.');
